@@ -98,10 +98,10 @@ class Generic(ABC):
         self.v_timeout = p_timeout
     @classmethod
     def SetExecuteSecurity(self, p_execute_security):
-        self.v_execute_security
+        self.v_execute_security = p_execute_security
     @classmethod
     def SetDefaultString(self, p_default_string):
-        self.v_default_string
+        self.v_default_string = p_default_string
     @abstractmethod
     def Transfer(self, p_query, p_insert, p_destdatabase, p_log, p_startrow, p_endrow, p_hasmoredata):
         pass

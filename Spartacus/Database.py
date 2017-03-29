@@ -39,6 +39,13 @@ class DataTable(object):
         self.Columns = []
         self.Rows = []
 
+class DataReturn(object):
+    def __init__(self):
+        self.NumRecords = 0
+        self.HasMoreRecords = False
+        self.Log = []
+        self.Data = DataTable()
+
 '''
 ------------------------------------------------------------------------
 Generic
@@ -46,34 +53,13 @@ Generic
 '''
 class Generic(ABC):
     @abstractmethod
-    def CreateDatabase(self, p_name=None):
-        pass
-    @abstractmethod
     def Open(self):
         pass
     @abstractmethod
-    def Query(self, p_sql, p_tablename, p_progress=None):
-        pass
-    @abstractmethod
-    def QueryBlock(self, p_sql, p_tablename, p_startrow, p_endrow, p_hasmoredata):
-        pass
-    @abstractmethod
-    def QueryHtml(self, p_sql, p_id, p_options):
-        pass
-    @abstractmethod
-    def QueryStoredProc(self, p_sql, p_tablename, p_outparam):
-        pass
-    @abstractmethod
-    def QueryListT(self, p_sql):
-        pass
-    @abstractmethod
-    def QuerySList(self, p_sql, p_header=None):
+    def Query(self, p_sql):
         pass
     @abstractmethod
     def Execute(self, p_sql):
-        pass
-    @abstractmethod
-    def InsertBlock(self, p_sql, p_rows, p_columnnames=None):
         pass
     @abstractmethod
     def ExecuteScalar(self, p_sql):
@@ -82,28 +68,16 @@ class Generic(ABC):
     def Close(self):
         pass
     @abstractmethod
-    def DropDatabase(self, p_name=None):
-        pass
-    @abstractmethod
-    def GetColumnNames(self, p_sql):
-        pass
-    @abstractmethod
-    def GetColumnNamesAndTypes(self, p_sql):
-        pass
-    @abstractmethod
     def GetFields(self, p_sql):
         pass
-    @classmethod
-    def SetTimeout(self, p_timeout):
-        self.v_timeout = p_timeout
-    @classmethod
-    def SetExecuteSecurity(self, p_execute_security):
-        self.v_execute_security = p_execute_security
-    @classmethod
-    def SetDefaultString(self, p_default_string):
-        self.v_default_string = p_default_string
     @abstractmethod
-    def Transfer(self, p_query, p_insert, p_destdatabase, p_log, p_startrow, p_endrow, p_hasmoredata):
+    def QueryBlock(self, p_sql, p_startrow, p_endrow):
+        pass
+    @abstractmethod
+    def InsertBlock(self, p_sql, p_rows, p_columnnames=None):
+        pass
+    @abstractmethod
+    def Transfer(self, p_query, p_insert, p_destdatabase, p_startrow, p_endrow,):
         pass
 
 '''
@@ -118,14 +92,8 @@ class SQLite(Generic):
         self.v_service = p_service
         self.v_user = None
         self.v_password = None
-        self.v_timeout = -1; #TODO
-        self.v_execute_security = True; #TODO
-        self.v_blocksize = 100;
-        self.v_default_string = 'text';
         self.v_con = None
         self.v_cur = None
-    def CreateDatabase(self, p_name=None):
-        raise Spartacus.Database.Exception ('Not Implemented')
     def Open(self):
         try:
             self.v_con = sqlite3.connect(self.v_service)
@@ -133,7 +101,7 @@ class SQLite(Generic):
             self.v_cur = self.v_con.cursor()
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def Query(self, p_sql, p_progress=None):
+    def Query(self, p_sql):
         try:
             if self.v_con is None:
                 self.Open()
@@ -159,16 +127,6 @@ class SQLite(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def QueryBlock(self, p_sql, p_tablename, p_startrow, p_endrow, p_hasmoredata):
-        raise Spartacus.Database.Exception ('Not Implemented')
-    def QueryHtml(self, p_sql, p_id, p_options):
-        raise Spartacus.Database.Exception ('Not Implemented')
-    def QueryStoredProc(self, p_sql, p_tablename, p_outparam):
-        raise Spartacus.Database.Exception ('Not Implemented')
-    def QueryListT(self, p_sql):
-        raise Spartacus.Database.Exception ('Not Implemented')
-    def QuerySList(self, p_sql, p_header=None):
-        raise Spartacus.Database.Exception ('Not Implemented')
     def Execute(self, p_sql):
         try:
             if self.v_con is None:
@@ -185,8 +143,6 @@ class SQLite(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def InsertBlock(self, p_sql, p_rows, p_columnnames=None):
-        raise Spartacus.Database.Exception ('Not Implemented')
     def ExecuteScalar(self, p_sql):
         try:
             if self.v_con is None:
@@ -217,15 +173,13 @@ class SQLite(Generic):
             self.v_con.close()
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def DropDatabase(self, p_name=None):
-        raise Spartacus.Database.Exception ('Not Implemented')
-    def GetColumnNames(self, p_sql):
-        raise Spartacus.Database.Exception ('Not Implemented')
-    def GetColumnNamesAndTypes(self, p_sql):
-        raise Spartacus.Database.Exception ('Not Implemented')
     def GetFields(self, p_sql):
         raise Spartacus.Database.Exception ('Not Implemented')
-    def Transfer(self, p_query, p_insert, p_destdatabase, p_log, p_startrow, p_endrow, p_hasmoredata):
+    def QueryBlock(self, p_sql, p_startrow, p_endrow):
+        raise Spartacus.Database.Exception ('Not Implemented')
+    def InsertBlock(self, p_sql, p_rows, p_columnnames=None):
+        raise Spartacus.Database.Exception ('Not Implemented')
+    def Transfer(self, p_query, p_insert, p_destdatabase, p_startrow, p_endrow):
         raise Spartacus.Database.Exception ('Not Implemented')
 
 '''
@@ -240,14 +194,8 @@ class PostgreSQL(Generic):
         self.v_service = p_service
         self.v_user = p_user
         self.v_password = p_password
-        self.v_timeout = -1; #TODO
-        self.v_execute_security = True; #TODO
-        self.v_blocksize = 100;
-        self.v_default_string = 'text';
         self.v_con = None
         self.v_cur = None
-    def CreateDatabase(self, p_name=None):
-        raise Spartacus.Database.Exception ('Not Implemented')
     def Open(self):
         try:
             self.v_con = psycopg2.connect(
@@ -262,7 +210,7 @@ class PostgreSQL(Generic):
             self.v_cur = self.v_con.cursor()
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def Query(self, p_sql, p_tablename=None, p_progress=None):
+    def Query(self, p_sql):
         try:
             if self.v_con is None:
                 self.Open()
@@ -288,16 +236,6 @@ class PostgreSQL(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def QueryBlock(self, p_sql, p_tablename, p_startrow, p_endrow, p_hasmoredata):
-        raise Spartacus.Database.Exception ('Not Implemented')
-    def QueryHtml(self, p_sql, p_id, p_options):
-        raise Spartacus.Database.Exception ('Not Implemented')
-    def QueryStoredProc(self, p_sql, p_tablename, p_outparam):
-        raise Spartacus.Database.Exception ('Not Implemented')
-    def QueryListT(self, p_sql):
-        raise Spartacus.Database.Exception ('Not Implemented')
-    def QuerySList(self, p_sql, p_header=None):
-        raise Spartacus.Database.Exception ('Not Implemented')
     def Execute(self, p_sql):
         try:
             if self.v_con is None:
@@ -314,8 +252,6 @@ class PostgreSQL(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def InsertBlock(self, p_sql, p_rows, p_columnnames=None):
-        raise Spartacus.Database.Exception ('Not Implemented')
     def ExecuteScalar(self, p_sql):
         try:
             if self.v_con is None:
@@ -346,13 +282,11 @@ class PostgreSQL(Generic):
             self.v_con.close()
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def DropDatabase(self, p_name=None):
-        raise Spartacus.Database.Exception ('Not Implemented')
-    def GetColumnNames(self, p_sql):
-        raise Spartacus.Database.Exception ('Not Implemented')
-    def GetColumnNamesAndTypes(self, p_sql):
-        raise Spartacus.Database.Exception ('Not Implemented')
     def GetFields(self, p_sql):
         raise Spartacus.Database.Exception ('Not Implemented')
-    def Transfer(self, p_query, p_insert, p_destdatabase, p_log, p_startrow, p_endrow, p_hasmoredata):
+    def QueryBlock(self, p_sql, p_startrow, p_endrow):
+        raise Spartacus.Database.Exception ('Not Implemented')
+    def InsertBlock(self, p_sql, p_rows, p_columnnames=None):
+        raise Spartacus.Database.Exception ('Not Implemented')
+    def Transfer(self, p_query, p_insert, p_destdatabase, p_startrow, p_endrow):
         raise Spartacus.Database.Exception ('Not Implemented')

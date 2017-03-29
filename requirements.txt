@@ -1,0 +1,4 @@
+pyscrypt
+pyaes
+psycopg2
+PyMySQL

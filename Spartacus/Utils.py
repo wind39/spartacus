@@ -33,8 +33,9 @@ class Exception(Exception):
     pass
 
 class Cryptor(object):
-    def __init__(self, p_key):
+    def __init__(self, p_key, p_encoding='utf-8'):
         try:
+            self.v_encoding = p_encoding
             self.v_hash = pyscrypt.hash(
                 password = p_key.encode('utf-8'),
                 salt = '0123456789ABCDEF'.encode('utf-8'),
@@ -48,12 +49,12 @@ class Cryptor(object):
     def Encrypt(self, p_plaintext):
         try:
             v_aes = pyaes.AESModeOfOperationCTR(self.v_hash)
-            return base64.b64encode(v_aes.encrypt(p_plaintext))
+            return base64.b64encode(v_aes.encrypt(p_plaintext)).decode(self.v_encoding)
         except Exception as exc:
             raise Spartacus.Utils.Exception(str(exc))
     def Decrypt(self, p_cyphertext):
         try:
             v_aes = pyaes.AESModeOfOperationCTR(self.v_hash)
-            return v_aes.decrypt(base64.b64decode(p_cyphertext))
+            return v_aes.decrypt(base64.b64decode(p_cyphertext)).decode(self.v_encoding)
         except Exception as exc:
             raise Spartacus.Utils.Exception(str(exc))

@@ -1,5 +1,5 @@
 import Spartacus
-import Spartacus.Utils
+from Spartacus import Utils
 
 try:
     v_cryptor = Spartacus.Utils.Cryptor("password")

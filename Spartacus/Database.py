@@ -29,7 +29,6 @@ import psycopg2
 from psycopg2 import extras
 
 import Spartacus
-from Spartacus import *
 
 class Exception(Exception):
     pass
@@ -39,10 +38,9 @@ class DataTable(object):
         self.Columns = []
         self.Rows = []
 
-class DataReturn(object):
+class DataBlock(object):
     def __init__(self):
         self.NumRecords = 0
-        self.HasMoreRecords = False
         self.Log = []
         self.Data = DataTable()
 
@@ -71,13 +69,13 @@ class Generic(ABC):
     def GetFields(self, p_sql):
         pass
     @abstractmethod
-    def QueryBlock(self, p_sql, p_startrow, p_endrow):
+    def QueryBlock(self, p_sql, p_blocksize):
         pass
     @abstractmethod
     def InsertBlock(self, p_sql, p_rows, p_columnnames=None):
         pass
     @abstractmethod
-    def Transfer(self, p_query, p_insert, p_destdatabase, p_startrow, p_endrow,):
+    def Transfer(self, p_sql, p_insert, p_destdatabase, p_blocksize):
         pass
 
 '''
@@ -99,6 +97,7 @@ class SQLite(Generic):
             self.v_con = sqlite3.connect(self.v_service)
             self.v_con.row_factory = sqlite3.Row
             self.v_cur = self.v_con.cursor()
+            self.v_start = True
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
     def Query(self, p_sql):
@@ -170,16 +169,44 @@ class SQLite(Generic):
     def Close(self):
         try:
             self.v_cur.close()
+            self.v_cur = None
             self.v_con.close()
+            self.v_con = None
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
     def GetFields(self, p_sql):
         raise Spartacus.Database.Exception ('Not Implemented')
-    def QueryBlock(self, p_sql, p_startrow, p_endrow):
-        raise Spartacus.Database.Exception ('Not Implemented')
+    def QueryBlock(self, p_sql, p_blocksize):
+        try:
+            if self.v_con is None:
+                raise Spartacus.Database.Exception('This method should be called in the middle of Open() and Close() calls.')
+            else:
+                if self.v_start:
+                    self.v_cur.execute(p_sql)
+                    self.v_start = False
+                v_block = DataBlock()
+                for c in self.v_cur.description:
+                    v_block.Data.Columns.append(c[0])
+                v_hasmorerecords = True
+                while v_hasmorerecords and v_block.NumRecords < p_blocksize:
+                    r = self.v_cur.fetchone()
+                    if r is not None:
+                        v_block.Data.Rows.append(r)
+                        v_block.NumRecords = v_block.NumRecords + 1
+                        v_hasmorerecords = True
+                    else:
+                        self.v_con.commit()
+                        v_hasmorerecords = False
+                return v_block
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except sqlite3.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
     def InsertBlock(self, p_sql, p_rows, p_columnnames=None):
         raise Spartacus.Database.Exception ('Not Implemented')
-    def Transfer(self, p_query, p_insert, p_destdatabase, p_startrow, p_endrow):
+    def Transfer(self, p_query, p_insert, p_destdatabase, p_blocksize):
         raise Spartacus.Database.Exception ('Not Implemented')
 
 '''
@@ -208,6 +235,7 @@ class PostgreSQL(Generic):
                 ),
                 cursor_factory=psycopg2.extras.DictCursor)
             self.v_cur = self.v_con.cursor()
+            self.v_start = True
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
     def Query(self, p_sql):
@@ -279,14 +307,42 @@ class PostgreSQL(Generic):
     def Close(self):
         try:
             self.v_cur.close()
+            self.v_cur = None
             self.v_con.close()
+            self.v_con = None
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
     def GetFields(self, p_sql):
         raise Spartacus.Database.Exception ('Not Implemented')
-    def QueryBlock(self, p_sql, p_startrow, p_endrow):
-        raise Spartacus.Database.Exception ('Not Implemented')
+    def QueryBlock(self, p_sql, p_blocksize):
+        try:
+            if self.v_con is None:
+                raise Spartacus.Database.Exception('This method should be called in the middle of Open() and Close() calls.')
+            else:
+                if self.v_start:
+                    self.v_cur.execute(p_sql)
+                    self.v_start = False
+                v_block = DataBlock()
+                for c in self.v_cur.description:
+                    v_block.Data.Columns.append(c.name)
+                v_hasmorerecords = True
+                while v_hasmorerecords and v_block.NumRecords < p_blocksize:
+                    r = self.v_cur.fetchone()
+                    if r is not None:
+                        v_block.Data.Rows.append(r)
+                        v_block.NumRecords = v_block.NumRecords + 1
+                        v_hasmorerecords = True
+                    else:
+                        self.v_con.commit()
+                        v_hasmorerecords = False
+                return v_block
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except psycopg2.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
     def InsertBlock(self, p_sql, p_rows, p_columnnames=None):
         raise Spartacus.Database.Exception ('Not Implemented')
-    def Transfer(self, p_query, p_insert, p_destdatabase, p_startrow, p_endrow):
+    def Transfer(self, p_query, p_insert, p_destdatabase, p_blocksize):
         raise Spartacus.Database.Exception ('Not Implemented')

@@ -27,7 +27,6 @@ import pyaes
 import base64
 
 import Spartacus
-from Spartacus import *
 
 class Exception(Exception):
     pass

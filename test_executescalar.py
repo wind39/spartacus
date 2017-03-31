@@ -1,8 +1,8 @@
 import Spartacus
-import Spartacus.Database
+from Spartacus import Database
 
 try:
-    #v_database = Spartacus.Database.SQLite('employees.db')
+    #v_database = Spartacus.Database.SQLite('../employees.db')
     v_database = Spartacus.Database.PostgreSQL('127.0.0.1', '5432', 'employees', 'william', 'password')
 
     v_result = v_database.ExecuteScalar("select dept_name from departments where dept_no = 'd005'")

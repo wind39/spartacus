@@ -1,0 +1,7 @@
+Spartacus is a database wrapper for the most widely used RDBMS Python drivers.
+
+Currently, Spartacus supports:
+
+* Memory (in-memory SQLite)
+* SQLite
+* PostgreSQL

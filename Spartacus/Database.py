@@ -23,6 +23,7 @@ SOFTWARE.
 '''
 
 from abc import ABC, abstractmethod
+import datetime
 
 import sqlite3
 import psycopg2
@@ -37,12 +38,27 @@ class DataTable(object):
     def __init__(self):
         self.Columns = []
         self.Rows = []
+    def Merge(self, p_datatable):
+        if len(self.Columns) > 0 and len(p_datatable.Columns) > 0:
+            if self.Columns == p_datatable.Columns:
+                for r in p_datatable.Rows:
+                    self.Rows.append(r)
+            else:
+                raise Spartacus.Database.Exception('Can not merge tables with different columns.')
+        else:
+            raise Spartacus.Database.Exception('Can not merge tables with no columns.')
 
-class DataBlock(object):
+class DataField(object):
+    def __init__(self, p_name, p_type=None, p_dbtype=None, p_mask='#'):
+        self.v_name = p_name
+        self.v_type = p_type
+        self.v_dbtype = p_dbtype
+        self.v_mask = p_mask
+
+class DataTransferReturn(object):
     def __init__(self):
-        self.NumRecords = 0
-        self.Log = []
-        self.Data = DataTable()
+        self.v_numrecords = 0
+        self.v_log = None
 
 '''
 ------------------------------------------------------------------------
@@ -72,11 +88,30 @@ class Generic(ABC):
     def QueryBlock(self, p_sql, p_blocksize):
         pass
     @abstractmethod
-    def InsertBlock(self, p_sql, p_rows, p_columnnames=None):
+    def Mogrify(self, p_row):
         pass
     @abstractmethod
-    def Transfer(self, p_sql, p_insert, p_destdatabase, p_blocksize):
+    def InsertBlock(self, p_block, p_tablename, p_fields=None):
         pass
+    @abstractmethod
+    def Transfer(self, p_sql, p_targetdatabase, p_tablename, p_blocksize, p_fields=None):
+        pass
+    @classmethod
+    def Mogrify(self, p_row, p_fields):
+        if len(p_row) == len(p_fields):
+            k = 0
+            v_mog = []
+            while k < len(p_row):
+                if type(p_row[k]) == type(None):
+                    v_mog.append('null')
+                elif type(p_row[k]) == type(str()) or type(p_row[k]) == datetime.datetime:
+                    v_mog.append(p_fields[k].v_mask.replace('#', "'{0}'".format(p_row[k])))
+                else:
+                    v_mog.append(p_fields[k].v_mask.replace('#', "{0}".format(p_row[k])))
+                k = k + 1
+            return '(' + ','.join(v_mog) + ')'
+        else:
+            raise Spartacus.Database.Exception('Can not mogrify with different number of parameters.')
 
 '''
 ------------------------------------------------------------------------
@@ -149,7 +184,6 @@ class SQLite(Generic):
                 self.v_cur.execute(p_sql)
                 r = self.v_cur.fetchone()
                 s = r[0]
-                self.v_cur.fetchall()
                 self.v_con.commit()
                 self.Close()
                 return s
@@ -157,7 +191,6 @@ class SQLite(Generic):
                 self.v_cur.execute(p_sql)
                 r = self.v_cur.fetchone()
                 s = r[0]
-                self.v_cur.fetchall()
                 self.v_con.commit()
                 return s
         except Spartacus.Database.Exception as exc:
@@ -175,7 +208,35 @@ class SQLite(Generic):
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
     def GetFields(self, p_sql):
-        raise Spartacus.Database.Exception ('Not Implemented')
+        try:
+            if self.v_con is None:
+                v_fields = []
+                self.Open()
+                self.v_cur.execute(p_sql)
+                r = self.v_cur.fetchone()
+                k = 0
+                for c in self.v_cur.description:
+                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
+                    k = k + 1
+                self.v_con.commit()
+                self.Close()
+                return v_fields
+            else:
+                v_fields = []
+                self.v_cur.execute(p_sql)
+                r = self.v_cur.fetchone()
+                k = 0
+                for c in self.v_cur.description:
+                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
+                    k = k + 1
+                self.v_con.commit()
+                return v_fields
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except sqlite3.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
     def QueryBlock(self, p_sql, p_blocksize):
         try:
             if self.v_con is None:
@@ -183,31 +244,239 @@ class SQLite(Generic):
             else:
                 if self.v_start:
                     self.v_cur.execute(p_sql)
-                    self.v_start = False
-                v_block = DataBlock()
+                v_table = DataTable()
                 for c in self.v_cur.description:
-                    v_block.Data.Columns.append(c[0])
-                v_hasmorerecords = True
-                while v_hasmorerecords and v_block.NumRecords < p_blocksize:
-                    r = self.v_cur.fetchone()
-                    if r is not None:
-                        v_block.Data.Rows.append(r)
-                        v_block.NumRecords = v_block.NumRecords + 1
-                        v_hasmorerecords = True
-                    else:
-                        self.v_con.commit()
-                        v_hasmorerecords = False
-                return v_block
+                    v_table.Columns.append(c[0])
+                v_table.Rows = self.v_cur.fetchmany(p_blocksize)
+                if len(v_table.Rows) == 0:
+                    self.v_con.commit()
+                if self.v_start:
+                    self.v_start = False
+                return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
         except sqlite3.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def InsertBlock(self, p_sql, p_rows, p_columnnames=None):
-        raise Spartacus.Database.Exception ('Not Implemented')
-    def Transfer(self, p_query, p_insert, p_destdatabase, p_blocksize):
-        raise Spartacus.Database.Exception ('Not Implemented')
+    def InsertBlock(self, p_block, p_tablename, p_fields=None):
+        try:
+            v_columnames = []
+            if p_fields is None:
+                v_fields = []
+                for c in p_block.Columns:
+                    v_columnames.append(c)
+                    v_fields.append(DataField(c))
+            else:
+                v_fields = p_fields
+                for p in v_fields:
+                    v_columnames.append(p.v_name)
+            v_insert = 'begin; '
+            for r in p_block.Rows:
+                v_insert = v_insert + 'insert into ' + p_tablename + '(' + ','.join(v_columnames) + ') values ' + self.Mogrify(r, v_fields) + '; '
+            v_insert = v_insert + 'commit;'
+            self.Execute(v_insert)
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except sqlite3.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Transfer(self, p_sql, p_targetdatabase, p_tablename, p_blocksize, p_fields=None):
+        v_return = DataTransferReturn()
+        try:
+            v_table = self.QueryBlock(p_sql, p_blocksize)
+            if len(v_table.Rows) > 0:
+                p_targetdatabase.InsertBlock(v_table, p_tablename, p_fields)
+            v_return.v_numrecords = len(v_table.Rows)
+        except Spartacus.Database.Exception as exc:
+            v_return.v_log = str(exc)
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        return v_return
+
+
+'''
+------------------------------------------------------------------------
+Memory
+------------------------------------------------------------------------
+'''
+class Memory(Generic):
+    def __init__(self):
+        self.v_host = None
+        self.v_port = None
+        self.v_service = ':memory:'
+        self.v_user = None
+        self.v_password = None
+        self.v_con = None
+        self.v_cur = None
+    def Open(self):
+        try:
+            self.v_con = sqlite3.connect(self.v_service)
+            self.v_con.row_factory = sqlite3.Row
+            self.v_cur = self.v_con.cursor()
+            self.v_start = True
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Query(self, p_sql):
+        try:
+            if self.v_con is None:
+                self.Open()
+                self.v_cur.execute(p_sql)
+                v_table = DataTable()
+                for c in self.v_cur.description:
+                    v_table.Columns.append(c[0])
+                v_table.Rows = self.v_cur.fetchall()
+                self.v_con.commit()
+                self.Close()
+                return v_table
+            else:
+                self.v_cur.execute(p_sql)
+                v_table = DataTable()
+                for c in self.v_cur.description:
+                    v_table.Columns.append(c[0])
+                v_table.Rows = self.v_cur.fetchall()
+                self.v_con.commit()
+                return v_table
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except sqlite3.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Execute(self, p_sql):
+        try:
+            if self.v_con is None:
+                self.Open()
+                self.v_cur.execute(p_sql)
+                self.v_con.commit()
+                self.Close()
+            else:
+                self.v_cur.execute(p_sql)
+                self.v_con.commit()
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except sqlite3.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def ExecuteScalar(self, p_sql):
+        try:
+            if self.v_con is None:
+                self.Open()
+                self.v_cur.execute(p_sql)
+                r = self.v_cur.fetchone()
+                s = r[0]
+                self.v_con.commit()
+                self.Close()
+                return s
+            else:
+                self.v_cur.execute(p_sql)
+                r = self.v_cur.fetchone()
+                s = r[0]
+                self.v_con.commit()
+                return s
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except sqlite3.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Close(self):
+        try:
+            self.v_cur.close()
+            self.v_cur = None
+            self.v_con.close()
+            self.v_con = None
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def GetFields(self, p_sql):
+        try:
+            if self.v_con is None:
+                v_fields = []
+                self.Open()
+                self.v_cur.execute(p_sql)
+                r = self.v_cur.fetchone()
+                k = 0
+                for c in self.v_cur.description:
+                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
+                    k = k + 1
+                self.v_con.commit()
+                self.Close()
+                return v_fields
+            else:
+                v_fields = []
+                self.v_cur.execute(p_sql)
+                r = self.v_cur.fetchone()
+                k = 0
+                for c in self.v_cur.description:
+                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
+                    k = k + 1
+                self.v_con.commit()
+                return v_fields
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except sqlite3.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def QueryBlock(self, p_sql, p_blocksize):
+        try:
+            if self.v_con is None:
+                raise Spartacus.Database.Exception('This method should be called in the middle of Open() and Close() calls.')
+            else:
+                if self.v_start:
+                    self.v_cur.execute(p_sql)
+                v_table = DataTable()
+                for c in self.v_cur.description:
+                    v_table.Columns.append(c[0])
+                v_table.Rows = self.v_cur.fetchmany(p_blocksize)
+                if len(v_table.Rows) == 0:
+                    self.v_con.commit()
+                if self.v_start:
+                    self.v_start = False
+                return v_table
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except sqlite3.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def InsertBlock(self, p_block, p_tablename, p_fields=None):
+        try:
+            v_columnames = []
+            if p_fields is None:
+                v_fields = []
+                for c in p_block.Columns:
+                    v_columnames.append(c)
+                    v_fields.append(DataField(c))
+            else:
+                v_fields = p_fields
+                for p in v_fields:
+                    v_columnames.append(p.v_name)
+            v_insert = 'begin; '
+            for r in p_block.Rows:
+                v_insert = v_insert + 'insert into ' + p_tablename + '(' + ','.join(v_columnames) + ') values ' + self.Mogrify(r, v_fields) + '; '
+            v_insert = v_insert + 'commit;'
+            self.Execute(v_insert)
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except sqlite3.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Transfer(self, p_sql, p_targetdatabase, p_tablename, p_blocksize, p_fields=None):
+        v_return = DataTransferReturn()
+        try:
+            v_table = self.QueryBlock(p_sql, p_blocksize)
+            if len(v_table.Rows) > 0:
+                p_targetdatabase.InsertBlock(v_table, p_tablename, p_fields)
+            v_return.v_numrecords = len(v_table.Rows)
+        except Spartacus.Database.Exception as exc:
+            v_return.v_log = str(exc)
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        return v_return
 
 '''
 ------------------------------------------------------------------------
@@ -223,6 +492,12 @@ class PostgreSQL(Generic):
         self.v_password = p_password
         self.v_con = None
         self.v_cur = None
+        # PostgreSQL types
+        self.Open()
+        self.v_cur.execute('select oid, typname from pg_type')
+        self.v_types = dict([(r['oid'], r['typname']) for r in self.v_cur.fetchall()])
+        self.v_con.commit()
+        self.Close()
     def Open(self):
         try:
             self.v_con = psycopg2.connect(
@@ -245,7 +520,7 @@ class PostgreSQL(Generic):
                 self.v_cur.execute(p_sql)
                 v_table = DataTable()
                 for c in self.v_cur.description:
-                    v_table.Columns.append(c.name)
+                    v_table.Columns.append(c[0])
                 v_table.Rows = self.v_cur.fetchall()
                 self.v_con.commit()
                 self.Close()
@@ -254,7 +529,7 @@ class PostgreSQL(Generic):
                 self.v_cur.execute(p_sql)
                 v_table = DataTable()
                 for c in self.v_cur.description:
-                    v_table.Columns.append(c.name)
+                    v_table.Columns.append(c[0])
                 v_table.Rows = self.v_cur.fetchall()
                 self.v_con.commit()
                 return v_table
@@ -287,7 +562,6 @@ class PostgreSQL(Generic):
                 self.v_cur.execute(p_sql)
                 r = self.v_cur.fetchone()
                 s = r[0]
-                self.v_cur.fetchall()
                 self.v_con.commit()
                 self.Close()
                 return s
@@ -295,7 +569,6 @@ class PostgreSQL(Generic):
                 self.v_cur.execute(p_sql)
                 r = self.v_cur.fetchone()
                 s = r[0]
-                self.v_cur.fetchall()
                 self.v_con.commit()
                 return s
         except Spartacus.Database.Exception as exc:
@@ -313,7 +586,37 @@ class PostgreSQL(Generic):
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
     def GetFields(self, p_sql):
-        raise Spartacus.Database.Exception ('Not Implemented')
+        try:
+            if self.v_con is None:
+                v_fields = []
+                self.Open()
+                self.v_cur.execute(p_sql)
+                r = self.v_cur.fetchone()
+                k = 0
+                for c in self.v_cur.description:
+                    v_type = '{0}'.format(self.v_types[c.type_code])
+                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=v_type))
+                    k = k + 1
+                self.v_con.commit()
+                self.Close()
+                return v_fields
+            else:
+                v_fields = []
+                self.v_cur.execute(p_sql)
+                r = self.v_cur.fetchone()
+                k = 0
+                for c in self.v_cur.description:
+                    v_type = '{0}'.format(self.v_types[c.type_code])
+                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=v_type))
+                    k = k + 1
+                self.v_con.commit()
+                return v_fields
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except sqlite3.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
     def QueryBlock(self, p_sql, p_blocksize):
         try:
             if self.v_con is None:
@@ -321,28 +624,52 @@ class PostgreSQL(Generic):
             else:
                 if self.v_start:
                     self.v_cur.execute(p_sql)
-                    self.v_start = False
-                v_block = DataBlock()
+                v_table = DataTable()
                 for c in self.v_cur.description:
-                    v_block.Data.Columns.append(c.name)
-                v_hasmorerecords = True
-                while v_hasmorerecords and v_block.NumRecords < p_blocksize:
-                    r = self.v_cur.fetchone()
-                    if r is not None:
-                        v_block.Data.Rows.append(r)
-                        v_block.NumRecords = v_block.NumRecords + 1
-                        v_hasmorerecords = True
-                    else:
-                        self.v_con.commit()
-                        v_hasmorerecords = False
-                return v_block
+                    v_table.Columns.append(c[0])
+                v_table.Rows = self.v_cur.fetchmany(p_blocksize)
+                if len(v_table.Rows) == 0:
+                    self.v_con.commit()
+                if self.v_start:
+                    self.v_start = False
+                return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
         except psycopg2.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def InsertBlock(self, p_sql, p_rows, p_columnnames=None):
-        raise Spartacus.Database.Exception ('Not Implemented')
-    def Transfer(self, p_query, p_insert, p_destdatabase, p_blocksize):
-        raise Spartacus.Database.Exception ('Not Implemented')
+    def InsertBlock(self, p_block, p_tablename, p_fields=None):
+        try:
+            v_columnames = []
+            if p_fields is None:
+                v_fields = []
+                for c in p_block.Columns:
+                    v_columnames.append(c)
+                    v_fields.append(DataField(c))
+            else:
+                v_fields = p_fields
+                for p in v_fields:
+                    v_columnames.append(p.v_name)
+            v_values = []
+            for r in p_block.Rows:
+                v_values.append(self.Mogrify(r, v_fields))
+            self.Execute('insert into ' + p_tablename + '(' + ','.join(v_columnames) + ') values ' + ','.join(v_values) + '')
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except psycopg2.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Transfer(self, p_sql, p_targetdatabase, p_tablename, p_blocksize, p_fields=None):
+        v_return = DataTransferReturn()
+        try:
+            v_table = self.QueryBlock(p_sql, p_blocksize)
+            if len(v_table.Rows) > 0:
+                p_targetdatabase.InsertBlock(v_table, p_tablename, p_fields)
+            v_return.v_numrecords = len(v_table.Rows)
+        except Spartacus.Database.Exception as exc:
+            v_return.v_log = str(exc)
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        return v_return

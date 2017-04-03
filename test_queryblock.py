@@ -10,16 +10,17 @@ try:
     b = 1
     v_hasmorerecords = True
     while v_hasmorerecords:
-        v_block = v_database.QueryBlock('select * from departments', 4)
+        v_table = v_database.QueryBlock('select * from departments', 4)
+        #v_table = v_database.QueryBlock('select * from salaries', 4)
 
-        if v_block.NumRecords > 0:
-            print("Block {0}: {1} record(s)".format(b, v_block.NumRecords))
+        if len(v_table.Rows) > 0:
+            print("Block {0}: {1} record(s)".format(b, len(v_table.Rows)))
 
-            for c in v_block.Data.Columns:
+            for c in v_table.Columns:
                 print('{0}|'.format(c), end='')
             print('')
-            for r in v_block.Data.Rows:
-                for c in v_block.Data.Columns:
+            for r in v_table.Rows:
+                for c in v_table.Columns:
                     print('{0}|'.format(r[c]), end='')
                 print('')
             print('')

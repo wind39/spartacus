@@ -28,7 +28,7 @@ from setuptools import setup
 setup(name='Spartacus',
       version='0.3',
       description='Generic database wrapper',
-      url='http://github.com/wind39/spartacus-python',
+      url='http://github.com/wind39/spartacus',
       author='William Ivanski',
       author_email='william.ivanski@gmail.com',
       license='MIT',

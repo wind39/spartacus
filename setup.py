@@ -26,7 +26,7 @@ import sys
 from setuptools import setup
 
 setup(name='Spartacus',
-      version='0.2',
+      version='0.3',
       description='Generic database wrapper',
       url='http://github.com/wind39/spartacus-python',
       author='William Ivanski',
@@ -35,3 +35,4 @@ setup(name='Spartacus',
       packages=['Spartacus'],
       install_requires=['pyscrypt', 'pyaes', 'psycopg2', 'PyMySQL'],
       zip_safe=False)
+

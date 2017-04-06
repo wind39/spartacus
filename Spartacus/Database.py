@@ -70,7 +70,7 @@ class Generic(ABC):
     def Open(self):
         pass
     @abstractmethod
-    def Query(self, p_sql):
+    def Query(self, p_sql, p_alltypesstr=False):
         pass
     @abstractmethod
     def Execute(self, p_sql):
@@ -85,7 +85,7 @@ class Generic(ABC):
     def GetFields(self, p_sql):
         pass
     @abstractmethod
-    def QueryBlock(self, p_sql, p_blocksize):
+    def QueryBlock(self, p_sql, p_blocksize, p_alltypesstr=False):
         pass
     @abstractmethod
     def Mogrify(self, p_row):
@@ -94,7 +94,7 @@ class Generic(ABC):
     def InsertBlock(self, p_block, p_tablename, p_fields=None):
         pass
     @abstractmethod
-    def Transfer(self, p_sql, p_targetdatabase, p_tablename, p_blocksize, p_fields=None):
+    def Transfer(self, p_sql, p_targetdatabase, p_tablename, p_blocksize, p_fields=None, p_alltypesstr=False):
         pass
     @classmethod
     def Mogrify(self, p_row, p_fields):
@@ -135,7 +135,7 @@ class SQLite(Generic):
             self.v_start = True
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def Query(self, p_sql):
+    def Query(self, p_sql, p_alltypesstr=False):
         try:
             if self.v_con is None:
                 self.Open()
@@ -144,6 +144,10 @@ class SQLite(Generic):
                 for c in self.v_cur.description:
                     v_table.Columns.append(c[0])
                 v_table.Rows = self.v_cur.fetchall()
+                if p_alltypesstr:
+                    for i in range(0, len(v_table.Rows)):
+                        for j in range(0, len(v_table.Columns)):
+                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
                 self.v_con.commit()
                 self.Close()
                 return v_table
@@ -153,6 +157,10 @@ class SQLite(Generic):
                 for c in self.v_cur.description:
                     v_table.Columns.append(c[0])
                 v_table.Rows = self.v_cur.fetchall()
+                if p_alltypesstr:
+                    for i in range(0, len(v_table.Rows)):
+                        for j in range(0, len(v_table.Columns)):
+                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
                 self.v_con.commit()
                 return v_table
         except Spartacus.Database.Exception as exc:
@@ -237,7 +245,7 @@ class SQLite(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def QueryBlock(self, p_sql, p_blocksize):
+    def QueryBlock(self, p_sql, p_blocksize, p_alltypesstr=False):
         try:
             if self.v_con is None:
                 raise Spartacus.Database.Exception('This method should be called in the middle of Open() and Close() calls.')
@@ -248,6 +256,10 @@ class SQLite(Generic):
                 for c in self.v_cur.description:
                     v_table.Columns.append(c[0])
                 v_table.Rows = self.v_cur.fetchmany(p_blocksize)
+                if p_alltypesstr:
+                    for i in range(0, len(v_table.Rows)):
+                        for j in range(0, len(v_table.Columns)):
+                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
                 if len(v_table.Rows) == 0:
                     self.v_con.commit()
                 if self.v_start:
@@ -282,10 +294,10 @@ class SQLite(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def Transfer(self, p_sql, p_targetdatabase, p_tablename, p_blocksize, p_fields=None):
+    def Transfer(self, p_sql, p_targetdatabase, p_tablename, p_blocksize, p_fields=None, p_alltypesstr=False):
         v_return = DataTransferReturn()
         try:
-            v_table = self.QueryBlock(p_sql, p_blocksize)
+            v_table = self.QueryBlock(p_sql, p_blocksize, p_alltypesstr)
             if len(v_table.Rows) > 0:
                 p_targetdatabase.InsertBlock(v_table, p_tablename, p_fields)
             v_return.v_numrecords = len(v_table.Rows)
@@ -318,7 +330,7 @@ class Memory(Generic):
             self.v_start = True
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def Query(self, p_sql):
+    def Query(self, p_sql, p_alltypesstr=False):
         try:
             if self.v_con is None:
                 self.Open()
@@ -327,6 +339,10 @@ class Memory(Generic):
                 for c in self.v_cur.description:
                     v_table.Columns.append(c[0])
                 v_table.Rows = self.v_cur.fetchall()
+                if p_alltypesstr:
+                    for i in range(0, len(v_table.Rows)):
+                        for j in range(0, len(v_table.Columns)):
+                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
                 self.v_con.commit()
                 self.Close()
                 return v_table
@@ -336,6 +352,10 @@ class Memory(Generic):
                 for c in self.v_cur.description:
                     v_table.Columns.append(c[0])
                 v_table.Rows = self.v_cur.fetchall()
+                if p_alltypesstr:
+                    for i in range(0, len(v_table.Rows)):
+                        for j in range(0, len(v_table.Columns)):
+                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
                 self.v_con.commit()
                 return v_table
         except Spartacus.Database.Exception as exc:
@@ -420,7 +440,7 @@ class Memory(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def QueryBlock(self, p_sql, p_blocksize):
+    def QueryBlock(self, p_sql, p_blocksize, p_alltypesstr=False):
         try:
             if self.v_con is None:
                 raise Spartacus.Database.Exception('This method should be called in the middle of Open() and Close() calls.')
@@ -431,6 +451,10 @@ class Memory(Generic):
                 for c in self.v_cur.description:
                     v_table.Columns.append(c[0])
                 v_table.Rows = self.v_cur.fetchmany(p_blocksize)
+                if p_alltypesstr:
+                    for i in range(0, len(v_table.Rows)):
+                        for j in range(0, len(v_table.Columns)):
+                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
                 if len(v_table.Rows) == 0:
                     self.v_con.commit()
                 if self.v_start:
@@ -465,10 +489,10 @@ class Memory(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def Transfer(self, p_sql, p_targetdatabase, p_tablename, p_blocksize, p_fields=None):
+    def Transfer(self, p_sql, p_targetdatabase, p_tablename, p_blocksize, p_fields=None, p_alltypesstr=False):
         v_return = DataTransferReturn()
         try:
-            v_table = self.QueryBlock(p_sql, p_blocksize)
+            v_table = self.QueryBlock(p_sql, p_blocksize, p_alltypesstr)
             if len(v_table.Rows) > 0:
                 p_targetdatabase.InsertBlock(v_table, p_tablename, p_fields)
             v_return.v_numrecords = len(v_table.Rows)
@@ -513,7 +537,7 @@ class PostgreSQL(Generic):
             self.v_start = True
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def Query(self, p_sql):
+    def Query(self, p_sql, p_alltypesstr=False):
         try:
             if self.v_con is None:
                 self.Open()
@@ -522,6 +546,10 @@ class PostgreSQL(Generic):
                 for c in self.v_cur.description:
                     v_table.Columns.append(c[0])
                 v_table.Rows = self.v_cur.fetchall()
+                if p_alltypesstr:
+                    for i in range(0, len(v_table.Rows)):
+                        for j in range(0, len(v_table.Columns)):
+                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
                 self.v_con.commit()
                 self.Close()
                 return v_table
@@ -531,6 +559,10 @@ class PostgreSQL(Generic):
                 for c in self.v_cur.description:
                     v_table.Columns.append(c[0])
                 v_table.Rows = self.v_cur.fetchall()
+                if p_alltypesstr:
+                    for i in range(0, len(v_table.Rows)):
+                        for j in range(0, len(v_table.Columns)):
+                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
                 self.v_con.commit()
                 return v_table
         except Spartacus.Database.Exception as exc:
@@ -617,7 +649,7 @@ class PostgreSQL(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def QueryBlock(self, p_sql, p_blocksize):
+    def QueryBlock(self, p_sql, p_blocksize, p_alltypesstr=False):
         try:
             if self.v_con is None:
                 raise Spartacus.Database.Exception('This method should be called in the middle of Open() and Close() calls.')
@@ -628,6 +660,10 @@ class PostgreSQL(Generic):
                 for c in self.v_cur.description:
                     v_table.Columns.append(c[0])
                 v_table.Rows = self.v_cur.fetchmany(p_blocksize)
+                if p_alltypesstr:
+                    for i in range(0, len(v_table.Rows)):
+                        for j in range(0, len(v_table.Columns)):
+                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
                 if len(v_table.Rows) == 0:
                     self.v_con.commit()
                 if self.v_start:
@@ -661,10 +697,10 @@ class PostgreSQL(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def Transfer(self, p_sql, p_targetdatabase, p_tablename, p_blocksize, p_fields=None):
+    def Transfer(self, p_sql, p_targetdatabase, p_tablename, p_blocksize, p_fields=None, p_alltypesstr=False):
         v_return = DataTransferReturn()
         try:
-            v_table = self.QueryBlock(p_sql, p_blocksize)
+            v_table = self.QueryBlock(p_sql, p_blocksize, p_alltypesstr)
             if len(v_table.Rows) > 0:
                 p_targetdatabase.InsertBlock(v_table, p_tablename, p_fields)
             v_return.v_numrecords = len(v_table.Rows)

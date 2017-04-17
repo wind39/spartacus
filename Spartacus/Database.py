@@ -22,12 +22,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
 
+from collections import OrderedDict
 from abc import ABC, abstractmethod
 import datetime
-
-import sqlite3
-import psycopg2
-from psycopg2 import extras
+import prettytable
 
 import Spartacus
 
@@ -47,6 +45,15 @@ class DataTable(object):
                 raise Spartacus.Database.Exception('Can not merge tables with different columns.')
         else:
             raise Spartacus.Database.Exception('Can not merge tables with no columns.')
+    def Pretty(self):
+        v_pretty = prettytable.PrettyTable()
+        v_pretty._set_field_names(self.Columns)
+        for r in self.Rows:
+            v_row = []
+            for c in self.Columns:
+                v_row.append(r[c])
+            v_pretty.add_row(v_row)
+        return v_pretty
 
 class DataField(object):
     def __init__(self, p_name, p_type=None, p_dbtype=None, p_mask='#'):
@@ -59,6 +66,36 @@ class DataTransferReturn(object):
     def __init__(self):
         self.v_numrecords = 0
         self.v_log = None
+
+v_supported_rdbms = []
+try:
+    import sqlite3
+    v_supported_rdbms.append('SQLite')
+    v_supported_rdbms.append('Memory')
+except ImportError:
+    pass
+try:
+    import psycopg2
+    from psycopg2 import extras
+    v_supported_rdbms.append('PostgreSQL')
+except ImportError:
+    pass
+try:
+    import pymysql
+    v_supported_rdbms.append('MySQL')
+    v_supported_rdbms.append('MariaDB')
+except ImportError:
+    pass
+try:
+    import fdb
+    v_supported_rdbms.append('Firebird')
+except ImportError:
+    pass
+try:
+    import cx_Oracle
+    v_supported_rdbms.append('Oracle')
+except ImportError:
+    pass
 
 '''
 ------------------------------------------------------------------------
@@ -120,19 +157,24 @@ SQLite
 '''
 class SQLite(Generic):
     def __init__(self, p_service):
-        self.v_host = None
-        self.v_port = None
-        self.v_service = p_service
-        self.v_user = None
-        self.v_password = None
-        self.v_con = None
-        self.v_cur = None
+        if 'SQLite' in v_supported_rdbms:
+            self.v_host = None
+            self.v_port = None
+            self.v_service = p_service
+            self.v_user = None
+            self.v_password = None
+            self.v_con = None
+            self.v_cur = None
+        else:
+            raise Spartacus.Database.Exception("SQLite is not supported. Please install it with 'pip install sqlite3'.")
     def Open(self):
         try:
             self.v_con = sqlite3.connect(self.v_service)
             self.v_con.row_factory = sqlite3.Row
             self.v_cur = self.v_con.cursor()
             self.v_start = True
+        except sqlite3.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
     def Query(self, p_sql, p_alltypesstr=False):
@@ -213,6 +255,8 @@ class SQLite(Generic):
             self.v_cur = None
             self.v_con.close()
             self.v_con = None
+        except sqlite3.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
     def GetFields(self, p_sql):
@@ -315,19 +359,24 @@ Memory
 '''
 class Memory(Generic):
     def __init__(self):
-        self.v_host = None
-        self.v_port = None
-        self.v_service = ':memory:'
-        self.v_user = None
-        self.v_password = None
-        self.v_con = None
-        self.v_cur = None
+        if 'Memory' in v_supported_rdbms:
+            self.v_host = None
+            self.v_port = None
+            self.v_service = ':memory:'
+            self.v_user = None
+            self.v_password = None
+            self.v_con = None
+            self.v_cur = None
+        else:
+            raise Spartacus.Database.Exception("Memory is not supported. Please install it with 'pip install sqlite3'.")
     def Open(self):
         try:
             self.v_con = sqlite3.connect(self.v_service)
             self.v_con.row_factory = sqlite3.Row
             self.v_cur = self.v_con.cursor()
             self.v_start = True
+        except sqlite3.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
     def Query(self, p_sql, p_alltypesstr=False):
@@ -408,6 +457,8 @@ class Memory(Generic):
             self.v_cur = None
             self.v_con.close()
             self.v_con = None
+        except sqlite3.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
     def GetFields(self, p_sql):
@@ -509,19 +560,22 @@ PostgreSQL
 '''
 class PostgreSQL(Generic):
     def __init__(self, p_host, p_port, p_service, p_user, p_password):
-        self.v_host = p_host
-        self.v_port = p_port
-        self.v_service = p_service
-        self.v_user = p_user
-        self.v_password = p_password
-        self.v_con = None
-        self.v_cur = None
-        # PostgreSQL types
-        self.Open()
-        self.v_cur.execute('select oid, typname from pg_type')
-        self.v_types = dict([(r['oid'], r['typname']) for r in self.v_cur.fetchall()])
-        self.v_con.commit()
-        self.Close()
+        if 'PostgreSQL' in v_supported_rdbms:
+            self.v_host = p_host
+            self.v_port = p_port
+            self.v_service = p_service
+            self.v_user = p_user
+            self.v_password = p_password
+            self.v_con = None
+            self.v_cur = None
+            # PostgreSQL types
+            self.Open()
+            self.v_cur.execute('select oid, typname from pg_type')
+            self.v_types = dict([(r['oid'], r['typname']) for r in self.v_cur.fetchall()])
+            self.v_con.commit()
+            self.Close()
+        else:
+            raise Spartacus.Database.Exception("PostgreSQL is not supported. Please install it with 'pip install psycopg2'.")
     def Open(self):
         try:
             self.v_con = psycopg2.connect(
@@ -535,6 +589,10 @@ class PostgreSQL(Generic):
                 cursor_factory=psycopg2.extras.DictCursor)
             self.v_cur = self.v_con.cursor()
             self.v_start = True
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except psycopg2.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
     def Query(self, p_sql, p_alltypesstr=False):
@@ -615,6 +673,8 @@ class PostgreSQL(Generic):
             self.v_cur = None
             self.v_con.close()
             self.v_con = None
+        except psycopg2.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
     def GetFields(self, p_sql):
@@ -645,7 +705,7 @@ class PostgreSQL(Generic):
                 return v_fields
         except Spartacus.Database.Exception as exc:
             raise exc
-        except sqlite3.Error as exc:
+        except psycopg2.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
@@ -694,6 +754,849 @@ class PostgreSQL(Generic):
         except Spartacus.Database.Exception as exc:
             raise exc
         except psycopg2.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Transfer(self, p_sql, p_targetdatabase, p_tablename, p_blocksize, p_fields=None, p_alltypesstr=False):
+        v_return = DataTransferReturn()
+        try:
+            v_table = self.QueryBlock(p_sql, p_blocksize, p_alltypesstr)
+            if len(v_table.Rows) > 0:
+                p_targetdatabase.InsertBlock(v_table, p_tablename, p_fields)
+            v_return.v_numrecords = len(v_table.Rows)
+        except Spartacus.Database.Exception as exc:
+            v_return.v_log = str(exc)
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        return v_return
+
+'''
+------------------------------------------------------------------------
+MySQL
+------------------------------------------------------------------------
+'''
+class MySQL(Generic):
+    def __init__(self, p_host, p_port, p_service, p_user, p_password):
+        if 'MySQL' in v_supported_rdbms:
+            self.v_host = p_host
+            self.v_port = p_port
+            self.v_service = p_service
+            self.v_user = p_user
+            self.v_password = p_password
+            self.v_con = None
+            self.v_cur = None
+        else:
+            raise Spartacus.Database.Exception("MySQL is not supported. Please install it with 'pip install PyMySQL'.")
+    def Open(self):
+        try:
+            self.v_con = pymysql.connect(
+                host=self.v_host,
+                port=int(self.v_port),
+                db=self.v_service,
+                user=self.v_user,
+                password=self.v_password,
+                cursorclass=pymysql.cursors.DictCursor)
+            self.v_cur = self.v_con.cursor()
+            self.v_start = True
+        except pymysql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Query(self, p_sql, p_alltypesstr=False):
+        try:
+            if self.v_con is None:
+                self.Open()
+                self.v_cur.execute(p_sql)
+                v_table = DataTable()
+                for c in self.v_cur.description:
+                    v_table.Columns.append(c[0])
+                v_table.Rows = self.v_cur.fetchall()
+                if p_alltypesstr:
+                    for i in range(0, len(v_table.Rows)):
+                        for j in range(0, len(v_table.Columns)):
+                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                self.v_con.commit()
+                self.Close()
+                return v_table
+            else:
+                self.v_cur.execute(p_sql)
+                v_table = DataTable()
+                for c in self.v_cur.description:
+                    v_table.Columns.append(c[0])
+                v_table.Rows = self.v_cur.fetchall()
+                if p_alltypesstr:
+                    for i in range(0, len(v_table.Rows)):
+                        for j in range(0, len(v_table.Columns)):
+                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                self.v_con.commit()
+                return v_table
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except pymysql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Execute(self, p_sql):
+        try:
+            if self.v_con is None:
+                self.Open()
+                self.v_cur.execute(p_sql)
+                self.v_con.commit()
+                self.Close()
+            else:
+                self.v_cur.execute(p_sql)
+                self.v_con.commit()
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except pymysql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def ExecuteScalar(self, p_sql):
+        try:
+            if self.v_con is None:
+                self.Open()
+                self.v_cur.execute(p_sql)
+                r = self.v_cur.fetchone()
+                s = r[0]
+                self.v_con.commit()
+                self.Close()
+                return s
+            else:
+                self.v_cur.execute(p_sql)
+                r = self.v_cur.fetchone()
+                s = r[0]
+                self.v_con.commit()
+                return s
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except pymysql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Close(self):
+        try:
+            self.v_cur.close()
+            self.v_cur = None
+            self.v_con.close()
+            self.v_con = None
+        except pymysql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def GetFields(self, p_sql):
+        try:
+            if self.v_con is None:
+                v_fields = []
+                self.Open()
+                self.v_cur.execute(p_sql)
+                r = self.v_cur.fetchone()
+                k = 0
+                for c in self.v_cur.description:
+                    v_type = '{0}'.format(self.v_types[c.type_code])
+                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=v_type))
+                    k = k + 1
+                self.v_con.commit()
+                self.Close()
+                return v_fields
+            else:
+                v_fields = []
+                self.v_cur.execute(p_sql)
+                r = self.v_cur.fetchone()
+                k = 0
+                for c in self.v_cur.description:
+                    v_type = '{0}'.format(self.v_types[c.type_code])
+                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=v_type))
+                    k = k + 1
+                self.v_con.commit()
+                return v_fields
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except pymysql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def QueryBlock(self, p_sql, p_blocksize, p_alltypesstr=False):
+        try:
+            if self.v_con is None:
+                raise Spartacus.Database.Exception('This method should be called in the middle of Open() and Close() calls.')
+            else:
+                if self.v_start:
+                    self.v_cur.execute(p_sql)
+                v_table = DataTable()
+                for c in self.v_cur.description:
+                    v_table.Columns.append(c[0])
+                v_table.Rows = self.v_cur.fetchmany(p_blocksize)
+                if p_alltypesstr:
+                    for i in range(0, len(v_table.Rows)):
+                        for j in range(0, len(v_table.Columns)):
+                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                if len(v_table.Rows) == 0:
+                    self.v_con.commit()
+                if self.v_start:
+                    self.v_start = False
+                return v_table
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except pymysql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def InsertBlock(self, p_block, p_tablename, p_fields=None):
+        try:
+            v_columnames = []
+            if p_fields is None:
+                v_fields = []
+                for c in p_block.Columns:
+                    v_columnames.append(c)
+                    v_fields.append(DataField(c))
+            else:
+                v_fields = p_fields
+                for p in v_fields:
+                    v_columnames.append(p.v_name)
+            v_values = []
+            for r in p_block.Rows:
+                v_values.append(self.Mogrify(r, v_fields))
+            self.Execute('insert into ' + p_tablename + '(' + ','.join(v_columnames) + ') values ' + ','.join(v_values) + '')
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except pymysql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Transfer(self, p_sql, p_targetdatabase, p_tablename, p_blocksize, p_fields=None, p_alltypesstr=False):
+        v_return = DataTransferReturn()
+        try:
+            v_table = self.QueryBlock(p_sql, p_blocksize, p_alltypesstr)
+            if len(v_table.Rows) > 0:
+                p_targetdatabase.InsertBlock(v_table, p_tablename, p_fields)
+            v_return.v_numrecords = len(v_table.Rows)
+        except Spartacus.Database.Exception as exc:
+            v_return.v_log = str(exc)
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        return v_return
+
+'''
+------------------------------------------------------------------------
+MariaDB
+------------------------------------------------------------------------
+'''
+class MariaDB(Generic):
+    def __init__(self, p_host, p_port, p_service, p_user, p_password):
+        if 'MariaDB' in v_supported_rdbms:
+            self.v_host = p_host
+            self.v_port = p_port
+            self.v_service = p_service
+            self.v_user = p_user
+            self.v_password = p_password
+            self.v_con = None
+            self.v_cur = None
+        else:
+            raise Spartacus.Database.Exception("MariaDB is not supported. Please install it with 'pip install PyMySQL'.")
+    def Open(self):
+        try:
+            self.v_con = pymysql.connect(
+                host=self.v_host,
+                port=int(self.v_port),
+                db=self.v_service,
+                user=self.v_user,
+                password=self.v_password,
+                cursorclass=pymysql.cursors.DictCursor)
+            self.v_cur = self.v_con.cursor()
+            self.v_start = True
+        except pymysql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Query(self, p_sql, p_alltypesstr=False):
+        try:
+            if self.v_con is None:
+                self.Open()
+                self.v_cur.execute(p_sql)
+                v_table = DataTable()
+                for c in self.v_cur.description:
+                    v_table.Columns.append(c[0])
+                v_table.Rows = self.v_cur.fetchall()
+                if p_alltypesstr:
+                    for i in range(0, len(v_table.Rows)):
+                        for j in range(0, len(v_table.Columns)):
+                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                self.v_con.commit()
+                self.Close()
+                return v_table
+            else:
+                self.v_cur.execute(p_sql)
+                v_table = DataTable()
+                for c in self.v_cur.description:
+                    v_table.Columns.append(c[0])
+                v_table.Rows = self.v_cur.fetchall()
+                if p_alltypesstr:
+                    for i in range(0, len(v_table.Rows)):
+                        for j in range(0, len(v_table.Columns)):
+                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                self.v_con.commit()
+                return v_table
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except pymysql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Execute(self, p_sql):
+        try:
+            if self.v_con is None:
+                self.Open()
+                self.v_cur.execute(p_sql)
+                self.v_con.commit()
+                self.Close()
+            else:
+                self.v_cur.execute(p_sql)
+                self.v_con.commit()
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except pymysql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def ExecuteScalar(self, p_sql):
+        try:
+            if self.v_con is None:
+                self.Open()
+                self.v_cur.execute(p_sql)
+                r = self.v_cur.fetchone()
+                s = r[0]
+                self.v_con.commit()
+                self.Close()
+                return s
+            else:
+                self.v_cur.execute(p_sql)
+                r = self.v_cur.fetchone()
+                s = r[0]
+                self.v_con.commit()
+                return s
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except pymysql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Close(self):
+        try:
+            self.v_cur.close()
+            self.v_cur = None
+            self.v_con.close()
+            self.v_con = None
+        except pymysql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def GetFields(self, p_sql):
+        try:
+            if self.v_con is None:
+                v_fields = []
+                self.Open()
+                self.v_cur.execute(p_sql)
+                r = self.v_cur.fetchone()
+                k = 0
+                for c in self.v_cur.description:
+                    v_type = '{0}'.format(self.v_types[c.type_code])
+                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=v_type))
+                    k = k + 1
+                self.v_con.commit()
+                self.Close()
+                return v_fields
+            else:
+                v_fields = []
+                self.v_cur.execute(p_sql)
+                r = self.v_cur.fetchone()
+                k = 0
+                for c in self.v_cur.description:
+                    v_type = '{0}'.format(self.v_types[c.type_code])
+                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=v_type))
+                    k = k + 1
+                self.v_con.commit()
+                return v_fields
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except pymysql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def QueryBlock(self, p_sql, p_blocksize, p_alltypesstr=False):
+        try:
+            if self.v_con is None:
+                raise Spartacus.Database.Exception('This method should be called in the middle of Open() and Close() calls.')
+            else:
+                if self.v_start:
+                    self.v_cur.execute(p_sql)
+                v_table = DataTable()
+                for c in self.v_cur.description:
+                    v_table.Columns.append(c[0])
+                v_table.Rows = self.v_cur.fetchmany(p_blocksize)
+                if p_alltypesstr:
+                    for i in range(0, len(v_table.Rows)):
+                        for j in range(0, len(v_table.Columns)):
+                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                if len(v_table.Rows) == 0:
+                    self.v_con.commit()
+                if self.v_start:
+                    self.v_start = False
+                return v_table
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except pymysql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def InsertBlock(self, p_block, p_tablename, p_fields=None):
+        try:
+            v_columnames = []
+            if p_fields is None:
+                v_fields = []
+                for c in p_block.Columns:
+                    v_columnames.append(c)
+                    v_fields.append(DataField(c))
+            else:
+                v_fields = p_fields
+                for p in v_fields:
+                    v_columnames.append(p.v_name)
+            v_values = []
+            for r in p_block.Rows:
+                v_values.append(self.Mogrify(r, v_fields))
+            self.Execute('insert into ' + p_tablename + '(' + ','.join(v_columnames) + ') values ' + ','.join(v_values) + '')
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except pymysql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Transfer(self, p_sql, p_targetdatabase, p_tablename, p_blocksize, p_fields=None, p_alltypesstr=False):
+        v_return = DataTransferReturn()
+        try:
+            v_table = self.QueryBlock(p_sql, p_blocksize, p_alltypesstr)
+            if len(v_table.Rows) > 0:
+                p_targetdatabase.InsertBlock(v_table, p_tablename, p_fields)
+            v_return.v_numrecords = len(v_table.Rows)
+        except Spartacus.Database.Exception as exc:
+            v_return.v_log = str(exc)
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        return v_return
+
+'''
+------------------------------------------------------------------------
+Firebird
+------------------------------------------------------------------------
+'''
+class Firebird(Generic):
+    def __init__(self, p_host, p_port, p_service, p_user, p_password):
+        if 'Firebird' in v_supported_rdbms:
+            self.v_host = p_host
+            self.v_port = p_port
+            self.v_service = p_service
+            self.v_user = p_user
+            self.v_password = p_password
+            self.v_con = None
+            self.v_cur = None
+        else:
+            raise Spartacus.Database.Exception("Firebird is not supported. Please install it with 'pip install fdb'.")
+    def Open(self):
+        try:
+            self.v_con = fdb.connect(
+                host=self.v_host,
+                port=int(self.v_port),
+                database=self.v_service,
+                user=self.v_user,
+                password=self.v_password)
+            self.v_cur = self.v_con.cursor()
+            self.v_start = True
+        except fdb.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Query(self, p_sql, p_alltypesstr=False):
+        try:
+            if self.v_con is None:
+                self.Open()
+                self.v_cur.execute(p_sql)
+                v_table = DataTable()
+                for c in self.v_cur.description:
+                    v_table.Columns.append(c[0])
+                v_row = self.v_cur.fetchone()
+                while v_row is not None:
+                    v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
+                    if p_alltypesstr:
+                        for j in range(0, len(v_table.Columns)):
+                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                    v_row = self.v_cur.fetchone()
+                self.v_con.commit()
+                self.Close()
+                return v_table
+            else:
+                self.v_cur.execute(p_sql)
+                v_table = DataTable()
+                for c in self.v_cur.description:
+                    v_table.Columns.append(c[0])
+                v_row = self.v_cur.fetchone()
+                while v_row is not None:
+                    v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
+                    if p_alltypesstr:
+                        for j in range(0, len(v_table.Columns)):
+                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                    v_row = self.v_cur.fetchone()
+                self.v_con.commit()
+                return v_table
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except fdb.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Execute(self, p_sql):
+        try:
+            if self.v_con is None:
+                self.Open()
+                self.v_cur.execute(p_sql)
+                self.v_con.commit()
+                self.Close()
+            else:
+                self.v_cur.execute(p_sql)
+                self.v_con.commit()
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except fdb.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def ExecuteScalar(self, p_sql):
+        try:
+            if self.v_con is None:
+                self.Open()
+                self.v_cur.execute(p_sql)
+                r = self.v_cur.fetchone()
+                s = r[0]
+                self.v_con.commit()
+                self.Close()
+                return s
+            else:
+                self.v_cur.execute(p_sql)
+                r = self.v_cur.fetchone()
+                s = r[0]
+                self.v_con.commit()
+                return s
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except fdb.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Close(self):
+        try:
+            self.v_cur.close()
+            self.v_cur = None
+            self.v_con.close()
+            self.v_con = None
+        except fdb.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def GetFields(self, p_sql):
+        try:
+            if self.v_con is None:
+                v_fields = []
+                self.Open()
+                self.v_cur.execute(p_sql)
+                r = self.v_cur.fetchone()
+                k = 0
+                for c in self.v_cur.description:
+                    v_type = '{0}'.format(self.v_types[c.type_code])
+                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=v_type))
+                    k = k + 1
+                self.v_con.commit()
+                self.Close()
+                return v_fields
+            else:
+                v_fields = []
+                self.v_cur.execute(p_sql)
+                r = self.v_cur.fetchone()
+                k = 0
+                for c in self.v_cur.description:
+                    v_type = '{0}'.format(self.v_types[c.type_code])
+                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=v_type))
+                    k = k + 1
+                self.v_con.commit()
+                return v_fields
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except fdb.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def QueryBlock(self, p_sql, p_blocksize, p_alltypesstr=False):
+        try:
+            if self.v_con is None:
+                raise Spartacus.Database.Exception('This method should be called in the middle of Open() and Close() calls.')
+            else:
+                if self.v_start:
+                    self.v_cur.execute(p_sql)
+                v_table = DataTable()
+                for c in self.v_cur.description:
+                    v_table.Columns.append(c[0])
+                v_row = self.v_cur.fetchone()
+                k = 0
+                while v_row is not None and k < p_blocksize:
+                    v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
+                    if p_alltypesstr:
+                        for j in range(0, len(v_table.Columns)):
+                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                    v_row = self.v_cur.fetchone()
+                    k = k + 1
+                if len(v_table.Rows) == 0:
+                    self.v_con.commit()
+                if self.v_start:
+                    self.v_start = False
+                return v_table
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except fdb.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def InsertBlock(self, p_block, p_tablename, p_fields=None):
+        try:
+            v_columnames = []
+            if p_fields is None:
+                v_fields = []
+                for c in p_block.Columns:
+                    v_columnames.append(c)
+                    v_fields.append(DataField(c))
+            else:
+                v_fields = p_fields
+                for p in v_fields:
+                    v_columnames.append(p.v_name)
+            v_values = []
+            for r in p_block.Rows:
+                v_values.append(self.Mogrify(r, v_fields))
+            self.Execute('insert into ' + p_tablename + '(' + ','.join(v_columnames) + ') values ' + ','.join(v_values) + '')
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except fdb.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Transfer(self, p_sql, p_targetdatabase, p_tablename, p_blocksize, p_fields=None, p_alltypesstr=False):
+        v_return = DataTransferReturn()
+        try:
+            v_table = self.QueryBlock(p_sql, p_blocksize, p_alltypesstr)
+            if len(v_table.Rows) > 0:
+                p_targetdatabase.InsertBlock(v_table, p_tablename, p_fields)
+            v_return.v_numrecords = len(v_table.Rows)
+        except Spartacus.Database.Exception as exc:
+            v_return.v_log = str(exc)
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        return v_return
+
+'''
+------------------------------------------------------------------------
+Oracle
+------------------------------------------------------------------------
+'''
+class Oracle(Generic):
+    def __init__(self, p_host, p_port, p_service, p_user, p_password):
+        if 'Oracle' in v_supported_rdbms:
+            self.v_host = p_host
+            self.v_port = p_port
+            self.v_service = p_service
+            self.v_user = p_user
+            self.v_password = p_password
+            self.v_con = None
+            self.v_cur = None
+        else:
+            raise Spartacus.Database.Exception("Oracle is not supported. Please install it with 'pip install cx_Oracle'.")
+    def Open(self):
+        try:
+            self.v_con = cx_Oracle.connect('{0}/{1}@{2}:{3}/{4}'.format(
+                self.v_user,
+                self.v_password,
+                self.v_host,
+                self.v_port,
+                self.v_service
+            ))
+            self.v_cur = self.v_con.cursor()
+            self.v_start = True
+        except cx_Oracle.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Query(self, p_sql, p_alltypesstr=False):
+        try:
+            if self.v_con is None:
+                self.Open()
+                self.v_cur.execute(p_sql)
+                v_table = DataTable()
+                for c in self.v_cur.description:
+                    v_table.Columns.append(c[0])
+                v_row = self.v_cur.fetchone()
+                while v_row is not None:
+                    v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
+                    if p_alltypesstr:
+                        for j in range(0, len(v_table.Columns)):
+                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                    v_row = self.v_cur.fetchone()
+                self.v_con.commit()
+                self.Close()
+                return v_table
+            else:
+                self.v_cur.execute(p_sql)
+                v_table = DataTable()
+                for c in self.v_cur.description:
+                    v_table.Columns.append(c[0])
+                v_row = self.v_cur.fetchone()
+                while v_row is not None:
+                    v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
+                    if p_alltypesstr:
+                        for j in range(0, len(v_table.Columns)):
+                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                    v_row = self.v_cur.fetchone()
+                self.v_con.commit()
+                return v_table
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except cx_Oracle.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Execute(self, p_sql):
+        try:
+            if self.v_con is None:
+                self.Open()
+                self.v_cur.execute(p_sql)
+                self.v_con.commit()
+                self.Close()
+            else:
+                self.v_cur.execute(p_sql)
+                self.v_con.commit()
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except cx_Oracle.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def ExecuteScalar(self, p_sql):
+        try:
+            if self.v_con is None:
+                self.Open()
+                self.v_cur.execute(p_sql)
+                r = self.v_cur.fetchone()
+                s = r[0]
+                self.v_con.commit()
+                self.Close()
+                return s
+            else:
+                self.v_cur.execute(p_sql)
+                r = self.v_cur.fetchone()
+                s = r[0]
+                self.v_con.commit()
+                return s
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except cx_Oracle.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Close(self):
+        try:
+            self.v_cur.close()
+            self.v_cur = None
+            self.v_con.close()
+            self.v_con = None
+        except cx_Oracle.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def GetFields(self, p_sql):
+        try:
+            if self.v_con is None:
+                v_fields = []
+                self.Open()
+                self.v_cur.execute(p_sql)
+                r = self.v_cur.fetchone()
+                k = 0
+                for c in self.v_cur.description:
+                    v_type = '{0}'.format(self.v_types[c.type_code])
+                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=v_type))
+                    k = k + 1
+                self.v_con.commit()
+                self.Close()
+                return v_fields
+            else:
+                v_fields = []
+                self.v_cur.execute(p_sql)
+                r = self.v_cur.fetchone()
+                k = 0
+                for c in self.v_cur.description:
+                    v_type = '{0}'.format(self.v_types[c.type_code])
+                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=v_type))
+                    k = k + 1
+                self.v_con.commit()
+                return v_fields
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except cx_Oracle.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def QueryBlock(self, p_sql, p_blocksize, p_alltypesstr=False):
+        try:
+            if self.v_con is None:
+                raise Spartacus.Database.Exception('This method should be called in the middle of Open() and Close() calls.')
+            else:
+                if self.v_start:
+                    self.v_cur.execute(p_sql)
+                v_table = DataTable()
+                for c in self.v_cur.description:
+                    v_table.Columns.append(c[0])
+                v_row = self.v_cur.fetchone()
+                k = 0
+                while v_row is not None and k < p_blocksize:
+                    v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
+                    if p_alltypesstr:
+                        for j in range(0, len(v_table.Columns)):
+                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                    v_row = self.v_cur.fetchone()
+                    k = k + 1
+                if len(v_table.Rows) == 0:
+                    self.v_con.commit()
+                if self.v_start:
+                    self.v_start = False
+                return v_table
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except cx_Oracle.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def InsertBlock(self, p_block, p_tablename, p_fields=None):
+        try:
+            v_columnames = []
+            if p_fields is None:
+                v_fields = []
+                for c in p_block.Columns:
+                    v_columnames.append(c)
+                    v_fields.append(DataField(c))
+            else:
+                v_fields = p_fields
+                for p in v_fields:
+                    v_columnames.append(p.v_name)
+            v_values = []
+            for r in p_block.Rows:
+                v_values.append(self.Mogrify(r, v_fields))
+            self.Execute('insert into ' + p_tablename + '(' + ','.join(v_columnames) + ') values ' + ','.join(v_values) + '')
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except cx_Oracle.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))

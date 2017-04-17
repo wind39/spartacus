@@ -22,17 +22,29 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
 
+import os
 import sys
 from setuptools import setup
 
+rootdir = os.path.abspath(os.path.dirname(__file__))
+long_description = open(os.path.join(rootdir, 'README')).read()
+
 setup(name='Spartacus',
-      version='0.3',
+      version='0.5',
       description='Generic database wrapper',
+      long_description=long_description,
       url='http://github.com/wind39/spartacus',
       author='William Ivanski',
       author_email='william.ivanski@gmail.com',
       license='MIT',
       packages=['Spartacus'],
-      install_requires=['pyscrypt', 'pyaes', 'psycopg2', 'PyMySQL'],
+      install_requires=['pyscrypt', 'pyaes', 'PrettyTable'],
+      extras_require={
+        'postgresql': ['psycopg2'],
+        'mysql':      ['PyMySQL'],
+        'mariadb':    ['PyMySQL'],
+        'firebird':   ['fdb'],
+        'oracle':     ['cx_Oracle'],
+        'complete':   ['psycopg2', 'PyMySQL', 'fdb', 'cx_Oracle']
+      },
       zip_safe=False)
-

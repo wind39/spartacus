@@ -30,7 +30,7 @@ rootdir = os.path.abspath(os.path.dirname(__file__))
 long_description = open(os.path.join(rootdir, 'README')).read()
 
 setup(name='Spartacus',
-      version='0.5',
+      version='0.6',
       description='Generic database wrapper',
       long_description=long_description,
       url='http://github.com/wind39/spartacus',
@@ -45,6 +45,7 @@ setup(name='Spartacus',
         'mariadb':    ['PyMySQL'],
         'firebird':   ['fdb'],
         'oracle':     ['cx_Oracle'],
-        'complete':   ['psycopg2', 'PyMySQL', 'fdb', 'cx_Oracle']
+        'mssql':      ['pymssql'],
+        'complete':   ['psycopg2', 'PyMySQL', 'fdb', 'cx_Oracle', 'pymssql']
       },
       zip_safe=False)

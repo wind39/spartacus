@@ -8,6 +8,7 @@ try:
     #v_database = Spartacus.Database.Firebird('127.0.0.1', '3050', '/path/to/employees.fdb', 'sysdba', 'masterkey')
     #v_database = Spartacus.Database.Oracle('127.0.0.1', '1521', 'XE', 'employees', 'password')
     #v_database = Spartacus.Database.MSSQL('127.0.0.1', '1433', 'employees', 'sa', 'password')
+    #v_database = Spartacus.Database.IBMDB2('127.0.0.1', '50000', 'employes', 'db2inst1', 'password')
 
     v_table = v_database.Query('select * from departments')
     #v_table = v_database.Query('select * from salaries')

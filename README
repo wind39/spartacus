@@ -3,10 +3,41 @@ Spartacus is a database wrapper for the most widely used RDBMS Python drivers.
 Currently, Spartacus supports:
 
 * SQLite
+
 * Memory (in-memory SQLite)
+
 * PostgreSQL
+  pip install psycopg2
+
 * MySQL
+  pip install PyMySQL
+
 * MariaDB
+  pip install PyMySQL
+
 * Firebird
+  pip install fdb
+
 * Oracle
+  # make sure you have Oracle Database or Instant Client installed and configured
+  pip install cx_Oracle
+
 * MS SQL
+  sudo apt install freetds-bin freetds-dev
+  pip install pymssql
+
+* IBM DB2
+  pip install ibm_db
+
+
+Instantiate this way:
+
+- SQLite: v_database = Spartacus.Database.SQLite('../employees.db')
+- Memory: v_database = Spartacus.Database.Memory()
+- PostgreSQL: v_database = Spartacus.Database.PostgreSQL('127.0.0.1', '5432', 'employees', 'william', 'password')
+- MySQL: v_database = Spartacus.Database.MySQL('127.0.0.1', '3306', 'employees', 'root', 'password')
+- MariaDB: v_database = Spartacus.Database.MariaDB('127.0.0.1', '3306', 'employees', 'root', 'password')
+- Firebird: v_database = Spartacus.Database.Firebird('127.0.0.1', '3050', '/path/to/employees.fdb', 'sysdba', 'masterkey')
+- Oracle: v_database = Spartacus.Database.Oracle('127.0.0.1', '1521', 'XE', 'employees', 'password')
+- Microsoft SQL Server: v_database = Spartacus.Database.MSSQL('127.0.0.1', '1433', 'employees', 'sa', 'password')
+- IBM DB2: v_database = Spartacus.Database.IBMDB2('127.0.0.1', '50000', 'employes', 'db2inst1', 'password')

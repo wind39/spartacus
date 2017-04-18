@@ -101,6 +101,12 @@ try:
     v_supported_rdbms.append('MSSQL')
 except ImportError:
     pass
+try:
+    import ibm_db
+    import ibm_db_dbi
+    v_supported_rdbms.append('IBMDB2')
+except ImportError:
+    pass
 
 '''
 ------------------------------------------------------------------------
@@ -573,12 +579,6 @@ class PostgreSQL(Generic):
             self.v_password = p_password
             self.v_con = None
             self.v_cur = None
-            # PostgreSQL types
-            self.Open()
-            self.v_cur.execute('select oid, typname from pg_type')
-            self.v_types = dict([(r['oid'], r['typname']) for r in self.v_cur.fetchall()])
-            self.v_con.commit()
-            self.Close()
         else:
             raise Spartacus.Database.Exception("PostgreSQL is not supported. Please install it with 'pip install psycopg2'.")
     def Open(self):
@@ -594,6 +594,10 @@ class PostgreSQL(Generic):
                 cursor_factory=psycopg2.extras.DictCursor)
             self.v_cur = self.v_con.cursor()
             self.v_start = True
+            # PostgreSQL types
+            self.v_cur.execute('select oid, typname from pg_type')
+            self.v_types = dict([(r['oid'], r['typname']) for r in self.v_cur.fetchall()])
+            self.v_con.commit()
         except Spartacus.Database.Exception as exc:
             raise exc
         except psycopg2.Error as exc:
@@ -1817,6 +1821,224 @@ class MSSQL(Generic):
         except Spartacus.Database.Exception as exc:
             raise exc
         except pymssql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Transfer(self, p_sql, p_targetdatabase, p_tablename, p_blocksize, p_fields=None, p_alltypesstr=False):
+        v_return = DataTransferReturn()
+        try:
+            v_table = self.QueryBlock(p_sql, p_blocksize, p_alltypesstr)
+            if len(v_table.Rows) > 0:
+                p_targetdatabase.InsertBlock(v_table, p_tablename, p_fields)
+            v_return.v_numrecords = len(v_table.Rows)
+        except Spartacus.Database.Exception as exc:
+            v_return.v_log = str(exc)
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        return v_return
+
+'''
+------------------------------------------------------------------------
+IBM DB2
+------------------------------------------------------------------------
+'''
+class IBMDB2(Generic):
+    def __init__(self, p_host, p_port, p_service, p_user, p_password):
+        if 'IBMDB2' in v_supported_rdbms:
+            self.v_host = p_host
+            self.v_port = p_port
+            self.v_service = p_service
+            self.v_user = p_user
+            self.v_password = p_password
+            self.v_con = None
+            self.v_cur = None
+        else:
+            raise Spartacus.Database.Exception("IBM DB2 is not supported. Please install it with 'pip install ibm_db'.")
+    def Open(self):
+        try:
+            c = ibm_db.connect('DATABASE={0};HOSTNAME={1};PORT={2};PROTOCOL=TCPIP;UID={3};PWD={4}'.format(
+                self.v_service,
+                self.v_host,
+                self.v_port,
+                self.v_user,
+                self.v_password
+            ), '', '')
+            self.v_con = ibm_db_dbi.Connection(c)
+            self.v_cur = self.v_con.cursor()
+            self.v_start = True
+        except ibm_db.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except ibm_db_dbi.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Query(self, p_sql, p_alltypesstr=False):
+        try:
+            if self.v_con is None:
+                self.Open()
+                self.v_cur.execute(p_sql)
+                v_table = DataTable()
+                for c in self.v_cur.description:
+                    v_table.Columns.append(c[0])
+                v_row = self.v_cur.fetchone()
+                while v_row is not None:
+                    v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
+                    if p_alltypesstr:
+                        for j in range(0, len(v_table.Columns)):
+                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                    v_row = self.v_cur.fetchone()
+                self.v_con.commit()
+                self.Close()
+                return v_table
+            else:
+                self.v_cur.execute(p_sql)
+                v_table = DataTable()
+                for c in self.v_cur.description:
+                    v_table.Columns.append(c[0])
+                v_row = self.v_cur.fetchone()
+                while v_row is not None:
+                    v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
+                    if p_alltypesstr:
+                        for j in range(0, len(v_table.Columns)):
+                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                    v_row = self.v_cur.fetchone()
+                self.v_con.commit()
+                return v_table
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except ibm_db_dbi.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Execute(self, p_sql):
+        try:
+            if self.v_con is None:
+                self.Open()
+                self.v_cur.execute(p_sql)
+                self.v_con.commit()
+                self.Close()
+            else:
+                self.v_cur.execute(p_sql)
+                self.v_con.commit()
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except ibm_db_dbi.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def ExecuteScalar(self, p_sql):
+        try:
+            if self.v_con is None:
+                self.Open()
+                self.v_cur.execute(p_sql)
+                r = self.v_cur.fetchone()
+                s = r[0]
+                self.v_con.commit()
+                self.Close()
+                return s
+            else:
+                self.v_cur.execute(p_sql)
+                r = self.v_cur.fetchone()
+                s = r[0]
+                self.v_con.commit()
+                return s
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except ibm_db_dbi.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Close(self):
+        try:
+            self.v_cur.close()
+            self.v_cur = None
+            self.v_con.close()
+            self.v_con = None
+        except ibm_db_dbi.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def GetFields(self, p_sql):
+        try:
+            if self.v_con is None:
+                v_fields = []
+                self.Open()
+                self.v_cur.execute(p_sql)
+                r = self.v_cur.fetchone()
+                k = 0
+                for c in self.v_cur.description:
+                    v_type = '{0}'.format(self.v_types[c.type_code])
+                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=v_type))
+                    k = k + 1
+                self.v_con.commit()
+                self.Close()
+                return v_fields
+            else:
+                v_fields = []
+                self.v_cur.execute(p_sql)
+                r = self.v_cur.fetchone()
+                k = 0
+                for c in self.v_cur.description:
+                    v_type = '{0}'.format(self.v_types[c.type_code])
+                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=v_type))
+                    k = k + 1
+                self.v_con.commit()
+                return v_fields
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except ibm_db_dbi.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def QueryBlock(self, p_sql, p_blocksize, p_alltypesstr=False):
+        try:
+            if self.v_con is None:
+                raise Spartacus.Database.Exception('This method should be called in the middle of Open() and Close() calls.')
+            else:
+                if self.v_start:
+                    self.v_cur.execute(p_sql)
+                v_table = DataTable()
+                for c in self.v_cur.description:
+                    v_table.Columns.append(c[0])
+                v_row = self.v_cur.fetchone()
+                k = 0
+                while v_row is not None and k < p_blocksize:
+                    v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
+                    if p_alltypesstr:
+                        for j in range(0, len(v_table.Columns)):
+                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                    v_row = self.v_cur.fetchone()
+                    k = k + 1
+                if len(v_table.Rows) == 0:
+                    self.v_con.commit()
+                if self.v_start:
+                    self.v_start = False
+                return v_table
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except ibm_db_dbi.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def InsertBlock(self, p_block, p_tablename, p_fields=None):
+        try:
+            v_columnames = []
+            if p_fields is None:
+                v_fields = []
+                for c in p_block.Columns:
+                    v_columnames.append(c)
+                    v_fields.append(DataField(c))
+            else:
+                v_fields = p_fields
+                for p in v_fields:
+                    v_columnames.append(p.v_name)
+            v_values = []
+            for r in p_block.Rows:
+                v_values.append(self.Mogrify(r, v_fields))
+            self.Execute('insert into ' + p_tablename + '(' + ','.join(v_columnames) + ') values ' + ','.join(v_values) + '')
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except ibm_db_dbi.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))

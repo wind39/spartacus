@@ -252,14 +252,20 @@ class SQLite(Generic):
                 self.Open()
                 self.v_cur.execute(p_sql)
                 r = self.v_cur.fetchone()
-                s = r[0]
+                if r != None:
+                    s = r[0]
+                else:
+                    s = None
                 self.v_con.commit()
                 self.Close()
                 return s
             else:
                 self.v_cur.execute(p_sql)
                 r = self.v_cur.fetchone()
-                s = r[0]
+                if r != None:
+                    s = r[0]
+                else:
+                    s = None
                 self.v_con.commit()
                 return s
         except Spartacus.Database.Exception as exc:
@@ -479,14 +485,20 @@ class Memory(Generic):
                 self.Open()
                 self.v_cur.execute(p_sql)
                 r = self.v_cur.fetchone()
-                s = r[0]
+                if r != None:
+                    s = r[0]
+                else:
+                    s = None
                 self.v_con.commit()
                 self.Close()
                 return s
             else:
                 self.v_cur.execute(p_sql)
                 r = self.v_cur.fetchone()
-                s = r[0]
+                if r != None:
+                    s = r[0]
+                else:
+                    s = None
                 self.v_con.commit()
                 return s
         except Spartacus.Database.Exception as exc:
@@ -711,14 +723,20 @@ class PostgreSQL(Generic):
                 self.Open()
                 self.v_cur.execute(p_sql)
                 r = self.v_cur.fetchone()
-                s = r[0]
+                if r != None:
+                    s = r[0]
+                else:
+                    s = None
                 self.v_con.commit()
                 self.Close()
                 return s
             else:
                 self.v_cur.execute(p_sql)
                 r = self.v_cur.fetchone()
-                s = r[0]
+                if r != None:
+                    s = r[0]
+                else:
+                    s = None
                 self.v_con.commit()
                 return s
         except Spartacus.Database.Exception as exc:
@@ -928,14 +946,20 @@ class MySQL(Generic):
                 self.Open()
                 self.v_cur.execute(p_sql)
                 r = self.v_cur.fetchone()
-                s = r[0]
+                if r != None:
+                    s = r[0]
+                else:
+                    s = None
                 self.v_con.commit()
                 self.Close()
                 return s
             else:
                 self.v_cur.execute(p_sql)
                 r = self.v_cur.fetchone()
-                s = r[0]
+                if r != None:
+                    s = r[0]
+                else:
+                    s = None
                 self.v_con.commit()
                 return s
         except Spartacus.Database.Exception as exc:
@@ -1145,14 +1169,20 @@ class MariaDB(Generic):
                 self.Open()
                 self.v_cur.execute(p_sql)
                 r = self.v_cur.fetchone()
-                s = r[0]
+                if r != None:
+                    s = r[0]
+                else:
+                    s = None
                 self.v_con.commit()
                 self.Close()
                 return s
             else:
                 self.v_cur.execute(p_sql)
                 r = self.v_cur.fetchone()
-                s = r[0]
+                if r != None:
+                    s = r[0]
+                else:
+                    s = None
                 self.v_con.commit()
                 return s
         except Spartacus.Database.Exception as exc:
@@ -1369,14 +1399,20 @@ class Firebird(Generic):
                 self.Open()
                 self.v_cur.execute(p_sql)
                 r = self.v_cur.fetchone()
-                s = r[0]
+                if r != None:
+                    s = r[0]
+                else:
+                    s = None
                 self.v_con.commit()
                 self.Close()
                 return s
             else:
                 self.v_cur.execute(p_sql)
                 r = self.v_cur.fetchone()
-                s = r[0]
+                if r != None:
+                    s = r[0]
+                else:
+                    s = None
                 self.v_con.commit()
                 return s
         except Spartacus.Database.Exception as exc:
@@ -1600,14 +1636,20 @@ class Oracle(Generic):
                 self.Open()
                 self.v_cur.execute(p_sql)
                 r = self.v_cur.fetchone()
-                s = r[0]
+                if r != None:
+                    s = r[0]
+                else:
+                    s = None
                 self.v_con.commit()
                 self.Close()
                 return s
             else:
                 self.v_cur.execute(p_sql)
                 r = self.v_cur.fetchone()
-                s = r[0]
+                if r != None:
+                    s = r[0]
+                else:
+                    s = None
                 self.v_con.commit()
                 return s
         except Spartacus.Database.Exception as exc:
@@ -1831,14 +1873,20 @@ class MSSQL(Generic):
                 self.Open()
                 self.v_cur.execute(p_sql)
                 r = self.v_cur.fetchone()
-                s = r[0]
+                if r != None:
+                    s = r[0]
+                else:
+                    s = None
                 self.v_con.commit()
                 self.Close()
                 return s
             else:
                 self.v_cur.execute(p_sql)
                 r = self.v_cur.fetchone()
-                s = r[0]
+                if r != None:
+                    s = r[0]
+                else:
+                    s = None
                 self.v_con.commit()
                 return s
         except Spartacus.Database.Exception as exc:
@@ -2065,14 +2113,20 @@ class IBMDB2(Generic):
                 self.Open()
                 self.v_cur.execute(p_sql)
                 r = self.v_cur.fetchone()
-                s = r[0]
+                if r != None:
+                    s = r[0]
+                else:
+                    s = None
                 self.v_con.commit()
                 self.Close()
                 return s
             else:
                 self.v_cur.execute(p_sql)
                 r = self.v_cur.fetchone()
-                s = r[0]
+                if r != None:
+                    s = r[0]
+                else:
+                    s = None
                 self.v_con.commit()
                 return s
         except Spartacus.Database.Exception as exc:

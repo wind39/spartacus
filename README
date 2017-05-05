@@ -4,40 +4,80 @@ Currently, Spartacus supports:
 
 * SQLite
 
+    pip install Spartacus
+
 * Memory (in-memory SQLite)
 
+    pip install Spartacus
+
 * PostgreSQL
-  pip install psycopg2
+
+    pip install Spartacus[postgresql]
 
 * MySQL
-  pip install PyMySQL
+
+    pip install Spartacus[mysql]
 
 * MariaDB
-  pip install PyMySQL
+
+    pip install Spartacus[mariadb]
 
 * Firebird
-  pip install fdb
+
+    pip install Spartacus[firebird]
 
 * Oracle
-  # make sure you have Oracle Database or Instant Client installed and configured
-  pip install cx_Oracle
+
+    # make sure you have Oracle Database or Instant Client installed and configured
+    pip install Spartacus[oracle]
 
 * MS SQL
-  sudo apt install freetds-bin freetds-dev
-  pip install pymssql
+
+    sudo apt install freetds-bin freetds-dev
+    pip install Spartacus[mssql]
 
 * IBM DB2
-  pip install ibm_db
 
+    pip install Spartacus[ibmdb2]
+
+* All supported RDBMS:
+
+    pip install Spartacus[complete]
 
 Instantiate this way:
 
-- SQLite: v_database = Spartacus.Database.SQLite('../employees.db')
-- Memory: v_database = Spartacus.Database.Memory()
-- PostgreSQL: v_database = Spartacus.Database.PostgreSQL('127.0.0.1', '5432', 'employees', 'william', 'password')
-- MySQL: v_database = Spartacus.Database.MySQL('127.0.0.1', '3306', 'employees', 'root', 'password')
-- MariaDB: v_database = Spartacus.Database.MariaDB('127.0.0.1', '3306', 'employees', 'root', 'password')
-- Firebird: v_database = Spartacus.Database.Firebird('127.0.0.1', '3050', '/path/to/employees.fdb', 'sysdba', 'masterkey')
-- Oracle: v_database = Spartacus.Database.Oracle('127.0.0.1', '1521', 'XE', 'employees', 'password')
-- Microsoft SQL Server: v_database = Spartacus.Database.MSSQL('127.0.0.1', '1433', 'employees', 'sa', 'password')
-- IBM DB2: v_database = Spartacus.Database.IBMDB2('127.0.0.1', '50000', 'employes', 'db2inst1', 'password')
+SQLite
+
+    v_database = Spartacus.Database.SQLite('../employees.db')
+
+Memory
+
+    v_database = Spartacus.Database.Memory()
+
+PostgreSQL
+
+    v_database = Spartacus.Database.PostgreSQL('127.0.0.1', '5432', 'employees', 'william', 'password')
+
+MySQL
+
+    v_database = Spartacus.Database.MySQL('127.0.0.1', '3306', 'employees', 'root', 'password')
+
+MariaDB
+
+    v_database = Spartacus.Database.MariaDB('127.0.0.1', '3306', 'employees', 'root', 'password')
+
+Firebird
+
+    v_database = Spartacus.Database.Firebird('127.0.0.1', '3050', '/path/to/employees.fdb', 'sysdba', 'masterkey')
+
+Oracle
+
+    v_database = Spartacus.Database.Oracle('127.0.0.1', '1521', 'XE', 'employees', 'password')
+
+Microsoft SQL Server
+
+    v_database = Spartacus.Database.MSSQL('127.0.0.1', '1433', 'employees', 'sa', 'password')
+
+IBM DB2
+
+    v_database = Spartacus.Database.IBMDB2('127.0.0.1', '50000', 'employes', 'db2inst1', 'password')

@@ -21,14 +21,7 @@ try:
 
         if len(v_table.Rows) > 0:
             print("Block {0}: {1} record(s)".format(b, len(v_table.Rows)))
-
-            for c in v_table.Columns:
-                print('{0}|'.format(c), end='')
-            print('')
-            for r in v_table.Rows:
-                for c in v_table.Columns:
-                    print('{0}|'.format(r[c]), end='')
-                print('')
+            print(v_table.Pretty())
             print('')
 
             v_target.InsertBlock(v_table, 'departments2', v_fields)

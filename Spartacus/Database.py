@@ -45,6 +45,73 @@ class DataTable(object):
                 raise Spartacus.Database.Exception('Can not merge tables with different columns.')
         else:
             raise Spartacus.Database.Exception('Can not merge tables with no columns.')
+    def Compare(self, p_datatable, p_pkcols, p_statuscolname, p_diffcolname, p_keepequal=False):
+        if len(self.Columns) > 0 and len(p_datatable.Columns) > 0:
+            if self.Columns == p_datatable.Columns:
+                v_table = DataTable()
+                for c in self.Columns:
+                    v_table.Columns.append(c)
+                v_table.Columns.append(p_statuscolname)
+                v_table.Columns.append(p_diffcolname)
+                for r1 in self.Rows:
+                    v_pkmatch = False
+                    for r2 in p_datatable.Rows:
+                        v_pkmatch = True
+                        for pkcol in p_pkcols:
+                            if r1[pkcol] != r2[pkcol]:
+                                v_pkmatch = False
+                                break
+                        if v_pkmatch:
+                            break;
+                    if v_pkmatch:
+                        v_allmatch = True
+                        v_row = []
+                        v_diff = []
+                        for c in self.Columns:
+                            if r1[c] != r2[c]:
+                                v_row.append('{0} --> {1}'.format(r1[c], r2[c]))
+                                v_diff.append(c)
+                                v_allmatch = False
+                            else:
+                                v_row.append(r1[c])
+                        if v_allmatch:
+                            v_row.append('E')
+                            v_row.append('')
+                            if p_keepequal:
+                                v_table.Rows.append(OrderedDict(zip(v_table.Columns, tuple(v_row))))
+                        else:
+                            v_row.append('U')
+                            v_row.append(','.join(v_diff))
+                            v_table.Rows.append(OrderedDict(zip(v_table.Columns, tuple(v_row))))
+                    else:
+                        v_row = []
+                        for c in self.Columns:
+                            v_row.append(r1[c])
+                        v_row.append('D')
+                        v_row.append('')
+                        v_table.Rows.append(OrderedDict(zip(v_table.Columns, tuple(v_row))))
+                for r2 in p_datatable.Rows:
+                    v_pkmatch = False
+                    for r1 in self.Rows:
+                        v_pkmatch = True
+                        for pkcol in p_pkcols:
+                            if r1[pkcol] != r2[pkcol]:
+                                v_pkmatch = False
+                                break
+                        if v_pkmatch:
+                            break
+                    if not v_pkmatch:
+                        v_row = []
+                        for c in p_datatable.Columns:
+                            v_row.append(r2[c])
+                        v_row.append('I')
+                        v_row.append('')
+                        v_table.Rows.append(OrderedDict(zip(v_table.Columns, tuple(v_row))))
+                return v_table
+            else:
+                raise Spartacus.Database.Exception('Can not compare tables with different columns.')
+        else:
+            raise Spartacus.Database.Exception('Can not compare tables with no columns.')
     def Pretty(self):
         v_pretty = prettytable.PrettyTable()
         v_pretty._set_field_names(self.Columns)

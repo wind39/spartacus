@@ -8,38 +8,19 @@ try:
     v_table_a = v_database.Query("select dept_no, dept_name, 'A' as test from departments")
 
     print('Table A:')
-    for c in v_table_a.Columns:
-        print('{0}|'.format(c), end='')
-    print('')
-    for r in v_table_a.Rows:
-        for c in v_table_a.Columns:
-            print('{0}|'.format(r[c]), end='')
-        print('')
+    print(v_table_a.Pretty())
     print('')
 
     v_table_b = v_database.Query("select dept_no, dept_name, 'B' as test from departments")
 
     print('Table B:')
-    for c in v_table_b.Columns:
-        print('{0}|'.format(c), end='')
-    print('')
-    for r in v_table_b.Rows:
-        for c in v_table_b.Columns:
-            print('{0}|'.format(r[c]), end='')
-        print('')
+    print(v_table_b.Pretty())
     print('')
 
     v_table_a.Merge(v_table_b)
 
     print('Table A merged with table B:')
-    for c in v_table_a.Columns:
-        print('{0}|'.format(c), end='')
-    print('')
-    for r in v_table_a.Rows:
-        for c in v_table_a.Columns:
-            print('{0}|'.format(r[c]), end='')
-        print('')
-    print('')
+    print(v_table_a.Pretty())
 except Spartacus.Database.Exception as exc:
     print(str(exc))
 except Exception as exc:

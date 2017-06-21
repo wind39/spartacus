@@ -182,7 +182,7 @@ Generic
 '''
 class Generic(ABC):
     @abstractmethod
-    def Open(self):
+    def Open(self, p_autocommit=False):
         pass
     @abstractmethod
     def Query(self, p_sql, p_alltypesstr=False):
@@ -245,7 +245,7 @@ class SQLite(Generic):
             self.v_cur = None
         else:
             raise Spartacus.Database.Exception("SQLite is not supported. Please install it.")
-    def Open(self):
+    def Open(self, p_autocommit=False):
         try:
             self.v_con = sqlite3.connect(self.v_service)
             #self.v_con.row_factory = sqlite3.Row
@@ -478,7 +478,7 @@ class Memory(Generic):
             self.v_cur = None
         else:
             raise Spartacus.Database.Exception("SQLite is not supported. Please install it.")
-    def Open(self):
+    def Open(self, p_autocommit=False):
         try:
             self.v_con = sqlite3.connect(self.v_service)
             #self.v_con.row_factory = sqlite3.Row
@@ -711,7 +711,7 @@ class PostgreSQL(Generic):
             self.v_cur = None
         else:
             raise Spartacus.Database.Exception("PostgreSQL is not supported. Please install it with 'pip install Spartacus[postgresql]'.")
-    def Open(self):
+    def Open(self, p_autocommit=False):
         try:
             self.v_con = psycopg2.connect(
                 'host={0} port={1} dbname={2} user={3} password={4}'.format(
@@ -722,12 +722,14 @@ class PostgreSQL(Generic):
                     self.v_password
                 ),
                 cursor_factory=psycopg2.extras.DictCursor)
+            self.v_con.autocommit = p_autocommit
             self.v_cur = self.v_con.cursor()
             self.v_start = True
             # PostgreSQL types
             self.v_cur.execute('select oid, typname from pg_type')
             self.v_types = dict([(r['oid'], r['typname']) for r in self.v_cur.fetchall()])
-            self.v_con.commit()
+            if not p_autocommit:
+                self.v_con.commit()
         except Spartacus.Database.Exception as exc:
             raise exc
         except psycopg2.Error as exc:
@@ -771,13 +773,13 @@ class PostgreSQL(Generic):
     def Execute(self, p_sql):
         try:
             if self.v_con is None:
-                self.Open()
+                self.Open(True)
                 self.v_cur.execute(p_sql)
-                self.v_con.commit()
                 self.Close()
             else:
                 self.v_cur.execute(p_sql)
-                self.v_con.commit()
+                if not self.v_con.autocommit:
+                    self.v_con.commit()
         except Spartacus.Database.Exception as exc:
             raise exc
         except psycopg2.Error as exc:
@@ -942,7 +944,7 @@ class MySQL(Generic):
             self.v_cur = None
         else:
             raise Spartacus.Database.Exception("MySQL is not supported. Please install it with 'pip install Spartacus[mysql]'.")
-    def Open(self):
+    def Open(self, p_autocommit=False):
         try:
             self.v_con = pymysql.connect(
                 host=self.v_host,
@@ -1165,7 +1167,7 @@ class MariaDB(Generic):
             self.v_cur = None
         else:
             raise Spartacus.Database.Exception("MariaDB is not supported. Please install it with 'pip install Spartacus[mariadb]'.")
-    def Open(self):
+    def Open(self, p_autocommit=False):
         try:
             self.v_con = pymysql.connect(
                 host=self.v_host,
@@ -1388,7 +1390,7 @@ class Firebird(Generic):
             self.v_cur = None
         else:
             raise Spartacus.Database.Exception("Firebird is not supported. Please install it with 'pip install Spartacus[firebird]'.")
-    def Open(self):
+    def Open(self, p_autocommit=False):
         try:
             self.v_con = fdb.connect(
                 host=self.v_host,
@@ -1624,7 +1626,7 @@ class Oracle(Generic):
             self.v_cur = None
         else:
             raise Spartacus.Database.Exception("Oracle is not supported. Please install it with 'pip install Spartacus[oracle]'.")
-    def Open(self):
+    def Open(self, p_autocommit=False):
         try:
             self.v_con = cx_Oracle.connect('{0}/{1}@{2}:{3}/{4}'.format(
                 self.v_user,
@@ -1861,7 +1863,7 @@ class MSSQL(Generic):
             self.v_cur = None
         else:
             raise Spartacus.Database.Exception("MSSQL is not supported. Please install it with 'pip install Spartacus[mssql]'.")
-    def Open(self):
+    def Open(self, p_autocommit=False):
         try:
             self.v_con = pymssql.connect(
                 host=self.v_host,
@@ -2098,7 +2100,7 @@ class IBMDB2(Generic):
             self.v_cur = None
         else:
             raise Spartacus.Database.Exception("IBM DB2 is not supported. Please install it with 'pip install Spartacus[ibmdb2]'.")
-    def Open(self):
+    def Open(self, p_autocommit=False):
         try:
             c = ibm_db.connect('DATABASE={0};HOSTNAME={1};PORT={2};PROTOCOL=TCPIP;UID={3};PWD={4}'.format(
                 self.v_service,

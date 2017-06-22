@@ -250,6 +250,7 @@ class SQLite(Generic):
             self.v_con = sqlite3.connect(self.v_service)
             #self.v_con.row_factory = sqlite3.Row
             self.v_cur = self.v_con.cursor()
+            self.v_cur.execute('PRAGMA foreign_keys = ON')
             self.v_start = True
         except sqlite3.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
@@ -483,6 +484,7 @@ class Memory(Generic):
             self.v_con = sqlite3.connect(self.v_service)
             #self.v_con.row_factory = sqlite3.Row
             self.v_cur = self.v_con.cursor()
+            self.v_cur.execute('PRAGMA foreign_keys = ON')
             self.v_start = True
         except sqlite3.Error as exc:
             raise Spartacus.Database.Exception(str(exc))

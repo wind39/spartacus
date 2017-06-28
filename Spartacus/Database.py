@@ -836,12 +836,12 @@ class PostgreSQL(Generic):
                 if r != None:
                     k = 0
                     for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
+                        v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=self.v_types[c[1]]))
                         k = k + 1
                 else:
                     k = 0
                     for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
+                        v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=self.v_types[c[1]]))
                         k = k + 1
                 self.v_con.commit()
                 self.Close()
@@ -853,12 +853,12 @@ class PostgreSQL(Generic):
                 if r != None:
                     k = 0
                     for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
+                        v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=self.v_types[c[1]]))
                         k = k + 1
                 else:
                     k = 0
                     for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
+                        v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=self.v_types[c[1]]))
                         k = k + 1
                 self.v_con.commit()
                 return v_fields

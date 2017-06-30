@@ -302,11 +302,11 @@ class SQLite(Generic):
         try:
             if self.v_con is None:
                 self.Open()
-                self.v_cur.execute(p_sql)
+                self.v_cur.executescript(p_sql)
                 self.v_con.commit()
                 self.Close()
             else:
-                self.v_cur.execute(p_sql)
+                self.v_cur.executescript(p_sql)
                 self.v_con.commit()
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -536,11 +536,11 @@ class Memory(Generic):
         try:
             if self.v_con is None:
                 self.Open()
-                self.v_cur.execute(p_sql)
+                self.v_cur.executescript(p_sql)
                 self.v_con.commit()
                 self.Close()
             else:
-                self.v_cur.execute(p_sql)
+                self.v_cur.executescript(p_sql)
                 self.v_con.commit()
         except Spartacus.Database.Exception as exc:
             raise exc

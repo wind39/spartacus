@@ -273,7 +273,6 @@ class SQLite(Generic):
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
-                self.v_con.commit()
                 self.Close()
                 return v_table
             else:
@@ -290,7 +289,6 @@ class SQLite(Generic):
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
-                self.v_con.commit()
                 return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -302,12 +300,10 @@ class SQLite(Generic):
         try:
             if self.v_con is None:
                 self.Open()
-                self.v_cur.executescript(p_sql)
-                self.v_con.commit()
+                self.v_cur.execute(p_sql)
                 self.Close()
             else:
-                self.v_cur.executescript(p_sql)
-                self.v_con.commit()
+                self.v_cur.execute(p_sql)
         except Spartacus.Database.Exception as exc:
             raise exc
         except sqlite3.Error as exc:
@@ -324,7 +320,6 @@ class SQLite(Generic):
                     s = r[0]
                 else:
                     s = None
-                self.v_con.commit()
                 self.Close()
                 return s
             else:
@@ -334,7 +329,6 @@ class SQLite(Generic):
                     s = r[0]
                 else:
                     s = None
-                self.v_con.commit()
                 return s
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -344,6 +338,7 @@ class SQLite(Generic):
             raise Spartacus.Database.Exception(str(exc))
     def Close(self):
         try:
+            self.v_con.commit()
             self.v_cur.close()
             self.v_cur = None
             self.v_con.close()
@@ -369,7 +364,6 @@ class SQLite(Generic):
                     for c in self.v_cur.description:
                         v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
                         k = k + 1
-                self.v_con.commit()
                 self.Close()
                 return v_fields
             else:
@@ -386,7 +380,6 @@ class SQLite(Generic):
                     for c in self.v_cur.description:
                         v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
                         k = k + 1
-                self.v_con.commit()
                 return v_fields
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -415,8 +408,6 @@ class SQLite(Generic):
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
                     k = k + 1
-                if len(v_table.Rows) == 0:
-                    self.v_con.commit()
                 if self.v_start:
                     self.v_start = False
                 return v_table
@@ -507,7 +498,6 @@ class Memory(Generic):
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
-                self.v_con.commit()
                 self.Close()
                 return v_table
             else:
@@ -524,7 +514,6 @@ class Memory(Generic):
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
-                self.v_con.commit()
                 return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -536,12 +525,10 @@ class Memory(Generic):
         try:
             if self.v_con is None:
                 self.Open()
-                self.v_cur.executescript(p_sql)
-                self.v_con.commit()
+                self.v_cur.execute(p_sql)
                 self.Close()
             else:
-                self.v_cur.executescript(p_sql)
-                self.v_con.commit()
+                self.v_cur.execute(p_sql)
         except Spartacus.Database.Exception as exc:
             raise exc
         except sqlite3.Error as exc:
@@ -558,7 +545,6 @@ class Memory(Generic):
                     s = r[0]
                 else:
                     s = None
-                self.v_con.commit()
                 self.Close()
                 return s
             else:
@@ -568,7 +554,6 @@ class Memory(Generic):
                     s = r[0]
                 else:
                     s = None
-                self.v_con.commit()
                 return s
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -578,6 +563,7 @@ class Memory(Generic):
             raise Spartacus.Database.Exception(str(exc))
     def Close(self):
         try:
+            self.v_con.commit()
             self.v_cur.close()
             self.v_cur = None
             self.v_con.close()
@@ -603,7 +589,6 @@ class Memory(Generic):
                     for c in self.v_cur.description:
                         v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
                         k = k + 1
-                self.v_con.commit()
                 self.Close()
                 return v_fields
             else:
@@ -620,7 +605,6 @@ class Memory(Generic):
                     for c in self.v_cur.description:
                         v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
                         k = k + 1
-                self.v_con.commit()
                 return v_fields
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -649,8 +633,6 @@ class Memory(Generic):
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
                     k = k + 1
-                if len(v_table.Rows) == 0:
-                    self.v_con.commit()
                 if self.v_start:
                     self.v_start = False
                 return v_table
@@ -751,7 +733,6 @@ class PostgreSQL(Generic):
                     for i in range(0, len(v_table.Rows)):
                         for j in range(0, len(v_table.Columns)):
                             v_table.Rows[i][j] = str(v_table.Rows[i][j])
-                self.v_con.commit()
                 self.Close()
                 return v_table
             else:
@@ -764,7 +745,6 @@ class PostgreSQL(Generic):
                     for i in range(0, len(v_table.Rows)):
                         for j in range(0, len(v_table.Columns)):
                             v_table.Rows[i][j] = str(v_table.Rows[i][j])
-                self.v_con.commit()
                 return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -780,8 +760,6 @@ class PostgreSQL(Generic):
                 self.Close()
             else:
                 self.v_cur.execute(p_sql)
-                if not self.v_con.autocommit:
-                    self.v_con.commit()
         except Spartacus.Database.Exception as exc:
             raise exc
         except psycopg2.Error as exc:
@@ -798,7 +776,6 @@ class PostgreSQL(Generic):
                     s = r[0]
                 else:
                     s = None
-                self.v_con.commit()
                 self.Close()
                 return s
             else:
@@ -808,7 +785,6 @@ class PostgreSQL(Generic):
                     s = r[0]
                 else:
                     s = None
-                self.v_con.commit()
                 return s
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -818,6 +794,7 @@ class PostgreSQL(Generic):
             raise Spartacus.Database.Exception(str(exc))
     def Close(self):
         try:
+            self.v_con.commit()
             self.v_cur.close()
             self.v_cur = None
             self.v_con.close()
@@ -843,7 +820,6 @@ class PostgreSQL(Generic):
                     for c in self.v_cur.description:
                         v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=self.v_types[c[1]]))
                         k = k + 1
-                self.v_con.commit()
                 self.Close()
                 return v_fields
             else:
@@ -860,7 +836,6 @@ class PostgreSQL(Generic):
                     for c in self.v_cur.description:
                         v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=self.v_types[c[1]]))
                         k = k + 1
-                self.v_con.commit()
                 return v_fields
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -883,8 +858,6 @@ class PostgreSQL(Generic):
                     for i in range(0, len(v_table.Rows)):
                         for j in range(0, len(v_table.Columns)):
                             v_table.Rows[i][j] = str(v_table.Rows[i][j])
-                if len(v_table.Rows) == 0:
-                    self.v_con.commit()
                 if self.v_start:
                     self.v_start = False
                 return v_table
@@ -974,7 +947,6 @@ class MySQL(Generic):
                     for i in range(0, len(v_table.Rows)):
                         for j in range(0, len(v_table.Columns)):
                             v_table.Rows[i][j] = str(v_table.Rows[i][j])
-                self.v_con.commit()
                 self.Close()
                 return v_table
             else:
@@ -987,7 +959,6 @@ class MySQL(Generic):
                     for i in range(0, len(v_table.Rows)):
                         for j in range(0, len(v_table.Columns)):
                             v_table.Rows[i][j] = str(v_table.Rows[i][j])
-                self.v_con.commit()
                 return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -1000,11 +971,9 @@ class MySQL(Generic):
             if self.v_con is None:
                 self.Open()
                 self.v_cur.execute(p_sql)
-                self.v_con.commit()
                 self.Close()
             else:
                 self.v_cur.execute(p_sql)
-                self.v_con.commit()
         except Spartacus.Database.Exception as exc:
             raise exc
         except pymysql.Error as exc:
@@ -1021,7 +990,6 @@ class MySQL(Generic):
                     s = r[0]
                 else:
                     s = None
-                self.v_con.commit()
                 self.Close()
                 return s
             else:
@@ -1031,7 +999,6 @@ class MySQL(Generic):
                     s = r[0]
                 else:
                     s = None
-                self.v_con.commit()
                 return s
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -1041,6 +1008,7 @@ class MySQL(Generic):
             raise Spartacus.Database.Exception(str(exc))
     def Close(self):
         try:
+            self.v_con.commit()
             self.v_cur.close()
             self.v_cur = None
             self.v_con.close()
@@ -1066,7 +1034,6 @@ class MySQL(Generic):
                     for c in self.v_cur.description:
                         v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
                         k = k + 1
-                self.v_con.commit()
                 self.Close()
                 return v_fields
             else:
@@ -1083,7 +1050,6 @@ class MySQL(Generic):
                     for c in self.v_cur.description:
                         v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
                         k = k + 1
-                self.v_con.commit()
                 return v_fields
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -1106,8 +1072,6 @@ class MySQL(Generic):
                     for i in range(0, len(v_table.Rows)):
                         for j in range(0, len(v_table.Columns)):
                             v_table.Rows[i][j] = str(v_table.Rows[i][j])
-                if len(v_table.Rows) == 0:
-                    self.v_con.commit()
                 if self.v_start:
                     self.v_start = False
                 return v_table
@@ -1197,7 +1161,6 @@ class MariaDB(Generic):
                     for i in range(0, len(v_table.Rows)):
                         for j in range(0, len(v_table.Columns)):
                             v_table.Rows[i][j] = str(v_table.Rows[i][j])
-                self.v_con.commit()
                 self.Close()
                 return v_table
             else:
@@ -1210,7 +1173,6 @@ class MariaDB(Generic):
                     for i in range(0, len(v_table.Rows)):
                         for j in range(0, len(v_table.Columns)):
                             v_table.Rows[i][j] = str(v_table.Rows[i][j])
-                self.v_con.commit()
                 return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -1223,11 +1185,9 @@ class MariaDB(Generic):
             if self.v_con is None:
                 self.Open()
                 self.v_cur.execute(p_sql)
-                self.v_con.commit()
                 self.Close()
             else:
                 self.v_cur.execute(p_sql)
-                self.v_con.commit()
         except Spartacus.Database.Exception as exc:
             raise exc
         except pymysql.Error as exc:
@@ -1244,7 +1204,6 @@ class MariaDB(Generic):
                     s = r[0]
                 else:
                     s = None
-                self.v_con.commit()
                 self.Close()
                 return s
             else:
@@ -1254,7 +1213,6 @@ class MariaDB(Generic):
                     s = r[0]
                 else:
                     s = None
-                self.v_con.commit()
                 return s
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -1264,6 +1222,7 @@ class MariaDB(Generic):
             raise Spartacus.Database.Exception(str(exc))
     def Close(self):
         try:
+            self.v_con.commit()
             self.v_cur.close()
             self.v_cur = None
             self.v_con.close()
@@ -1289,7 +1248,6 @@ class MariaDB(Generic):
                     for c in self.v_cur.description:
                         v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
                         k = k + 1
-                self.v_con.commit()
                 self.Close()
                 return v_fields
             else:
@@ -1306,7 +1264,6 @@ class MariaDB(Generic):
                     for c in self.v_cur.description:
                         v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
                         k = k + 1
-                self.v_con.commit()
                 return v_fields
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -1329,8 +1286,6 @@ class MariaDB(Generic):
                     for i in range(0, len(v_table.Rows)):
                         for j in range(0, len(v_table.Columns)):
                             v_table.Rows[i][j] = str(v_table.Rows[i][j])
-                if len(v_table.Rows) == 0:
-                    self.v_con.commit()
                 if self.v_start:
                     self.v_start = False
                 return v_table
@@ -1423,7 +1378,6 @@ class Firebird(Generic):
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
-                self.v_con.commit()
                 self.Close()
                 return v_table
             else:
@@ -1440,7 +1394,6 @@ class Firebird(Generic):
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
-                self.v_con.commit()
                 return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -1453,11 +1406,9 @@ class Firebird(Generic):
             if self.v_con is None:
                 self.Open()
                 self.v_cur.execute(p_sql)
-                self.v_con.commit()
                 self.Close()
             else:
                 self.v_cur.execute(p_sql)
-                self.v_con.commit()
         except Spartacus.Database.Exception as exc:
             raise exc
         except fdb.Error as exc:
@@ -1474,7 +1425,6 @@ class Firebird(Generic):
                     s = r[0]
                 else:
                     s = None
-                self.v_con.commit()
                 self.Close()
                 return s
             else:
@@ -1484,7 +1434,6 @@ class Firebird(Generic):
                     s = r[0]
                 else:
                     s = None
-                self.v_con.commit()
                 return s
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -1494,6 +1443,7 @@ class Firebird(Generic):
             raise Spartacus.Database.Exception(str(exc))
     def Close(self):
         try:
+            self.v_con.commit()
             self.v_cur.close()
             self.v_cur = None
             self.v_con.close()
@@ -1519,7 +1469,6 @@ class Firebird(Generic):
                     for c in self.v_cur.description:
                         v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
                         k = k + 1
-                self.v_con.commit()
                 self.Close()
                 return v_fields
             else:
@@ -1536,7 +1485,6 @@ class Firebird(Generic):
                     for c in self.v_cur.description:
                         v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
                         k = k + 1
-                self.v_con.commit()
                 return v_fields
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -1565,8 +1513,6 @@ class Firebird(Generic):
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
                     k = k + 1
-                if len(v_table.Rows) == 0:
-                    self.v_con.commit()
                 if self.v_start:
                     self.v_start = False
                 return v_table
@@ -1660,7 +1606,6 @@ class Oracle(Generic):
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
-                self.v_con.commit()
                 self.Close()
                 return v_table
             else:
@@ -1677,7 +1622,6 @@ class Oracle(Generic):
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
-                self.v_con.commit()
                 return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -1690,11 +1634,9 @@ class Oracle(Generic):
             if self.v_con is None:
                 self.Open()
                 self.v_cur.execute(p_sql)
-                self.v_con.commit()
                 self.Close()
             else:
                 self.v_cur.execute(p_sql)
-                self.v_con.commit()
         except Spartacus.Database.Exception as exc:
             raise exc
         except cx_Oracle.Error as exc:
@@ -1711,7 +1653,6 @@ class Oracle(Generic):
                     s = r[0]
                 else:
                     s = None
-                self.v_con.commit()
                 self.Close()
                 return s
             else:
@@ -1721,7 +1662,6 @@ class Oracle(Generic):
                     s = r[0]
                 else:
                     s = None
-                self.v_con.commit()
                 return s
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -1731,6 +1671,7 @@ class Oracle(Generic):
             raise Spartacus.Database.Exception(str(exc))
     def Close(self):
         try:
+            self.v_con.commit()
             self.v_cur.close()
             self.v_cur = None
             self.v_con.close()
@@ -1756,7 +1697,6 @@ class Oracle(Generic):
                     for c in self.v_cur.description:
                         v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
                         k = k + 1
-                self.v_con.commit()
                 self.Close()
                 return v_fields
             else:
@@ -1773,7 +1713,6 @@ class Oracle(Generic):
                     for c in self.v_cur.description:
                         v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
                         k = k + 1
-                self.v_con.commit()
                 return v_fields
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -1802,8 +1741,6 @@ class Oracle(Generic):
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
                     k = k + 1
-                if len(v_table.Rows) == 0:
-                    self.v_con.commit()
                 if self.v_start:
                     self.v_start = False
                 return v_table
@@ -1897,7 +1834,6 @@ class MSSQL(Generic):
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
-                self.v_con.commit()
                 self.Close()
                 return v_table
             else:
@@ -1914,7 +1850,6 @@ class MSSQL(Generic):
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
-                self.v_con.commit()
                 return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -1927,11 +1862,9 @@ class MSSQL(Generic):
             if self.v_con is None:
                 self.Open()
                 self.v_cur.execute(p_sql)
-                self.v_con.commit()
                 self.Close()
             else:
                 self.v_cur.execute(p_sql)
-                self.v_con.commit()
         except Spartacus.Database.Exception as exc:
             raise exc
         except pymssql.Error as exc:
@@ -1948,7 +1881,6 @@ class MSSQL(Generic):
                     s = r[0]
                 else:
                     s = None
-                self.v_con.commit()
                 self.Close()
                 return s
             else:
@@ -1958,7 +1890,6 @@ class MSSQL(Generic):
                     s = r[0]
                 else:
                     s = None
-                self.v_con.commit()
                 return s
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -1968,6 +1899,7 @@ class MSSQL(Generic):
             raise Spartacus.Database.Exception(str(exc))
     def Close(self):
         try:
+            self.v_con.commit()
             self.v_cur.close()
             self.v_cur = None
             self.v_con.close()
@@ -1993,7 +1925,6 @@ class MSSQL(Generic):
                     for c in self.v_cur.description:
                         v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
                         k = k + 1
-                self.v_con.commit()
                 self.Close()
                 return v_fields
             else:
@@ -2010,7 +1941,6 @@ class MSSQL(Generic):
                     for c in self.v_cur.description:
                         v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
                         k = k + 1
-                self.v_con.commit()
                 return v_fields
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -2039,8 +1969,6 @@ class MSSQL(Generic):
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
                     k = k + 1
-                if len(v_table.Rows) == 0:
-                    self.v_con.commit()
                 if self.v_start:
                     self.v_start = False
                 return v_table
@@ -2137,7 +2065,6 @@ class IBMDB2(Generic):
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
-                self.v_con.commit()
                 self.Close()
                 return v_table
             else:
@@ -2154,7 +2081,6 @@ class IBMDB2(Generic):
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
-                self.v_con.commit()
                 return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -2167,11 +2093,9 @@ class IBMDB2(Generic):
             if self.v_con is None:
                 self.Open()
                 self.v_cur.execute(p_sql)
-                self.v_con.commit()
                 self.Close()
             else:
                 self.v_cur.execute(p_sql)
-                self.v_con.commit()
         except Spartacus.Database.Exception as exc:
             raise exc
         except ibm_db_dbi.Error as exc:
@@ -2188,7 +2112,6 @@ class IBMDB2(Generic):
                     s = r[0]
                 else:
                     s = None
-                self.v_con.commit()
                 self.Close()
                 return s
             else:
@@ -2198,7 +2121,6 @@ class IBMDB2(Generic):
                     s = r[0]
                 else:
                     s = None
-                self.v_con.commit()
                 return s
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -2208,6 +2130,7 @@ class IBMDB2(Generic):
             raise Spartacus.Database.Exception(str(exc))
     def Close(self):
         try:
+            self.v_con.commit()
             self.v_cur.close()
             self.v_cur = None
             self.v_con.close()
@@ -2233,7 +2156,6 @@ class IBMDB2(Generic):
                     for c in self.v_cur.description:
                         v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
                         k = k + 1
-                self.v_con.commit()
                 self.Close()
                 return v_fields
             else:
@@ -2250,7 +2172,6 @@ class IBMDB2(Generic):
                     for c in self.v_cur.description:
                         v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
                         k = k + 1
-                self.v_con.commit()
                 return v_fields
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -2279,8 +2200,6 @@ class IBMDB2(Generic):
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
                     k = k + 1
-                if len(v_table.Rows) == 0:
-                    self.v_con.commit()
                 if self.v_start:
                     self.v_start = False
                 return v_table

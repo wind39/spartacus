@@ -269,7 +269,10 @@ class SQLite(Generic):
                     if p_alltypesstr:
                         v_rowtmp = list(v_row)
                         for j in range(0, len(v_table.Columns)):
-                            v_rowtmp[j] = str(v_rowtmp[j])
+                            if v_rowtmp[j]:
+                                v_rowtmp[j] = str(v_rowtmp[j])
+                            else:
+                                v_rowtmp[j] = ''
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
@@ -285,7 +288,10 @@ class SQLite(Generic):
                     if p_alltypesstr:
                         v_rowtmp = list(v_row)
                         for j in range(0, len(v_table.Columns)):
-                            v_rowtmp[j] = str(v_rowtmp[j])
+                            if v_rowtmp[j]:
+                                v_rowtmp[j] = str(v_rowtmp[j])
+                            else:
+                                v_rowtmp[j] = ''
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
@@ -403,7 +409,10 @@ class SQLite(Generic):
                     if p_alltypesstr:
                         v_rowtmp = list(v_row)
                         for j in range(0, len(v_table.Columns)):
-                            v_rowtmp[j] = str(v_rowtmp[j])
+                            if v_rowtmp[j]:
+                                v_rowtmp[j] = str(v_rowtmp[j])
+                            else:
+                                v_rowtmp[j] = ''
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
@@ -494,7 +503,10 @@ class Memory(Generic):
                     if p_alltypesstr:
                         v_rowtmp = list(v_row)
                         for j in range(0, len(v_table.Columns)):
-                            v_rowtmp[j] = str(v_rowtmp[j])
+                            if v_rowtmp[j]:
+                                v_rowtmp[j] = str(v_rowtmp[j])
+                            else:
+                                v_rowtmp[j] = ''
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
@@ -510,7 +522,10 @@ class Memory(Generic):
                     if p_alltypesstr:
                         v_rowtmp = list(v_row)
                         for j in range(0, len(v_table.Columns)):
-                            v_rowtmp[j] = str(v_rowtmp[j])
+                            if v_rowtmp[j]:
+                                v_rowtmp[j] = str(v_rowtmp[j])
+                            else:
+                                v_rowtmp[j] = ''
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
@@ -628,7 +643,10 @@ class Memory(Generic):
                     if p_alltypesstr:
                         v_rowtmp = list(v_row)
                         for j in range(0, len(v_table.Columns)):
-                            v_rowtmp[j] = str(v_rowtmp[j])
+                            if v_rowtmp[j]:
+                                v_rowtmp[j] = str(v_rowtmp[j])
+                            else:
+                                v_rowtmp[j] = ''
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
@@ -732,7 +750,10 @@ class PostgreSQL(Generic):
                 if p_alltypesstr:
                     for i in range(0, len(v_table.Rows)):
                         for j in range(0, len(v_table.Columns)):
-                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                            if v_table.Rows[i][j]:
+                                v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                            else:
+                                v_table.Rows[i][j] = ''
                 self.Close()
                 return v_table
             else:
@@ -744,7 +765,10 @@ class PostgreSQL(Generic):
                 if p_alltypesstr:
                     for i in range(0, len(v_table.Rows)):
                         for j in range(0, len(v_table.Columns)):
-                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                            if v_table.Rows[i][j]:
+                                v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                            else:
+                                v_table.Rows[i][j] = ''
                 return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -857,7 +881,10 @@ class PostgreSQL(Generic):
                 if p_alltypesstr:
                     for i in range(0, len(v_table.Rows)):
                         for j in range(0, len(v_table.Columns)):
-                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                            if v_table.Rows[i][j]:
+                                v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                            else:
+                                v_table.Rows[i][j] = ''
                 if self.v_start:
                     self.v_start = False
                 return v_table
@@ -946,7 +973,10 @@ class MySQL(Generic):
                 if p_alltypesstr:
                     for i in range(0, len(v_table.Rows)):
                         for j in range(0, len(v_table.Columns)):
-                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                            if v_table.Rows[i][j]:
+                                v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                            else:
+                                v_table.Rows[i][j] = ''
                 self.Close()
                 return v_table
             else:
@@ -958,7 +988,10 @@ class MySQL(Generic):
                 if p_alltypesstr:
                     for i in range(0, len(v_table.Rows)):
                         for j in range(0, len(v_table.Columns)):
-                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                            if v_table.Rows[i][j]:
+                                v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                            else:
+                                v_table.Rows[i][j] = ''
                 return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -1071,7 +1104,10 @@ class MySQL(Generic):
                 if p_alltypesstr:
                     for i in range(0, len(v_table.Rows)):
                         for j in range(0, len(v_table.Columns)):
-                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                            if v_table.Rows[i][j]:
+                                v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                            else:
+                                v_table.Rows[i][j] = ''
                 if self.v_start:
                     self.v_start = False
                 return v_table
@@ -1160,7 +1196,10 @@ class MariaDB(Generic):
                 if p_alltypesstr:
                     for i in range(0, len(v_table.Rows)):
                         for j in range(0, len(v_table.Columns)):
-                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                            if v_table.Rows[i][j]:
+                                v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                            else:
+                                v_table.Rows[i][j] = ''
                 self.Close()
                 return v_table
             else:
@@ -1172,7 +1211,10 @@ class MariaDB(Generic):
                 if p_alltypesstr:
                     for i in range(0, len(v_table.Rows)):
                         for j in range(0, len(v_table.Columns)):
-                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                            if v_table.Rows[i][j]:
+                                v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                            else:
+                                v_table.Rows[i][j] = ''
                 return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -1285,7 +1327,10 @@ class MariaDB(Generic):
                 if p_alltypesstr:
                     for i in range(0, len(v_table.Rows)):
                         for j in range(0, len(v_table.Columns)):
-                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                            if v_table.Rows[i][j]:
+                                v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                            else:
+                                v_table.Rows[i][j] = ''
                 if self.v_start:
                     self.v_start = False
                 return v_table
@@ -1374,7 +1419,10 @@ class Firebird(Generic):
                     if p_alltypesstr:
                         v_rowtmp = list(v_row)
                         for j in range(0, len(v_table.Columns)):
-                            v_rowtmp[j] = str(v_rowtmp[j])
+                            if v_rowtmp[j]:
+                                v_rowtmp[j] = str(v_rowtmp[j])
+                            else:
+                                v_rowtmp[j] = ''
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
@@ -1390,7 +1438,10 @@ class Firebird(Generic):
                     if p_alltypesstr:
                         v_rowtmp = list(v_row)
                         for j in range(0, len(v_table.Columns)):
-                            v_rowtmp[j] = str(v_rowtmp[j])
+                            if v_rowtmp[j]:
+                                v_rowtmp[j] = str(v_rowtmp[j])
+                            else:
+                                v_rowtmp[j] = ''
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
@@ -1508,7 +1559,10 @@ class Firebird(Generic):
                     if p_alltypesstr:
                         v_rowtmp = list(v_row)
                         for j in range(0, len(v_table.Columns)):
-                            v_rowtmp[j] = str(v_rowtmp[j])
+                            if v_rowtmp[j]:
+                                v_rowtmp[j] = str(v_rowtmp[j])
+                            else:
+                                v_rowtmp[j] = ''
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
@@ -1602,7 +1656,10 @@ class Oracle(Generic):
                     if p_alltypesstr:
                         v_rowtmp = list(v_row)
                         for j in range(0, len(v_table.Columns)):
-                            v_rowtmp[j] = str(v_rowtmp[j])
+                            if v_rowtmp[j]:
+                                v_rowtmp[j] = str(v_rowtmp[j])
+                            else:
+                                v_rowtmp[j] = ''
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
@@ -1618,7 +1675,10 @@ class Oracle(Generic):
                     if p_alltypesstr:
                         v_rowtmp = list(v_row)
                         for j in range(0, len(v_table.Columns)):
-                            v_rowtmp[j] = str(v_rowtmp[j])
+                            if v_rowtmp[j]:
+                                v_rowtmp[j] = str(v_rowtmp[j])
+                            else:
+                                v_rowtmp[j] = ''
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
@@ -1736,7 +1796,10 @@ class Oracle(Generic):
                     if p_alltypesstr:
                         v_rowtmp = list(v_row)
                         for j in range(0, len(v_table.Columns)):
-                            v_rowtmp[j] = str(v_rowtmp[j])
+                            if v_rowtmp[j]:
+                                v_rowtmp[j] = str(v_rowtmp[j])
+                            else:
+                                v_rowtmp[j] = ''
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
@@ -1830,7 +1893,10 @@ class MSSQL(Generic):
                     if p_alltypesstr:
                         v_rowtmp = list(v_row)
                         for j in range(0, len(v_table.Columns)):
-                            v_rowtmp[j] = str(v_rowtmp[j])
+                            if v_rowtmp[j]:
+                                v_rowtmp[j] = str(v_rowtmp[j])
+                            else:
+                                v_rowtmp[j] = ''
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
@@ -1846,7 +1912,10 @@ class MSSQL(Generic):
                     if p_alltypesstr:
                         v_rowtmp = list(v_row)
                         for j in range(0, len(v_table.Columns)):
-                            v_rowtmp[j] = str(v_rowtmp[j])
+                            if v_rowtmp[j]:
+                                v_rowtmp[j] = str(v_rowtmp[j])
+                            else:
+                                v_rowtmp[j] = ''
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
@@ -1964,7 +2033,10 @@ class MSSQL(Generic):
                     if p_alltypesstr:
                         v_rowtmp = list(v_row)
                         for j in range(0, len(v_table.Columns)):
-                            v_rowtmp[j] = str(v_rowtmp[j])
+                            if v_rowtmp[j]:
+                                v_rowtmp[j] = str(v_rowtmp[j])
+                            else:
+                                v_rowtmp[j] = ''
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
@@ -2061,7 +2133,10 @@ class IBMDB2(Generic):
                     if p_alltypesstr:
                         v_rowtmp = list(v_row)
                         for j in range(0, len(v_table.Columns)):
-                            v_rowtmp[j] = str(v_rowtmp[j])
+                            if v_rowtmp[j]:
+                                v_rowtmp[j] = str(v_rowtmp[j])
+                            else:
+                                v_rowtmp[j] = ''
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
@@ -2077,7 +2152,10 @@ class IBMDB2(Generic):
                     if p_alltypesstr:
                         v_rowtmp = list(v_row)
                         for j in range(0, len(v_table.Columns)):
-                            v_rowtmp[j] = str(v_rowtmp[j])
+                            if v_rowtmp[j]:
+                                v_rowtmp[j] = str(v_rowtmp[j])
+                            else:
+                                v_rowtmp[j] = ''
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()
@@ -2195,7 +2273,10 @@ class IBMDB2(Generic):
                     if p_alltypesstr:
                         v_rowtmp = list(v_row)
                         for j in range(0, len(v_table.Columns)):
-                            v_rowtmp[j] = str(v_rowtmp[j])
+                            if v_rowtmp[j]:
+                                v_rowtmp[j] = str(v_rowtmp[j])
+                            else:
+                                v_rowtmp[j] = ''
                         v_row = tuple(v_rowtmp)
                     v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                     v_row = self.v_cur.fetchone()

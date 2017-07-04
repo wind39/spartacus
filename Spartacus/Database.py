@@ -735,6 +735,7 @@ class PostgreSQL(Generic):
                 s = r[0]
             else:
                 s = None
+            return s
         except Spartacus.Database.Exception as exc:
             raise exc
         except psycopg2.Error as exc:

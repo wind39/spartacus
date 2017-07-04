@@ -260,95 +260,84 @@ class SQLite(Generic):
         try:
             if self.v_con is None:
                 self.Open()
-                self.v_cur.execute(p_sql)
-                v_table = DataTable()
-                for c in self.v_cur.description:
-                    v_table.Columns.append(c[0])
-                v_row = self.v_cur.fetchone()
-                while v_row is not None:
-                    if p_alltypesstr:
-                        v_rowtmp = list(v_row)
-                        for j in range(0, len(v_table.Columns)):
-                            if v_rowtmp[j]:
-                                v_rowtmp[j] = str(v_rowtmp[j])
-                            else:
-                                v_rowtmp[j] = ''
-                        v_row = tuple(v_rowtmp)
-                    v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
-                    v_row = self.v_cur.fetchone()
-                self.Close()
-                return v_table
+                v_keep = False
             else:
-                self.v_cur.execute(p_sql)
-                v_table = DataTable()
-                for c in self.v_cur.description:
-                    v_table.Columns.append(c[0])
+                v_keep = True
+            self.v_cur.execute(p_sql)
+            v_table = DataTable()
+            for c in self.v_cur.description:
+                v_table.Columns.append(c[0])
+            v_row = self.v_cur.fetchone()
+            while v_row is not None:
+                if p_alltypesstr:
+                    v_rowtmp = list(v_row)
+                    for j in range(0, len(v_table.Columns)):
+                        if v_rowtmp[j]:
+                            v_rowtmp[j] = str(v_rowtmp[j])
+                        else:
+                            v_rowtmp[j] = ''
+                    v_row = tuple(v_rowtmp)
+                v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                 v_row = self.v_cur.fetchone()
-                while v_row is not None:
-                    if p_alltypesstr:
-                        v_rowtmp = list(v_row)
-                        for j in range(0, len(v_table.Columns)):
-                            if v_rowtmp[j]:
-                                v_rowtmp[j] = str(v_rowtmp[j])
-                            else:
-                                v_rowtmp[j] = ''
-                        v_row = tuple(v_rowtmp)
-                    v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
-                    v_row = self.v_cur.fetchone()
-                return v_table
+            return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
         except sqlite3.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def Execute(self, p_sql):
         try:
             if self.v_con is None:
                 self.Open()
-                self.v_cur.execute(p_sql)
-                self.Close()
+                v_keep = False
             else:
-                self.v_cur.execute(p_sql)
+                v_keep = True
+            self.v_cur.execute(p_sql)
         except Spartacus.Database.Exception as exc:
             raise exc
         except sqlite3.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def ExecuteScalar(self, p_sql):
         try:
             if self.v_con is None:
                 self.Open()
-                self.v_cur.execute(p_sql)
-                r = self.v_cur.fetchone()
-                if r != None:
-                    s = r[0]
-                else:
-                    s = None
-                self.Close()
-                return s
+                v_keep = False
             else:
-                self.v_cur.execute(p_sql)
-                r = self.v_cur.fetchone()
-                if r != None:
-                    s = r[0]
-                else:
-                    s = None
-                return s
+                v_keep = True
+            self.v_cur.execute(p_sql)
+            r = self.v_cur.fetchone()
+            if r != None:
+                s = r[0]
+            else:
+                s = None
+            return s
         except Spartacus.Database.Exception as exc:
             raise exc
         except sqlite3.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def Close(self):
         try:
-            self.v_con.commit()
-            self.v_cur.close()
-            self.v_cur = None
-            self.v_con.close()
-            self.v_con = None
+            if self.v_con:
+                self.v_con.commit()
+                if self.v_cur:
+                    self.v_cur.close()
+                    self.v_cur = None
+                self.v_con.close()
+                self.v_con = None
         except sqlite3.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
@@ -356,43 +345,33 @@ class SQLite(Generic):
     def GetFields(self, p_sql):
         try:
             if self.v_con is None:
-                v_fields = []
                 self.Open()
-                self.v_cur.execute('select * from ( ' + p_sql + ' ) t limit 1')
-                r = self.v_cur.fetchone()
-                if r != None:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
-                        k = k + 1
-                else:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
-                        k = k + 1
-                self.Close()
-                return v_fields
+                v_keep = False
             else:
-                v_fields = []
-                self.v_cur.execute('select * from ( ' + p_sql + ' ) t limit 1')
-                r = self.v_cur.fetchone()
-                if r != None:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
-                        k = k + 1
-                else:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
-                        k = k + 1
-                return v_fields
+                v_keep = True
+            v_fields = []
+            self.v_cur.execute('select * from ( ' + p_sql + ' ) t limit 1')
+            r = self.v_cur.fetchone()
+            if r != None:
+                k = 0
+                for c in self.v_cur.description:
+                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
+                    k = k + 1
+            else:
+                k = 0
+                for c in self.v_cur.description:
+                    v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
+                    k = k + 1
+            return v_fields
         except Spartacus.Database.Exception as exc:
             raise exc
         except sqlite3.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def QueryBlock(self, p_sql, p_blocksize, p_alltypesstr=False):
         try:
             if self.v_con is None:
@@ -493,25 +472,7 @@ class Memory(Generic):
     def Query(self, p_sql, p_alltypesstr=False):
         try:
             if self.v_con is None:
-                self.Open()
-                self.v_cur.execute(p_sql)
-                v_table = DataTable()
-                for c in self.v_cur.description:
-                    v_table.Columns.append(c[0])
-                v_row = self.v_cur.fetchone()
-                while v_row is not None:
-                    if p_alltypesstr:
-                        v_rowtmp = list(v_row)
-                        for j in range(0, len(v_table.Columns)):
-                            if v_rowtmp[j]:
-                                v_rowtmp[j] = str(v_rowtmp[j])
-                            else:
-                                v_rowtmp[j] = ''
-                        v_row = tuple(v_rowtmp)
-                    v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
-                    v_row = self.v_cur.fetchone()
-                self.Close()
-                return v_table
+                raise Spartacus.Database.Exception('This method should be called in the middle of Open() and Close() calls.')
             else:
                 self.v_cur.execute(p_sql)
                 v_table = DataTable()
@@ -539,9 +500,7 @@ class Memory(Generic):
     def Execute(self, p_sql):
         try:
             if self.v_con is None:
-                self.Open()
-                self.v_cur.execute(p_sql)
-                self.Close()
+                raise Spartacus.Database.Exception('This method should be called in the middle of Open() and Close() calls.')
             else:
                 self.v_cur.execute(p_sql)
         except Spartacus.Database.Exception as exc:
@@ -553,15 +512,7 @@ class Memory(Generic):
     def ExecuteScalar(self, p_sql):
         try:
             if self.v_con is None:
-                self.Open()
-                self.v_cur.execute(p_sql)
-                r = self.v_cur.fetchone()
-                if r != None:
-                    s = r[0]
-                else:
-                    s = None
-                self.Close()
-                return s
+                raise Spartacus.Database.Exception('This method should be called in the middle of Open() and Close() calls.')
             else:
                 self.v_cur.execute(p_sql)
                 r = self.v_cur.fetchone()
@@ -578,11 +529,13 @@ class Memory(Generic):
             raise Spartacus.Database.Exception(str(exc))
     def Close(self):
         try:
-            self.v_con.commit()
-            self.v_cur.close()
-            self.v_cur = None
-            self.v_con.close()
-            self.v_con = None
+            if self.v_con:
+                self.v_con.commit()
+                if self.v_cur:
+                    self.v_cur.close()
+                    self.v_cur = None
+                self.v_con.close()
+                self.v_con = None
         except sqlite3.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
@@ -590,22 +543,7 @@ class Memory(Generic):
     def GetFields(self, p_sql):
         try:
             if self.v_con is None:
-                v_fields = []
-                self.Open()
-                self.v_cur.execute('select * from ( ' + p_sql + ' ) t limit 1')
-                r = self.v_cur.fetchone()
-                if r != None:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
-                        k = k + 1
-                else:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
-                        k = k + 1
-                self.Close()
-                return v_fields
+                raise Spartacus.Database.Exception('This method should be called in the middle of Open() and Close() calls.')
             else:
                 v_fields = []
                 self.v_cur.execute('select * from ( ' + p_sql + ' ) t limit 1')
@@ -742,87 +680,79 @@ class PostgreSQL(Generic):
         try:
             if self.v_con is None:
                 self.Open()
-                self.v_cur.execute(p_sql)
-                v_table = DataTable()
-                for c in self.v_cur.description:
-                    v_table.Columns.append(c[0])
-                v_table.Rows = self.v_cur.fetchall()
-                if p_alltypesstr:
-                    for i in range(0, len(v_table.Rows)):
-                        for j in range(0, len(v_table.Columns)):
-                            if v_table.Rows[i][j]:
-                                v_table.Rows[i][j] = str(v_table.Rows[i][j])
-                            else:
-                                v_table.Rows[i][j] = ''
-                self.Close()
-                return v_table
+                v_keep = False
             else:
-                self.v_cur.execute(p_sql)
-                v_table = DataTable()
-                for c in self.v_cur.description:
-                    v_table.Columns.append(c[0])
-                v_table.Rows = self.v_cur.fetchall()
-                if p_alltypesstr:
-                    for i in range(0, len(v_table.Rows)):
-                        for j in range(0, len(v_table.Columns)):
-                            if v_table.Rows[i][j]:
-                                v_table.Rows[i][j] = str(v_table.Rows[i][j])
-                            else:
-                                v_table.Rows[i][j] = ''
-                return v_table
+                v_keep = True
+            self.v_cur.execute(p_sql)
+            v_table = DataTable()
+            for c in self.v_cur.description:
+                v_table.Columns.append(c[0])
+            v_table.Rows = self.v_cur.fetchall()
+            if p_alltypesstr:
+                for i in range(0, len(v_table.Rows)):
+                    for j in range(0, len(v_table.Columns)):
+                        if v_table.Rows[i][j]:
+                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                        else:
+                            v_table.Rows[i][j] = ''
+            return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
         except psycopg2.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def Execute(self, p_sql):
         try:
             if self.v_con is None:
                 self.Open(True)
-                self.v_cur.execute(p_sql)
-                self.Close()
+                v_keep = False
             else:
-                self.v_cur.execute(p_sql)
+                v_keep = True
+            self.v_cur.execute(p_sql)
         except Spartacus.Database.Exception as exc:
             raise exc
         except psycopg2.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def ExecuteScalar(self, p_sql):
         try:
             if self.v_con is None:
                 self.Open()
-                self.v_cur.execute(p_sql)
-                r = self.v_cur.fetchone()
-                if r != None:
-                    s = r[0]
-                else:
-                    s = None
-                self.Close()
-                return s
+                v_keep = False
             else:
-                self.v_cur.execute(p_sql)
-                r = self.v_cur.fetchone()
-                if r != None:
-                    s = r[0]
-                else:
-                    s = None
-                return s
+                v_keep = True
+            self.v_cur.execute(p_sql)
+            r = self.v_cur.fetchone()
+            if r != None:
+                s = r[0]
+            else:
+                s = None
         except Spartacus.Database.Exception as exc:
             raise exc
         except psycopg2.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def Close(self):
         try:
-            self.v_con.commit()
-            self.v_cur.close()
-            self.v_cur = None
-            self.v_con.close()
-            self.v_con = None
+            if self.v_con:
+                self.v_con.commit()
+                if self.v_cur:
+                    self.v_cur.close()
+                    self.v_cur = None
+                self.v_con.close()
+                self.v_con = None
         except psycopg2.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
@@ -830,43 +760,33 @@ class PostgreSQL(Generic):
     def GetFields(self, p_sql):
         try:
             if self.v_con is None:
-                v_fields = []
                 self.Open()
-                self.v_cur.execute('select * from ( ' + p_sql + ' ) t limit 1')
-                r = self.v_cur.fetchone()
-                if r != None:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=self.v_types[c[1]]))
-                        k = k + 1
-                else:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=self.v_types[c[1]]))
-                        k = k + 1
-                self.Close()
-                return v_fields
+                v_keep = False
             else:
-                v_fields = []
-                self.v_cur.execute('select * from ( ' + p_sql + ' ) t limit 1')
-                r = self.v_cur.fetchone()
-                if r != None:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=self.v_types[c[1]]))
-                        k = k + 1
-                else:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=self.v_types[c[1]]))
-                        k = k + 1
-                return v_fields
+                v_keep = True
+            v_fields = []
+            self.v_cur.execute('select * from ( ' + p_sql + ' ) t limit 1')
+            r = self.v_cur.fetchone()
+            if r != None:
+                k = 0
+                for c in self.v_cur.description:
+                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=self.v_types[c[1]]))
+                    k = k + 1
+            else:
+                k = 0
+                for c in self.v_cur.description:
+                    v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=self.v_types[c[1]]))
+                    k = k + 1
+            return v_fields
         except Spartacus.Database.Exception as exc:
             raise exc
         except psycopg2.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def QueryBlock(self, p_sql, p_blocksize, p_alltypesstr=False):
         try:
             if self.v_con is None:
@@ -965,87 +885,80 @@ class MySQL(Generic):
         try:
             if self.v_con is None:
                 self.Open()
-                self.v_cur.execute(p_sql)
-                v_table = DataTable()
-                for c in self.v_cur.description:
-                    v_table.Columns.append(c[0])
-                v_table.Rows = self.v_cur.fetchall()
-                if p_alltypesstr:
-                    for i in range(0, len(v_table.Rows)):
-                        for j in range(0, len(v_table.Columns)):
-                            if v_table.Rows[i][j]:
-                                v_table.Rows[i][j] = str(v_table.Rows[i][j])
-                            else:
-                                v_table.Rows[i][j] = ''
-                self.Close()
-                return v_table
+                v_keep = False
             else:
-                self.v_cur.execute(p_sql)
-                v_table = DataTable()
-                for c in self.v_cur.description:
-                    v_table.Columns.append(c[0])
-                v_table.Rows = self.v_cur.fetchall()
-                if p_alltypesstr:
-                    for i in range(0, len(v_table.Rows)):
-                        for j in range(0, len(v_table.Columns)):
-                            if v_table.Rows[i][j]:
-                                v_table.Rows[i][j] = str(v_table.Rows[i][j])
-                            else:
-                                v_table.Rows[i][j] = ''
-                return v_table
+                v_keep = True
+            self.v_cur.execute(p_sql)
+            v_table = DataTable()
+            for c in self.v_cur.description:
+                v_table.Columns.append(c[0])
+            v_table.Rows = self.v_cur.fetchall()
+            if p_alltypesstr:
+                for i in range(0, len(v_table.Rows)):
+                    for j in range(0, len(v_table.Columns)):
+                        if v_table.Rows[i][j]:
+                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                        else:
+                            v_table.Rows[i][j] = ''
+            return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
         except pymysql.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def Execute(self, p_sql):
         try:
             if self.v_con is None:
                 self.Open()
-                self.v_cur.execute(p_sql)
-                self.Close()
+                v_keep = False
             else:
-                self.v_cur.execute(p_sql)
+                v_keep = True
+            self.v_cur.execute(p_sql)
         except Spartacus.Database.Exception as exc:
             raise exc
         except pymysql.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def ExecuteScalar(self, p_sql):
         try:
             if self.v_con is None:
                 self.Open()
-                self.v_cur.execute(p_sql)
-                r = self.v_cur.fetchone()
-                if r != None:
-                    s = r[0]
-                else:
-                    s = None
-                self.Close()
-                return s
+                v_keep = False
             else:
-                self.v_cur.execute(p_sql)
-                r = self.v_cur.fetchone()
-                if r != None:
-                    s = r[0]
-                else:
-                    s = None
-                return s
+                v_keep = True
+            self.v_cur.execute(p_sql)
+            r = self.v_cur.fetchone()
+            if r != None:
+                s = r[0]
+            else:
+                s = None
+            return s
         except Spartacus.Database.Exception as exc:
             raise exc
         except pymysql.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def Close(self):
         try:
-            self.v_con.commit()
-            self.v_cur.close()
-            self.v_cur = None
-            self.v_con.close()
-            self.v_con = None
+            if self.v_con:
+                self.v_con.commit()
+                if self.v_cur:
+                    self.v_cur.close()
+                    self.v_cur = None
+                self.v_con.close()
+                self.v_con = None
         except pymysql.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
@@ -1053,43 +966,33 @@ class MySQL(Generic):
     def GetFields(self, p_sql):
         try:
             if self.v_con is None:
-                v_fields = []
                 self.Open()
-                self.v_cur.execute('select * from ( ' + p_sql + ' ) t limit 1')
-                r = self.v_cur.fetchone()
-                if r != None:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
-                        k = k + 1
-                else:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
-                        k = k + 1
-                self.Close()
-                return v_fields
+                v_keep = False
             else:
-                v_fields = []
-                self.v_cur.execute('select * from ( ' + p_sql + ' ) t limit 1')
-                r = self.v_cur.fetchone()
-                if r != None:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
-                        k = k + 1
-                else:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
-                        k = k + 1
-                return v_fields
+                v_keep = True
+            v_fields = []
+            self.v_cur.execute('select * from ( ' + p_sql + ' ) t limit 1')
+            r = self.v_cur.fetchone()
+            if r != None:
+                k = 0
+                for c in self.v_cur.description:
+                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
+                    k = k + 1
+            else:
+                k = 0
+                for c in self.v_cur.description:
+                    v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
+                    k = k + 1
+            return v_fields
         except Spartacus.Database.Exception as exc:
             raise exc
         except pymysql.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def QueryBlock(self, p_sql, p_blocksize, p_alltypesstr=False):
         try:
             if self.v_con is None:
@@ -1188,87 +1091,80 @@ class MariaDB(Generic):
         try:
             if self.v_con is None:
                 self.Open()
-                self.v_cur.execute(p_sql)
-                v_table = DataTable()
-                for c in self.v_cur.description:
-                    v_table.Columns.append(c[0])
-                v_table.Rows = self.v_cur.fetchall()
-                if p_alltypesstr:
-                    for i in range(0, len(v_table.Rows)):
-                        for j in range(0, len(v_table.Columns)):
-                            if v_table.Rows[i][j]:
-                                v_table.Rows[i][j] = str(v_table.Rows[i][j])
-                            else:
-                                v_table.Rows[i][j] = ''
-                self.Close()
-                return v_table
+                v_keep = False
             else:
-                self.v_cur.execute(p_sql)
-                v_table = DataTable()
-                for c in self.v_cur.description:
-                    v_table.Columns.append(c[0])
-                v_table.Rows = self.v_cur.fetchall()
-                if p_alltypesstr:
-                    for i in range(0, len(v_table.Rows)):
-                        for j in range(0, len(v_table.Columns)):
-                            if v_table.Rows[i][j]:
-                                v_table.Rows[i][j] = str(v_table.Rows[i][j])
-                            else:
-                                v_table.Rows[i][j] = ''
-                return v_table
+                v_keep = True
+            self.v_cur.execute(p_sql)
+            v_table = DataTable()
+            for c in self.v_cur.description:
+                v_table.Columns.append(c[0])
+            v_table.Rows = self.v_cur.fetchall()
+            if p_alltypesstr:
+                for i in range(0, len(v_table.Rows)):
+                    for j in range(0, len(v_table.Columns)):
+                        if v_table.Rows[i][j]:
+                            v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                        else:
+                            v_table.Rows[i][j] = ''
+            return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
         except pymysql.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def Execute(self, p_sql):
         try:
             if self.v_con is None:
                 self.Open()
-                self.v_cur.execute(p_sql)
-                self.Close()
+                v_keep = False
             else:
-                self.v_cur.execute(p_sql)
+                v_keep = True
+            self.v_cur.execute(p_sql)
         except Spartacus.Database.Exception as exc:
             raise exc
         except pymysql.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def ExecuteScalar(self, p_sql):
         try:
             if self.v_con is None:
                 self.Open()
-                self.v_cur.execute(p_sql)
-                r = self.v_cur.fetchone()
-                if r != None:
-                    s = r[0]
-                else:
-                    s = None
-                self.Close()
-                return s
+                v_keep = False
             else:
-                self.v_cur.execute(p_sql)
-                r = self.v_cur.fetchone()
-                if r != None:
-                    s = r[0]
-                else:
-                    s = None
-                return s
+                v_keep = True
+            self.v_cur.execute(p_sql)
+            r = self.v_cur.fetchone()
+            if r != None:
+                s = r[0]
+            else:
+                s = None
+            return s
         except Spartacus.Database.Exception as exc:
             raise exc
         except pymysql.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def Close(self):
         try:
-            self.v_con.commit()
-            self.v_cur.close()
-            self.v_cur = None
-            self.v_con.close()
-            self.v_con = None
+            if self.v_con:
+                self.v_con.commit()
+                if self.v_cur:
+                    self.v_cur.close()
+                    self.v_cur = None
+                self.v_con.close()
+                self.v_con = None
         except pymysql.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
@@ -1276,43 +1172,33 @@ class MariaDB(Generic):
     def GetFields(self, p_sql):
         try:
             if self.v_con is None:
-                v_fields = []
                 self.Open()
-                self.v_cur.execute('select * from ( ' + p_sql + ' ) t limit 1')
-                r = self.v_cur.fetchone()
-                if r != None:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
-                        k = k + 1
-                else:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
-                        k = k + 1
-                self.Close()
-                return v_fields
+                v_keep = False
             else:
-                v_fields = []
-                self.v_cur.execute('select * from ( ' + p_sql + ' ) t limit 1')
-                r = self.v_cur.fetchone()
-                if r != None:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
-                        k = k + 1
-                else:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
-                        k = k + 1
-                return v_fields
+                v_keep = True
+            v_fields = []
+            self.v_cur.execute('select * from ( ' + p_sql + ' ) t limit 1')
+            r = self.v_cur.fetchone()
+            if r != None:
+                k = 0
+                for c in self.v_cur.description:
+                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
+                    k = k + 1
+            else:
+                k = 0
+                for c in self.v_cur.description:
+                    v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
+                    k = k + 1
+            return v_fields
         except Spartacus.Database.Exception as exc:
             raise exc
         except pymysql.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def QueryBlock(self, p_sql, p_blocksize, p_alltypesstr=False):
         try:
             if self.v_con is None:
@@ -1410,95 +1296,84 @@ class Firebird(Generic):
         try:
             if self.v_con is None:
                 self.Open()
-                self.v_cur.execute(p_sql)
-                v_table = DataTable()
-                for c in self.v_cur.description:
-                    v_table.Columns.append(c[0])
-                v_row = self.v_cur.fetchone()
-                while v_row is not None:
-                    if p_alltypesstr:
-                        v_rowtmp = list(v_row)
-                        for j in range(0, len(v_table.Columns)):
-                            if v_rowtmp[j]:
-                                v_rowtmp[j] = str(v_rowtmp[j])
-                            else:
-                                v_rowtmp[j] = ''
-                        v_row = tuple(v_rowtmp)
-                    v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
-                    v_row = self.v_cur.fetchone()
-                self.Close()
-                return v_table
+                v_keep = False
             else:
-                self.v_cur.execute(p_sql)
-                v_table = DataTable()
-                for c in self.v_cur.description:
-                    v_table.Columns.append(c[0])
+                v_keep = True
+            self.v_cur.execute(p_sql)
+            v_table = DataTable()
+            for c in self.v_cur.description:
+                v_table.Columns.append(c[0])
+            v_row = self.v_cur.fetchone()
+            while v_row is not None:
+                if p_alltypesstr:
+                    v_rowtmp = list(v_row)
+                    for j in range(0, len(v_table.Columns)):
+                        if v_rowtmp[j]:
+                            v_rowtmp[j] = str(v_rowtmp[j])
+                        else:
+                            v_rowtmp[j] = ''
+                    v_row = tuple(v_rowtmp)
+                v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                 v_row = self.v_cur.fetchone()
-                while v_row is not None:
-                    if p_alltypesstr:
-                        v_rowtmp = list(v_row)
-                        for j in range(0, len(v_table.Columns)):
-                            if v_rowtmp[j]:
-                                v_rowtmp[j] = str(v_rowtmp[j])
-                            else:
-                                v_rowtmp[j] = ''
-                        v_row = tuple(v_rowtmp)
-                    v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
-                    v_row = self.v_cur.fetchone()
-                return v_table
+            return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
         except fdb.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def Execute(self, p_sql):
         try:
             if self.v_con is None:
                 self.Open()
-                self.v_cur.execute(p_sql)
-                self.Close()
+                v_keep = False
             else:
-                self.v_cur.execute(p_sql)
+                v_keep = True
+            self.v_cur.execute(p_sql)
         except Spartacus.Database.Exception as exc:
             raise exc
         except fdb.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def ExecuteScalar(self, p_sql):
         try:
             if self.v_con is None:
                 self.Open()
-                self.v_cur.execute(p_sql)
-                r = self.v_cur.fetchone()
-                if r != None:
-                    s = r[0]
-                else:
-                    s = None
-                self.Close()
-                return s
+                v_keep = False
             else:
-                self.v_cur.execute(p_sql)
-                r = self.v_cur.fetchone()
-                if r != None:
-                    s = r[0]
-                else:
-                    s = None
-                return s
+                v_keep = True
+            self.v_cur.execute(p_sql)
+            r = self.v_cur.fetchone()
+            if r != None:
+                s = r[0]
+            else:
+                s = None
+            return s
         except Spartacus.Database.Exception as exc:
             raise exc
         except fdb.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def Close(self):
         try:
-            self.v_con.commit()
-            self.v_cur.close()
-            self.v_cur = None
-            self.v_con.close()
-            self.v_con = None
+            if self.v_con:
+                self.v_con.commit()
+                if self.v_cur:
+                    self.v_cur.close()
+                    self.v_cur = None
+                self.v_con.close()
+                self.v_con = None
         except fdb.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
@@ -1506,43 +1381,33 @@ class Firebird(Generic):
     def GetFields(self, p_sql):
         try:
             if self.v_con is None:
-                v_fields = []
                 self.Open()
-                self.v_cur.execute('select first 1 * from ( ' + p_sql + ' )')
-                r = self.v_cur.fetchone()
-                if r != None:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
-                        k = k + 1
-                else:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
-                        k = k + 1
-                self.Close()
-                return v_fields
+                v_keep = False
             else:
-                v_fields = []
-                self.v_cur.execute('select first 1 * from ( ' + p_sql + ' )')
-                r = self.v_cur.fetchone()
-                if r != None:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
-                        k = k + 1
-                else:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
-                        k = k + 1
-                return v_fields
+                v_keep = True
+            v_fields = []
+            self.v_cur.execute('select first 1 * from ( ' + p_sql + ' )')
+            r = self.v_cur.fetchone()
+            if r != None:
+                k = 0
+                for c in self.v_cur.description:
+                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
+                    k = k + 1
+            else:
+                k = 0
+                for c in self.v_cur.description:
+                    v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
+                    k = k + 1
+            return v_fields
         except Spartacus.Database.Exception as exc:
             raise exc
         except fdb.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def QueryBlock(self, p_sql, p_blocksize, p_alltypesstr=False):
         try:
             if self.v_con is None:
@@ -1647,95 +1512,84 @@ class Oracle(Generic):
         try:
             if self.v_con is None:
                 self.Open()
-                self.v_cur.execute(p_sql)
-                v_table = DataTable()
-                for c in self.v_cur.description:
-                    v_table.Columns.append(c[0])
-                v_row = self.v_cur.fetchone()
-                while v_row is not None:
-                    if p_alltypesstr:
-                        v_rowtmp = list(v_row)
-                        for j in range(0, len(v_table.Columns)):
-                            if v_rowtmp[j]:
-                                v_rowtmp[j] = str(v_rowtmp[j])
-                            else:
-                                v_rowtmp[j] = ''
-                        v_row = tuple(v_rowtmp)
-                    v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
-                    v_row = self.v_cur.fetchone()
-                self.Close()
-                return v_table
+                v_keep = False
             else:
-                self.v_cur.execute(p_sql)
-                v_table = DataTable()
-                for c in self.v_cur.description:
-                    v_table.Columns.append(c[0])
+                v_keep = True
+            self.v_cur.execute(p_sql)
+            v_table = DataTable()
+            for c in self.v_cur.description:
+                v_table.Columns.append(c[0])
+            v_row = self.v_cur.fetchone()
+            while v_row is not None:
+                if p_alltypesstr:
+                    v_rowtmp = list(v_row)
+                    for j in range(0, len(v_table.Columns)):
+                        if v_rowtmp[j]:
+                            v_rowtmp[j] = str(v_rowtmp[j])
+                        else:
+                            v_rowtmp[j] = ''
+                    v_row = tuple(v_rowtmp)
+                v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                 v_row = self.v_cur.fetchone()
-                while v_row is not None:
-                    if p_alltypesstr:
-                        v_rowtmp = list(v_row)
-                        for j in range(0, len(v_table.Columns)):
-                            if v_rowtmp[j]:
-                                v_rowtmp[j] = str(v_rowtmp[j])
-                            else:
-                                v_rowtmp[j] = ''
-                        v_row = tuple(v_rowtmp)
-                    v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
-                    v_row = self.v_cur.fetchone()
-                return v_table
+            return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
         except cx_Oracle.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def Execute(self, p_sql):
         try:
             if self.v_con is None:
                 self.Open()
-                self.v_cur.execute(p_sql)
-                self.Close()
+                v_keep = False
             else:
-                self.v_cur.execute(p_sql)
+                v_keep = True
+            self.v_cur.execute(p_sql)
         except Spartacus.Database.Exception as exc:
             raise exc
         except cx_Oracle.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def ExecuteScalar(self, p_sql):
         try:
             if self.v_con is None:
                 self.Open()
-                self.v_cur.execute(p_sql)
-                r = self.v_cur.fetchone()
-                if r != None:
-                    s = r[0]
-                else:
-                    s = None
-                self.Close()
-                return s
+                v_keep = False
             else:
-                self.v_cur.execute(p_sql)
-                r = self.v_cur.fetchone()
-                if r != None:
-                    s = r[0]
-                else:
-                    s = None
-                return s
+                v_keep = True
+            self.v_cur.execute(p_sql)
+            r = self.v_cur.fetchone()
+            if r != None:
+                s = r[0]
+            else:
+                s = None
+            return s
         except Spartacus.Database.Exception as exc:
             raise exc
         except cx_Oracle.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def Close(self):
         try:
-            self.v_con.commit()
-            self.v_cur.close()
-            self.v_cur = None
-            self.v_con.close()
-            self.v_con = None
+            if self.v_con:
+                self.v_con.commit()
+                if self.v_cur:
+                    self.v_cur.close()
+                    self.v_cur = None
+                self.v_con.close()
+                self.v_con = None
         except cx_Oracle.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
@@ -1743,43 +1597,33 @@ class Oracle(Generic):
     def GetFields(self, p_sql):
         try:
             if self.v_con is None:
-                v_fields = []
                 self.Open()
-                self.v_cur.execute('select * from ( ' + p_sql + ' ) t where rownum <= 1')
-                r = self.v_cur.fetchone()
-                if r != None:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
-                        k = k + 1
-                else:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
-                        k = k + 1
-                self.Close()
-                return v_fields
+                v_keep = False
             else:
-                v_fields = []
-                self.v_cur.execute('select * from ( ' + p_sql + ' ) t where rownum <= 1')
-                r = self.v_cur.fetchone()
-                if r != None:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
-                        k = k + 1
-                else:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
-                        k = k + 1
-                return v_fields
+                v_keep = True
+            v_fields = []
+            self.v_cur.execute('select * from ( ' + p_sql + ' ) t where rownum <= 1')
+            r = self.v_cur.fetchone()
+            if r != None:
+                k = 0
+                for c in self.v_cur.description:
+                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
+                    k = k + 1
+            else:
+                k = 0
+                for c in self.v_cur.description:
+                    v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
+                    k = k + 1
+            return v_fields
         except Spartacus.Database.Exception as exc:
             raise exc
         except cx_Oracle.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def QueryBlock(self, p_sql, p_blocksize, p_alltypesstr=False):
         try:
             if self.v_con is None:
@@ -1884,95 +1728,84 @@ class MSSQL(Generic):
         try:
             if self.v_con is None:
                 self.Open()
-                self.v_cur.execute(p_sql)
-                v_table = DataTable()
-                for c in self.v_cur.description:
-                    v_table.Columns.append(c[0])
-                v_row = self.v_cur.fetchone()
-                while v_row is not None:
-                    if p_alltypesstr:
-                        v_rowtmp = list(v_row)
-                        for j in range(0, len(v_table.Columns)):
-                            if v_rowtmp[j]:
-                                v_rowtmp[j] = str(v_rowtmp[j])
-                            else:
-                                v_rowtmp[j] = ''
-                        v_row = tuple(v_rowtmp)
-                    v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
-                    v_row = self.v_cur.fetchone()
-                self.Close()
-                return v_table
+                v_keep = False
             else:
-                self.v_cur.execute(p_sql)
-                v_table = DataTable()
-                for c in self.v_cur.description:
-                    v_table.Columns.append(c[0])
+                v_keep = True
+            self.v_cur.execute(p_sql)
+            v_table = DataTable()
+            for c in self.v_cur.description:
+                v_table.Columns.append(c[0])
+            v_row = self.v_cur.fetchone()
+            while v_row is not None:
+                if p_alltypesstr:
+                    v_rowtmp = list(v_row)
+                    for j in range(0, len(v_table.Columns)):
+                        if v_rowtmp[j]:
+                            v_rowtmp[j] = str(v_rowtmp[j])
+                        else:
+                            v_rowtmp[j] = ''
+                    v_row = tuple(v_rowtmp)
+                v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                 v_row = self.v_cur.fetchone()
-                while v_row is not None:
-                    if p_alltypesstr:
-                        v_rowtmp = list(v_row)
-                        for j in range(0, len(v_table.Columns)):
-                            if v_rowtmp[j]:
-                                v_rowtmp[j] = str(v_rowtmp[j])
-                            else:
-                                v_rowtmp[j] = ''
-                        v_row = tuple(v_rowtmp)
-                    v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
-                    v_row = self.v_cur.fetchone()
-                return v_table
+            return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
         except pymssql.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def Execute(self, p_sql):
         try:
             if self.v_con is None:
                 self.Open()
-                self.v_cur.execute(p_sql)
-                self.Close()
+                v_keep = False
             else:
-                self.v_cur.execute(p_sql)
+                v_keep = True
+            self.v_cur.execute(p_sql)
         except Spartacus.Database.Exception as exc:
             raise exc
         except pymssql.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def ExecuteScalar(self, p_sql):
         try:
             if self.v_con is None:
                 self.Open()
-                self.v_cur.execute(p_sql)
-                r = self.v_cur.fetchone()
-                if r != None:
-                    s = r[0]
-                else:
-                    s = None
-                self.Close()
-                return s
+                v_keep = False
             else:
-                self.v_cur.execute(p_sql)
-                r = self.v_cur.fetchone()
-                if r != None:
-                    s = r[0]
-                else:
-                    s = None
-                return s
+                v_keep = True
+            self.v_cur.execute(p_sql)
+            r = self.v_cur.fetchone()
+            if r != None:
+                s = r[0]
+            else:
+                s = None
+            return s
         except Spartacus.Database.Exception as exc:
             raise exc
         except pymssql.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def Close(self):
         try:
-            self.v_con.commit()
-            self.v_cur.close()
-            self.v_cur = None
-            self.v_con.close()
-            self.v_con = None
+            if self.v_con:
+                self.v_con.commit()
+                if self.v_cur:
+                    self.v_cur.close()
+                    self.v_cur = None
+                self.v_con.close()
+                self.v_con = None
         except pymssql.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
@@ -1980,43 +1813,33 @@ class MSSQL(Generic):
     def GetFields(self, p_sql):
         try:
             if self.v_con is None:
-                v_fields = []
                 self.Open()
-                self.v_cur.execute('select top 1 limit_alias.* from ( ' + p_sql + ' ) limit_alias')
-                r = self.v_cur.fetchone()
-                if r != None:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
-                        k = k + 1
-                else:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
-                        k = k + 1
-                self.Close()
-                return v_fields
+                v_keep = False
             else:
-                v_fields = []
-                self.v_cur.execute('select top 1 limit_alias.* from ( ' + p_sql + ' ) limit_alias')
-                r = self.v_cur.fetchone()
-                if r != None:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
-                        k = k + 1
-                else:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
-                        k = k + 1
-                return v_fields
+                v_keep = True
+            v_fields = []
+            self.v_cur.execute('select top 1 limit_alias.* from ( ' + p_sql + ' ) limit_alias')
+            r = self.v_cur.fetchone()
+            if r != None:
+                k = 0
+                for c in self.v_cur.description:
+                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
+                    k = k + 1
+            else:
+                k = 0
+                for c in self.v_cur.description:
+                    v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
+                    k = k + 1
+            return v_fields
         except Spartacus.Database.Exception as exc:
             raise exc
         except pymssql.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def QueryBlock(self, p_sql, p_blocksize, p_alltypesstr=False):
         try:
             if self.v_con is None:
@@ -2124,95 +1947,84 @@ class IBMDB2(Generic):
         try:
             if self.v_con is None:
                 self.Open()
-                self.v_cur.execute(p_sql)
-                v_table = DataTable()
-                for c in self.v_cur.description:
-                    v_table.Columns.append(c[0])
-                v_row = self.v_cur.fetchone()
-                while v_row is not None:
-                    if p_alltypesstr:
-                        v_rowtmp = list(v_row)
-                        for j in range(0, len(v_table.Columns)):
-                            if v_rowtmp[j]:
-                                v_rowtmp[j] = str(v_rowtmp[j])
-                            else:
-                                v_rowtmp[j] = ''
-                        v_row = tuple(v_rowtmp)
-                    v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
-                    v_row = self.v_cur.fetchone()
-                self.Close()
-                return v_table
+                v_keep = False
             else:
-                self.v_cur.execute(p_sql)
-                v_table = DataTable()
-                for c in self.v_cur.description:
-                    v_table.Columns.append(c[0])
+                v_keep = True
+            self.v_cur.execute(p_sql)
+            v_table = DataTable()
+            for c in self.v_cur.description:
+                v_table.Columns.append(c[0])
+            v_row = self.v_cur.fetchone()
+            while v_row is not None:
+                if p_alltypesstr:
+                    v_rowtmp = list(v_row)
+                    for j in range(0, len(v_table.Columns)):
+                        if v_rowtmp[j]:
+                            v_rowtmp[j] = str(v_rowtmp[j])
+                        else:
+                            v_rowtmp[j] = ''
+                    v_row = tuple(v_rowtmp)
+                v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
                 v_row = self.v_cur.fetchone()
-                while v_row is not None:
-                    if p_alltypesstr:
-                        v_rowtmp = list(v_row)
-                        for j in range(0, len(v_table.Columns)):
-                            if v_rowtmp[j]:
-                                v_rowtmp[j] = str(v_rowtmp[j])
-                            else:
-                                v_rowtmp[j] = ''
-                        v_row = tuple(v_rowtmp)
-                    v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_row)))
-                    v_row = self.v_cur.fetchone()
-                return v_table
+            return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
         except ibm_db_dbi.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def Execute(self, p_sql):
         try:
             if self.v_con is None:
                 self.Open()
-                self.v_cur.execute(p_sql)
-                self.Close()
+                v_keep = False
             else:
-                self.v_cur.execute(p_sql)
+                v_keep = True
+            self.v_cur.execute(p_sql)
         except Spartacus.Database.Exception as exc:
             raise exc
         except ibm_db_dbi.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def ExecuteScalar(self, p_sql):
         try:
             if self.v_con is None:
                 self.Open()
-                self.v_cur.execute(p_sql)
-                r = self.v_cur.fetchone()
-                if r != None:
-                    s = r[0]
-                else:
-                    s = None
-                self.Close()
-                return s
+                v_keep = False
             else:
-                self.v_cur.execute(p_sql)
-                r = self.v_cur.fetchone()
-                if r != None:
-                    s = r[0]
-                else:
-                    s = None
-                return s
+                v_keep = True
+            self.v_cur.execute(p_sql)
+            r = self.v_cur.fetchone()
+            if r != None:
+                s = r[0]
+            else:
+                s = None
+            return s
         except Spartacus.Database.Exception as exc:
             raise exc
         except ibm_db_dbi.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def Close(self):
         try:
-            self.v_con.commit()
-            self.v_cur.close()
-            self.v_cur = None
-            self.v_con.close()
-            self.v_con = None
+            if self.v_con:
+                self.v_con.commit()
+                if self.v_cur:
+                    self.v_cur.close()
+                    self.v_cur = None
+                self.v_con.close()
+                self.v_con = None
         except ibm_db_dbi.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
@@ -2220,43 +2032,33 @@ class IBMDB2(Generic):
     def GetFields(self, p_sql):
         try:
             if self.v_con is None:
-                v_fields = []
                 self.Open()
-                self.v_cur.execute('select * from ( ' + p_sql + ' ) t limit 1')
-                r = self.v_cur.fetchone()
-                if r != None:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
-                        k = k + 1
-                else:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
-                        k = k + 1
-                self.Close()
-                return v_fields
+                v_keep = False
             else:
-                v_fields = []
-                self.v_cur.execute('select * from ( ' + p_sql + ' ) t limit 1')
-                r = self.v_cur.fetchone()
-                if r != None:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
-                        k = k + 1
-                else:
-                    k = 0
-                    for c in self.v_cur.description:
-                        v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
-                        k = k + 1
-                return v_fields
+                v_keep = True
+            v_fields = []
+            self.v_cur.execute('select * from ( ' + p_sql + ' ) t limit 1')
+            r = self.v_cur.fetchone()
+            if r != None:
+                k = 0
+                for c in self.v_cur.description:
+                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
+                    k = k + 1
+            else:
+                k = 0
+                for c in self.v_cur.description:
+                    v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
+                    k = k + 1
+            return v_fields
         except Spartacus.Database.Exception as exc:
             raise exc
         except ibm_db_dbi.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def QueryBlock(self, p_sql, p_blocksize, p_alltypesstr=False):
         try:
             if self.v_con is None:

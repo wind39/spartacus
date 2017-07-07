@@ -342,6 +342,19 @@ class SQLite(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+    def Cancel(self):
+        try:
+            if self.v_con:
+                self.v_con.cancel()
+                if self.v_cur:
+                    self.v_cur.close()
+                    self.v_cur = None
+                self.v_con.close()
+                self.v_con = None
+        except sqlite3.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
     def GetFields(self, p_sql):
         try:
             if self.v_con is None:
@@ -531,6 +544,19 @@ class Memory(Generic):
         try:
             if self.v_con:
                 self.v_con.commit()
+                if self.v_cur:
+                    self.v_cur.close()
+                    self.v_cur = None
+                self.v_con.close()
+                self.v_con = None
+        except sqlite3.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Cancel(self):
+        try:
+            if self.v_con:
+                self.v_con.cancel()
                 if self.v_cur:
                     self.v_cur.close()
                     self.v_cur = None
@@ -758,6 +784,19 @@ class PostgreSQL(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+    def Cancel(self):
+        try:
+            if self.v_con:
+                self.v_con.cancel()
+                if self.v_cur:
+                    self.v_cur.close()
+                    self.v_cur = None
+                self.v_con.close()
+                self.v_con = None
+        except psycopg2.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
     def GetFields(self, p_sql):
         try:
             if self.v_con is None:
@@ -955,6 +994,19 @@ class MySQL(Generic):
         try:
             if self.v_con:
                 self.v_con.commit()
+                if self.v_cur:
+                    self.v_cur.close()
+                    self.v_cur = None
+                self.v_con.close()
+                self.v_con = None
+        except pymysql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Cancel(self):
+        try:
+            if self.v_con:
+                self.v_con.cancel()
                 if self.v_cur:
                     self.v_cur.close()
                     self.v_cur = None
@@ -1170,6 +1222,19 @@ class MariaDB(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+    def Cancel(self):
+        try:
+            if self.v_con:
+                self.v_con.cancel()
+                if self.v_cur:
+                    self.v_cur.close()
+                    self.v_cur = None
+                self.v_con.close()
+                self.v_con = None
+        except pymysql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
     def GetFields(self, p_sql):
         try:
             if self.v_con is None:
@@ -1370,6 +1435,19 @@ class Firebird(Generic):
         try:
             if self.v_con:
                 self.v_con.commit()
+                if self.v_cur:
+                    self.v_cur.close()
+                    self.v_cur = None
+                self.v_con.close()
+                self.v_con = None
+        except fdb.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Cancel(self):
+        try:
+            if self.v_con:
+                self.v_con.cancel()
                 if self.v_cur:
                     self.v_cur.close()
                     self.v_cur = None
@@ -1595,6 +1673,19 @@ class Oracle(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+    def Cancel(self):
+        try:
+            if self.v_con:
+                self.v_con.cancel()
+                if self.v_cur:
+                    self.v_cur.close()
+                    self.v_cur = None
+                self.v_con.close()
+                self.v_con = None
+        except cx_Oracle.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
     def GetFields(self, p_sql):
         try:
             if self.v_con is None:
@@ -1802,6 +1893,19 @@ class MSSQL(Generic):
         try:
             if self.v_con:
                 self.v_con.commit()
+                if self.v_cur:
+                    self.v_cur.close()
+                    self.v_cur = None
+                self.v_con.close()
+                self.v_con = None
+        except pymssql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Cancel(self):
+        try:
+            if self.v_con:
+                self.v_con.cancel()
                 if self.v_cur:
                     self.v_cur.close()
                     self.v_cur = None
@@ -2021,6 +2125,19 @@ class IBMDB2(Generic):
         try:
             if self.v_con:
                 self.v_con.commit()
+                if self.v_cur:
+                    self.v_cur.close()
+                    self.v_cur = None
+                self.v_con.close()
+                self.v_con = None
+        except ibm_db_dbi.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Cancel(self):
+        try:
+            if self.v_con:
+                self.v_con.cancel()
                 if self.v_cur:
                     self.v_cur.close()
                     self.v_cur = None

@@ -272,7 +272,7 @@ class SQLite(Generic):
                 if p_alltypesstr:
                     v_rowtmp = list(v_row)
                     for j in range(0, len(v_table.Columns)):
-                        if v_rowtmp[j]:
+                        if v_rowtmp[j] != None:
                             v_rowtmp[j] = str(v_rowtmp[j])
                         else:
                             v_rowtmp[j] = ''
@@ -401,7 +401,7 @@ class SQLite(Generic):
                     if p_alltypesstr:
                         v_rowtmp = list(v_row)
                         for j in range(0, len(v_table.Columns)):
-                            if v_rowtmp[j]:
+                            if v_rowtmp[j] != None:
                                 v_rowtmp[j] = str(v_rowtmp[j])
                             else:
                                 v_rowtmp[j] = ''
@@ -496,7 +496,7 @@ class Memory(Generic):
                     if p_alltypesstr:
                         v_rowtmp = list(v_row)
                         for j in range(0, len(v_table.Columns)):
-                            if v_rowtmp[j]:
+                            if v_rowtmp[j] != None:
                                 v_rowtmp[j] = str(v_rowtmp[j])
                             else:
                                 v_rowtmp[j] = ''
@@ -607,7 +607,7 @@ class Memory(Generic):
                     if p_alltypesstr:
                         v_rowtmp = list(v_row)
                         for j in range(0, len(v_table.Columns)):
-                            if v_rowtmp[j]:
+                            if v_rowtmp[j] != None:
                                 v_rowtmp[j] = str(v_rowtmp[j])
                             else:
                                 v_rowtmp[j] = ''
@@ -717,7 +717,7 @@ class PostgreSQL(Generic):
             if p_alltypesstr:
                 for i in range(0, len(v_table.Rows)):
                     for j in range(0, len(v_table.Columns)):
-                        if v_table.Rows[i][j]:
+                        if v_table.Rows[i][j] != None:
                             v_table.Rows[i][j] = str(v_table.Rows[i][j])
                         else:
                             v_table.Rows[i][j] = ''
@@ -841,7 +841,7 @@ class PostgreSQL(Generic):
                 if p_alltypesstr:
                     for i in range(0, len(v_table.Rows)):
                         for j in range(0, len(v_table.Columns)):
-                            if v_table.Rows[i][j]:
+                            if v_table.Rows[i][j] != None:
                                 v_table.Rows[i][j] = str(v_table.Rows[i][j])
                             else:
                                 v_table.Rows[i][j] = ''
@@ -936,7 +936,7 @@ class MySQL(Generic):
             if p_alltypesstr:
                 for i in range(0, len(v_table.Rows)):
                     for j in range(0, len(v_table.Columns)):
-                        if v_table.Rows[i][j]:
+                        if v_table.Rows[i][j] != None:
                             v_table.Rows[i][j] = str(v_table.Rows[i][j])
                         else:
                             v_table.Rows[i][j] = ''
@@ -1060,7 +1060,7 @@ class MySQL(Generic):
                 if p_alltypesstr:
                     for i in range(0, len(v_table.Rows)):
                         for j in range(0, len(v_table.Columns)):
-                            if v_table.Rows[i][j]:
+                            if v_table.Rows[i][j] != None:
                                 v_table.Rows[i][j] = str(v_table.Rows[i][j])
                             else:
                                 v_table.Rows[i][j] = ''
@@ -1155,7 +1155,7 @@ class MariaDB(Generic):
             if p_alltypesstr:
                 for i in range(0, len(v_table.Rows)):
                     for j in range(0, len(v_table.Columns)):
-                        if v_table.Rows[i][j]:
+                        if v_table.Rows[i][j] != None:
                             v_table.Rows[i][j] = str(v_table.Rows[i][j])
                         else:
                             v_table.Rows[i][j] = ''
@@ -1279,7 +1279,7 @@ class MariaDB(Generic):
                 if p_alltypesstr:
                     for i in range(0, len(v_table.Rows)):
                         for j in range(0, len(v_table.Columns)):
-                            if v_table.Rows[i][j]:
+                            if v_table.Rows[i][j] != None:
                                 v_table.Rows[i][j] = str(v_table.Rows[i][j])
                             else:
                                 v_table.Rows[i][j] = ''
@@ -1374,7 +1374,7 @@ class Firebird(Generic):
                 if p_alltypesstr:
                     v_rowtmp = list(v_row)
                     for j in range(0, len(v_table.Columns)):
-                        if v_rowtmp[j]:
+                        if v_rowtmp[j] != None:
                             v_rowtmp[j] = str(v_rowtmp[j])
                         else:
                             v_rowtmp[j] = ''
@@ -1503,7 +1503,7 @@ class Firebird(Generic):
                     if p_alltypesstr:
                         v_rowtmp = list(v_row)
                         for j in range(0, len(v_table.Columns)):
-                            if v_rowtmp[j]:
+                            if v_rowtmp[j] != None:
                                 v_rowtmp[j] = str(v_rowtmp[j])
                             else:
                                 v_rowtmp[j] = ''
@@ -1603,7 +1603,7 @@ class Oracle(Generic):
                 if p_alltypesstr:
                     v_rowtmp = list(v_row)
                     for j in range(0, len(v_table.Columns)):
-                        if v_rowtmp[j]:
+                        if v_rowtmp[j] != None:
                             v_rowtmp[j] = str(v_rowtmp[j])
                         else:
                             v_rowtmp[j] = ''
@@ -1732,7 +1732,7 @@ class Oracle(Generic):
                     if p_alltypesstr:
                         v_rowtmp = list(v_row)
                         for j in range(0, len(v_table.Columns)):
-                            if v_rowtmp[j]:
+                            if v_rowtmp[j] != None:
                                 v_rowtmp[j] = str(v_rowtmp[j])
                             else:
                                 v_rowtmp[j] = ''
@@ -1832,7 +1832,7 @@ class MSSQL(Generic):
                 if p_alltypesstr:
                     v_rowtmp = list(v_row)
                     for j in range(0, len(v_table.Columns)):
-                        if v_rowtmp[j]:
+                        if v_rowtmp[j] != None:
                             v_rowtmp[j] = str(v_rowtmp[j])
                         else:
                             v_rowtmp[j] = ''
@@ -1961,7 +1961,7 @@ class MSSQL(Generic):
                     if p_alltypesstr:
                         v_rowtmp = list(v_row)
                         for j in range(0, len(v_table.Columns)):
-                            if v_rowtmp[j]:
+                            if v_rowtmp[j] != None:
                                 v_rowtmp[j] = str(v_rowtmp[j])
                             else:
                                 v_rowtmp[j] = ''
@@ -2064,7 +2064,7 @@ class IBMDB2(Generic):
                 if p_alltypesstr:
                     v_rowtmp = list(v_row)
                     for j in range(0, len(v_table.Columns)):
-                        if v_rowtmp[j]:
+                        if v_rowtmp[j] != None:
                             v_rowtmp[j] = str(v_rowtmp[j])
                         else:
                             v_rowtmp[j] = ''
@@ -2193,7 +2193,7 @@ class IBMDB2(Generic):
                     if p_alltypesstr:
                         v_rowtmp = list(v_row)
                         for j in range(0, len(v_table.Columns)):
-                            if v_rowtmp[j]:
+                            if v_rowtmp[j] != None:
                                 v_rowtmp[j] = str(v_rowtmp[j])
                             else:
                                 v_rowtmp[j] = ''

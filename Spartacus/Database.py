@@ -234,7 +234,7 @@ SQLite
 ------------------------------------------------------------------------
 '''
 class SQLite(Generic):
-    def __init__(self, p_service):
+    def __init__(self, p_service, p_foreignkeys=True):
         if 'SQLite' in v_supported_rdbms:
             self.v_host = None
             self.v_port = None
@@ -243,6 +243,7 @@ class SQLite(Generic):
             self.v_password = None
             self.v_con = None
             self.v_cur = None
+            self.v_foreignkeys = p_foreignkeys
         else:
             raise Spartacus.Database.Exception("SQLite is not supported. Please install it.")
     def Open(self, p_autocommit=False):
@@ -250,7 +251,8 @@ class SQLite(Generic):
             self.v_con = sqlite3.connect(self.v_service)
             #self.v_con.row_factory = sqlite3.Row
             self.v_cur = self.v_con.cursor()
-            self.v_cur.execute('PRAGMA foreign_keys = ON')
+            if self.v_foreignkeys:
+                self.v_cur.execute('PRAGMA foreign_keys = ON')
             self.v_start = True
         except sqlite3.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
@@ -460,7 +462,7 @@ Memory
 ------------------------------------------------------------------------
 '''
 class Memory(Generic):
-    def __init__(self):
+    def __init__(self, p_foreignkeys=True):
         if 'Memory' in v_supported_rdbms:
             self.v_host = None
             self.v_port = None
@@ -469,6 +471,7 @@ class Memory(Generic):
             self.v_password = None
             self.v_con = None
             self.v_cur = None
+            self.v_foreignkeys = p_foreignkeys
         else:
             raise Spartacus.Database.Exception("SQLite is not supported. Please install it.")
     def Open(self, p_autocommit=False):
@@ -476,7 +479,8 @@ class Memory(Generic):
             self.v_con = sqlite3.connect(self.v_service)
             #self.v_con.row_factory = sqlite3.Row
             self.v_cur = self.v_con.cursor()
-            self.v_cur.execute('PRAGMA foreign_keys = ON')
+            if self.v_foreignkeys:
+                self.v_cur.execute('PRAGMA foreign_keys = ON')
             self.v_start = True
         except sqlite3.Error as exc:
             raise Spartacus.Database.Exception(str(exc))

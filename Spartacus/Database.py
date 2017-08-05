@@ -679,7 +679,10 @@ class PostgreSQL(Generic):
     def __init__(self, p_host, p_port, p_service, p_user, p_password):
         if 'PostgreSQL' in v_supported_rdbms:
             self.v_host = p_host
-            self.v_port = p_port
+            if self.v_port is None or self.v_port = '':
+                self.v_port = 5432
+            else:
+                self.v_port = p_port
             self.v_service = p_service
             self.v_user = p_user
             self.v_password = p_password
@@ -689,15 +692,34 @@ class PostgreSQL(Generic):
             raise Spartacus.Database.Exception("PostgreSQL is not supported. Please install it with 'pip install Spartacus[postgresql]'.")
     def Open(self, p_autocommit=False):
         try:
-            self.v_con = psycopg2.connect(
-                'host={0} port={1} dbname={2} user={3} password={4}'.format(
-                    self.v_host,
-                    self.v_port,
-                    self.v_service,
-                    self.v_user,
-                    self.v_password
-                ),
-                cursor_factory=psycopg2.extras.DictCursor)
+            if self.v_host is None or self.v_host = '':
+                if self.v_password is None or self.v_password = '':
+                    self.v_con = psycopg2.connect(
+                        'port={1} dbname={2} user={3}'.format(
+                            self.v_port,
+                            self.v_service,
+                            self.v_user,
+                        ),
+                        cursor_factory=psycopg2.extras.DictCursor)
+                else:
+                    self.v_con = psycopg2.connect(
+                        'port={1} dbname={2} user={3} password={4}'.format(
+                            self.v_port,
+                            self.v_service,
+                            self.v_user,
+                            self.v_password
+                        ),
+                        cursor_factory=psycopg2.extras.DictCursor)
+            else:
+                self.v_con = psycopg2.connect(
+                    'host={0} port={1} dbname={2} user={3} password={4}'.format(
+                        self.v_host,
+                        self.v_port,
+                        self.v_service,
+                        self.v_user,
+                        self.v_password
+                    ),
+                    cursor_factory=psycopg2.extras.DictCursor)
             self.v_con.autocommit = p_autocommit
             self.v_cur = self.v_con.cursor()
             self.v_start = True

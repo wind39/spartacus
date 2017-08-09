@@ -679,7 +679,7 @@ class PostgreSQL(Generic):
     def __init__(self, p_host, p_port, p_service, p_user, p_password):
         if 'PostgreSQL' in v_supported_rdbms:
             self.v_host = p_host
-            if self.v_port is None or self.v_port == '':
+            if p_port is None or p_port == '':
                 self.v_port = 5432
             else:
                 self.v_port = p_port

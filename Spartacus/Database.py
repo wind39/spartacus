@@ -28,12 +28,14 @@ import datetime
 import prettytable
 
 import Spartacus
+import Spartacus.Utils
 
 class Exception(Exception):
     pass
 
 class DataTable(object):
-    def __init__(self):
+    def __init__(self, p_name=None):
+        self.Name = p_name
         self.Columns = []
         self.Rows = []
     def Merge(self, p_datatable):

@@ -1,3 +1,4 @@
 pyscrypt
 pyaes
 PrettyTable
+openpyxl

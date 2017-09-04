@@ -38,6 +38,16 @@ class DataTable(object):
         self.Name = p_name
         self.Columns = []
         self.Rows = []
+    def AddColumn(self, p_columnname):
+        self.Columns.append(p_columnname)
+    def AddRow(self, p_row):
+        if len(self.Columns) > 0 and len(p_row) > 0:
+            if len(self.Columns) == len(p_row):
+                self.Rows.append(OrderedDict(zip(self.Columns, tuple(p_row))))
+            else:
+                raise Spartacus.Database.Exception('Can not add row to a table with different columns.')
+        else:
+            raise Spartacus.Database.Exception('Can not add row to a table with no columns.')
     def Merge(self, p_datatable):
         if len(self.Columns) > 0 and len(p_datatable.Columns) > 0:
             if self.Columns == p_datatable.Columns:

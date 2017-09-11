@@ -236,20 +236,21 @@ class Generic(ABC):
         pass
     @classmethod
     def Mogrify(self, p_row, p_fields):
-        if len(p_row) == len(p_fields):
-            k = 0
-            v_mog = []
-            while k < len(p_row):
-                if type(p_row[k]) == type(None):
-                    v_mog.append('null')
-                elif type(p_row[k]) == type(str()) or type(p_row[k]) == datetime.datetime:
-                    v_mog.append(p_fields[k].v_mask.replace('#', "'{0}'".format(p_row[k])))
-                else:
-                    v_mog.append(p_fields[k].v_mask.replace('#', "{0}".format(p_row[k])))
-                k = k + 1
-            return '(' + ','.join(v_mog) + ')'
-        else:
-            raise Spartacus.Database.Exception('Can not mogrify with different number of parameters.')
+        if len(p_row) > 0:
+            if len(p_row) == len(p_fields):
+                k = 0
+                v_mog = []
+                while k < len(p_row):
+                    if type(p_row[k]) == type(None):
+                        v_mog.append('null')
+                    elif type(p_row[k]) == type(str()) or type(p_row[k]) == datetime.datetime:
+                        v_mog.append(p_fields[k].v_mask.replace('#', "'{0}'".format(p_row[k])))
+                    else:
+                        v_mog.append(p_fields[k].v_mask.replace('#', "{0}".format(p_row[k])))
+                    k = k + 1
+                return '(' + ','.join(v_mog) + ')'
+            else:
+                raise Spartacus.Database.Exception('Can not mogrify with different number of parameters.')
 
 '''
 ------------------------------------------------------------------------

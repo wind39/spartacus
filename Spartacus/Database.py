@@ -223,6 +223,12 @@ class Generic(ABC):
     def Cancel(self):
         pass
     @abstractmethod
+    def GetPID(self):
+        pass
+    @abstractmethod
+    def Terminate(self, p_pid):
+        pass
+    @abstractmethod
     def GetFields(self, p_sql):
         pass
     @abstractmethod
@@ -233,9 +239,6 @@ class Generic(ABC):
         pass
     @abstractmethod
     def QueryBlock(self, p_sql, p_blocksize, p_alltypesstr=False):
-        pass
-    @abstractmethod
-    def Mogrify(self, p_row):
         pass
     @abstractmethod
     def InsertBlock(self, p_block, p_tablename, p_fields=None):
@@ -395,6 +398,10 @@ class SQLite(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+    def GetPID(self):
+        return None
+    def Terminate(self, p_pid):
+        pass
     def GetFields(self, p_sql):
         try:
             v_keep = None
@@ -629,6 +636,10 @@ class Memory(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+    def GetPID(self):
+        return None
+    def Terminate(self, p_pid):
+        pass
     def GetFields(self, p_sql):
         try:
             if self.v_con is None:
@@ -907,6 +918,25 @@ class PostgreSQL(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+    def GetPID(self):
+        try:
+            if self.v_con is None:
+                raise Spartacus.Database.Exception('This method should be called in the middle of Open() and Close() calls.')
+            else:
+                return self.v_con.get_backend_pid()
+        except psycopg2.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def Terminate(self, p_pid):
+        try:
+            self.Execute('select pg_terminate_backend({0})'.format(p_pid))
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except psycopg2.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
     def GetFields(self, p_sql):
         try:
             v_keep = None
@@ -1159,6 +1189,10 @@ class MySQL(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+    def GetPID(self):
+        return None
+    def Terminate(self, p_pid):
+        pass
     def GetFields(self, p_sql):
         try:
             v_keep = None
@@ -1391,6 +1425,10 @@ class MariaDB(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+    def GetPID(self):
+        return None
+    def Terminate(self, p_pid):
+        pass
     def GetFields(self, p_sql):
         try:
             v_keep = None
@@ -1626,6 +1664,10 @@ class Firebird(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+    def GetPID(self):
+        return None
+    def Terminate(self, p_pid):
+        pass
     def GetFields(self, p_sql):
         try:
             v_keep = None
@@ -1878,6 +1920,10 @@ class Oracle(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+    def GetPID(self):
+        return None
+    def Terminate(self, p_pid):
+        pass
     def GetFields(self, p_sql):
         try:
             v_keep = None
@@ -2130,6 +2176,10 @@ class MSSQL(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+    def GetPID(self):
+        return None
+    def Terminate(self, p_pid):
+        pass
     def GetFields(self, p_sql):
         try:
             v_keep = None
@@ -2385,6 +2435,10 @@ class IBMDB2(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+    def GetPID(self):
+        return None
+    def Terminate(self, p_pid):
+        pass
     def GetFields(self, p_sql):
         try:
             v_keep = None

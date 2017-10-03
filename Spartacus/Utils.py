@@ -126,7 +126,7 @@ class DataFileReader(object):
             else:
                 if p_sheetname:
                     v_worksheet = self.v_object[p_sheetname]
-                    v_table = Spartacus.Database.DataTable(v_sheetname)
+                    v_table = Spartacus.Database.DataTable(p_sheetname)
                 else:
                     v_worksheet = self.v_object.active
                     v_table = Spartacus.Database.DataTable()

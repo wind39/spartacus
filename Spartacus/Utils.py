@@ -141,7 +141,14 @@ class DataFileReader(object):
                             v_table.Columns = [a.value for a in v_row]
                         v_first = False
                     else:
-                        v_table.Rows.append(OrderedDict(zip(v_table.Columns, [a.value for a in v_row])))
+                        v_tmp = [a.value for a in v_row]
+                        if len(v_tmp) < len(v_table.Columns):
+                            for i in range(0, len(v_table.Columns) - len(v_tmp)):
+                                v_tmp.append(None)
+                        elif len(v_tmp) > len(v_table.Columns):
+                            for i in range(0, len(v_tmp) - len(v_table.Columns)):
+                                v_tmp.pop()
+                        v_table.Rows.append(OrderedDict(zip(v_table.Columns, v_tmp)))
                         x = x + 1
                         if x == p_blocksize:
                             yield v_table

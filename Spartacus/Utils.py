@@ -64,7 +64,7 @@ class Cryptor(object):
             raise Spartacus.Utils.Exception(str(exc))
 
 class DataFileReader(object):
-    def __init__(self, p_filename, p_fieldnames=None, p_encoding='utf-8'):
+    def __init__(self, p_filename, p_fieldnames=None, p_encoding='uft-8'):
         v_tmp = p_filename.split('.')
         if len(v_tmp) > 1:
             self.v_extension = v_tmp[-1].lower()
@@ -79,7 +79,7 @@ class DataFileReader(object):
             if not os.path.isfile(self.v_filename):
                 raise Spartacus.Utils.Exception('File {0} does not exist or is not a file.'.format(self.v_filename))
             if self.v_extension == 'csv':
-                self.v_file = open(self.v_filename, encoding=self.v_encoding)
+                self.v_file = open(self.v_filename, self.v_encoding)
                 v_sample = self.v_file.read(1024)
                 self.v_file.seek(0)
                 v_sniffer = csv.Sniffer()

@@ -211,6 +211,9 @@ Generic
 '''
 class Generic(ABC):
     @abstractmethod
+    def GetConnectionString(self):
+        pass
+    @abstractmethod
     def Open(self, p_autocommit=True):
         pass
     @abstractmethod
@@ -292,6 +295,8 @@ class SQLite(Generic):
             self.v_timeout = p_timeout
         else:
             raise Spartacus.Database.Exception("SQLite is not supported. Please install it.")
+    def GetConnectionString(self):
+        return None
     def Open(self, p_autocommit=True):
         try:
             self.v_con = sqlite3.connect(self.v_service, self.v_timeout)
@@ -550,6 +555,8 @@ class Memory(Generic):
             self.v_timeout = p_timeout
         else:
             raise Spartacus.Database.Exception("SQLite is not supported. Please install it.")
+    def GetConnectionString(self):
+        return None
     def Open(self, p_autocommit=True):
         try:
             self.v_con = sqlite3.connect(self.v_service, self.v_timeout)
@@ -788,36 +795,35 @@ class PostgreSQL(Generic):
             self.v_cur = None
         else:
             raise Spartacus.Database.Exception("PostgreSQL is not supported. Please install it with 'pip install Spartacus[postgresql]'.")
+    def GetConnectionString(self):
+        if self.v_host is None or self.v_host == '':
+            if self.v_password is None or self.v_password == '':
+                return "port={0} dbname='{1}' user='{2}'".format(
+                    self.v_port,
+                    self.v_service,
+                    self.v_user
+                )
+            else:
+                return "port={0} dbname='{1}' user='{2}' password='{3}'".format(
+                    self.v_port,
+                    self.v_service,
+                    self.v_user,
+                    self.v_password
+                )
+        else:
+            return "host='{0}' port={1} dbname='{2}' user='{3}' password='{4}'".format(
+                self.v_host,
+                self.v_port,
+                self.v_service,
+                self.v_user,
+                self.v_password
+            )
     def Open(self, p_autocommit=True):
         try:
-            if self.v_host is None or self.v_host == '':
-                if self.v_password is None or self.v_password == '':
-                    self.v_con = psycopg2.connect(
-                        "port={0} dbname='{1}' user='{2}'".format(
-                            self.v_port,
-                            self.v_service,
-                            self.v_user
-                        ),
-                        cursor_factory=psycopg2.extras.DictCursor)
-                else:
-                    self.v_con = psycopg2.connect(
-                        "port={0} dbname='{1}' user='{2}' password='{3}'".format(
-                            self.v_port,
-                            self.v_service,
-                            self.v_user,
-                            self.v_password
-                        ),
-                        cursor_factory=psycopg2.extras.DictCursor)
-            else:
-                self.v_con = psycopg2.connect(
-                    "host='{0}' port={1} dbname='{2}' user='{3}' password='{4}'".format(
-                        self.v_host,
-                        self.v_port,
-                        self.v_service,
-                        self.v_user,
-                        self.v_password
-                    ),
-                    cursor_factory=psycopg2.extras.DictCursor)
+            self.v_con = psycopg2.connect(
+                self.GetConnectionString(),
+                cursor_factory=psycopg2.extras.DictCursor
+            )
             self.v_con.autocommit = p_autocommit
             self.v_cur = self.v_con.cursor()
             self.v_start = True
@@ -1101,6 +1107,8 @@ class MySQL(Generic):
             self.v_cur = None
         else:
             raise Spartacus.Database.Exception("MySQL is not supported. Please install it with 'pip install Spartacus[mysql]'.")
+    def GetConnectionString(self):
+        return None
     def Open(self, p_autocommit=True):
         try:
             self.v_con = pymysql.connect(
@@ -1339,6 +1347,8 @@ class MariaDB(Generic):
             self.v_cur = None
         else:
             raise Spartacus.Database.Exception("MariaDB is not supported. Please install it with 'pip install Spartacus[mariadb]'.")
+    def GetConnectionString(self):
+        return None
     def Open(self, p_autocommit=True):
         try:
             self.v_con = pymysql.connect(
@@ -1577,6 +1587,8 @@ class Firebird(Generic):
             self.v_cur = None
         else:
             raise Spartacus.Database.Exception("Firebird is not supported. Please install it with 'pip install Spartacus[firebird]'.")
+    def GetConnectionString(self):
+        return None
     def Open(self, p_autocommit=True):
         try:
             self.v_con = fdb.connect(
@@ -1834,6 +1846,8 @@ class Oracle(Generic):
             self.v_cur = None
         else:
             raise Spartacus.Database.Exception("Oracle is not supported. Please install it with 'pip install Spartacus[oracle]'.")
+    def GetConnectionString(self):
+        return None
     def Open(self, p_autocommit=True):
         try:
             self.v_con = cx_Oracle.connect('{0}/{1}@{2}:{3}/{4}'.format(
@@ -2092,6 +2106,8 @@ class MSSQL(Generic):
             self.v_cur = None
         else:
             raise Spartacus.Database.Exception("MSSQL is not supported. Please install it with 'pip install Spartacus[mssql]'.")
+    def GetConnectionString(self):
+        return None
     def Open(self, p_autocommit=True):
         try:
             self.v_con = pymssql.connect(
@@ -2350,15 +2366,17 @@ class IBMDB2(Generic):
             self.v_cur = None
         else:
             raise Spartacus.Database.Exception("IBM DB2 is not supported. Please install it with 'pip install Spartacus[ibmdb2]'.")
+    def GetConnectionString(self):
+        return 'DATABASE={0};HOSTNAME={1};PORT={2};PROTOCOL=TCPIP;UID={3};PWD={4}'.format(
+            self.v_service,
+            self.v_host,
+            self.v_port,
+            self.v_user,
+            self.v_password
+        )
     def Open(self, p_autocommit=True):
         try:
-            c = ibm_db.connect('DATABASE={0};HOSTNAME={1};PORT={2};PROTOCOL=TCPIP;UID={3};PWD={4}'.format(
-                self.v_service,
-                self.v_host,
-                self.v_port,
-                self.v_user,
-                self.v_password
-            ), '', '')
+            c = ibm_db.connect(self.GetConnectionString(), '', '')
             self.v_con = ibm_db_dbi.Connection(c)
             self.v_cur = self.v_con.cursor()
             self.v_start = True

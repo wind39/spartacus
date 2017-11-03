@@ -27,7 +27,6 @@ from abc import ABC, abstractmethod
 import datetime
 import prettytable
 import math
-import uuid
 
 import Spartacus
 import Spartacus.Utils

@@ -327,7 +327,7 @@ class Generic(ABC):
                 if type(v_value) == type(None):
                     v_mog.append('null')
                 elif type(v_value) == type(str()) or type(v_value) == datetime.datetime:
-                    v_mog.append(p_fields[k].v_mask.replace('#', "'{0}'".format(v_value.replace("'", "\'"))))
+                    v_mog.append(p_fields[k].v_mask.replace('#', "'{0}'".format(v_value.replace("'", "''"))))
                 else:
                     v_mog.append(p_fields[k].v_mask.replace('#', "{0}".format(v_value)))
                 k = k + 1

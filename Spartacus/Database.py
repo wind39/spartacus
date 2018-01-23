@@ -2188,12 +2188,12 @@ class Oracle(Generic):
             if r != None:
                 k = 0
                 for c in self.v_cur.description:
-                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
+                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=c[1].__name__))
                     k = k + 1
             else:
                 k = 0
                 for c in self.v_cur.description:
-                    v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
+                    v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=c[1].__name__))
                     k = k + 1
             return v_fields
         except Spartacus.Database.Exception as exc:

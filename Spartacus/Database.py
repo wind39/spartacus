@@ -290,7 +290,7 @@ class Generic(ABC):
     def Open(self, p_autocommit=True):
         pass
     @abstractmethod
-    def Query(self, p_sql, p_alltypesstr=False):
+    def Query(self, p_sql, p_alltypesstr=False, p_simple=False):
         pass
     @abstractmethod
     def Execute(self, p_sql):
@@ -1315,7 +1315,7 @@ class MySQL(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def Query(self, p_sql, p_alltypesstr=False):
+    def Query(self, p_sql, p_alltypesstr=False, p_simple=False):
         try:
             v_keep = None
             if self.v_con is None:
@@ -1557,7 +1557,7 @@ class MariaDB(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def Query(self, p_sql, p_alltypesstr=False):
+    def Query(self, p_sql, p_alltypesstr=False, p_simple=False):
         try:
             v_keep = None
             if self.v_con is None:

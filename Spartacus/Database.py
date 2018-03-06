@@ -377,7 +377,10 @@ class SQLite(Generic):
         return None
     def Open(self, p_autocommit=True):
         try:
-            self.v_con = sqlite3.connect(self.v_service, self.v_timeout)
+            if p_autocommit:
+                self.v_con = sqlite3.connect(self.v_service, self.v_timeout)
+            else:
+                self.v_con = sqlite3.connect(self.v_service, self.v_timeout, None)
             #self.v_con.row_factory = sqlite3.Row
             self.v_cur = self.v_con.cursor()
             if self.v_foreignkeys:

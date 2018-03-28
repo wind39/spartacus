@@ -1,7 +1,7 @@
 '''
 The MIT License (MIT)
 
-Copyright (c) 2017 William Ivanski
+Copyright (c) 2014-2018 William Ivanski
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,6 @@ import prettytable
 import math
 
 import Spartacus
-import Spartacus.Utils
 
 class Exception(Exception):
     pass
@@ -41,10 +40,17 @@ class DataTable(object):
         self.Rows = []
     def AddColumn(self, p_columnname):
         self.Columns.append(p_columnname)
-    def AddRow(self, p_row, p_simple=False):
+    def AddRow(self, p_row, p_alltypesstr=False, p_simple=False):
         if len(self.Columns) > 0 and len(p_row) > 0:
             if len(self.Columns) == len(p_row):
-                v_rowtmp = OrderedDict(zip(self.Columns, tuple(p_row)))
+                v_rowtmp2 = p_row
+                if p_alltypesstr:
+                    for j in range(0, len(v_rowtmp2)):
+                        if v_rowtmp2[j] != None:
+                            v_rowtmp2[j] = str(v_rowtmp2[j])
+                        else:
+                            v_rowtmp2[j] = ''
+                v_rowtmp = OrderedDict(zip(self.Columns, tuple(v_rowtmp2)))
                 if p_simple:
                     v_row = []
                     for c in self.Columns:
@@ -60,7 +66,7 @@ class DataTable(object):
         try:
             v_table = Spartacus.Database.DataTable()
             for c in self.Columns:
-                v_table.Columns.append(c)
+                v_table.AddColumn(c)
             for r in self.Rows:
                 if r[p_key] == p_value:
                     v_table.Rows.append(r)
@@ -81,9 +87,9 @@ class DataTable(object):
             if self.Columns == p_datatable.Columns:
                 v_table = DataTable()
                 for c in self.Columns:
-                    v_table.Columns.append(c)
-                v_table.Columns.append(p_statuscolname)
-                v_table.Columns.append(p_diffcolname)
+                    v_table.AddColumn(c)
+                v_table.AddColumn(p_statuscolname)
+                v_table.AddColumn(p_diffcolname)
                 for r1 in self.Rows:
                     v_pkmatch = False
                     for r2 in p_datatable.Rows:
@@ -402,17 +408,10 @@ class SQLite(Generic):
             v_table = DataTable()
             if self.v_cur.description:
                 for c in self.v_cur.description:
-                    v_table.Columns.append(c[0])
+                    v_table.AddColumn(c[0])
                 v_row = self.v_cur.fetchone()
                 while v_row is not None:
-                    v_row = list(v_row)
-                    if p_alltypesstr:
-                        for j in range(0, len(v_table.Columns)):
-                            if v_row[j] != None:
-                                v_row[j] = str(v_row[j])
-                            else:
-                                v_row[j] = ''
-                    v_table.AddRow(v_row, p_simple)
+                    v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
                     v_row = self.v_cur.fetchone()
             return v_table
         except Spartacus.Database.Exception as exc:
@@ -543,31 +542,17 @@ class SQLite(Generic):
                 v_table = DataTable()
                 if self.v_cur.description:
                     for c in self.v_cur.description:
-                        v_table.Columns.append(c[0])
+                        v_table.AddColumn(c[0])
                     v_row = self.v_cur.fetchone()
                     if p_blocksize > 0:
                         k = 0
                         while v_row is not None and k < p_blocksize:
-                            v_row = list(v_row)
-                            if p_alltypesstr:
-                                for j in range(0, len(v_table.Columns)):
-                                    if v_row[j] != None:
-                                        v_row[j] = str(v_row[j])
-                                    else:
-                                        v_row[j] = ''
-                            v_table.AddRow(v_row, p_simple)
+                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
                             v_row = self.v_cur.fetchone()
                             k = k + 1
                     else:
                         while v_row is not None:
-                            v_row = list(v_row)
-                            if p_alltypesstr:
-                                for j in range(0, len(v_table.Columns)):
-                                    if v_row[j] != None:
-                                        v_row[j] = str(v_row[j])
-                                    else:
-                                        v_row[j] = ''
-                            v_table.AddRow(v_row, p_simple)
+                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
                             v_row = self.v_cur.fetchone()
                 if self.v_start:
                     self.v_start = False
@@ -658,17 +643,10 @@ class Memory(Generic):
                 v_table = DataTable()
                 if self.v_cur.description:
                     for c in self.v_cur.description:
-                        v_table.Columns.append(c[0])
+                        v_table.AddColumn(c[0])
                     v_row = self.v_cur.fetchone()
                     while v_row is not None:
-                        v_row = list(v_row)
-                        if p_alltypesstr:
-                            for j in range(0, len(v_table.Columns)):
-                                if v_row[j] != None:
-                                    v_row[j] = str(v_row[j])
-                                else:
-                                    v_row[j] = ''
-                        v_table.AddRow(v_row, p_simple)
+                        v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
                         v_row = self.v_cur.fetchone()
                 return v_table
         except Spartacus.Database.Exception as exc:
@@ -778,31 +756,17 @@ class Memory(Generic):
                 v_table = DataTable()
                 if self.v_cur.description:
                     for c in self.v_cur.description:
-                        v_table.Columns.append(c[0])
+                        v_table.AddColumn(c[0])
                     v_row = self.v_cur.fetchone()
                     if p_blocksize > 0:
                         k = 0
                         while v_row is not None and k < p_blocksize:
-                            v_row = list(v_row)
-                            if p_alltypesstr:
-                                for j in range(0, len(v_table.Columns)):
-                                    if v_row[j] != None:
-                                        v_row[j] = str(v_row[j])
-                                    else:
-                                        v_row[j] = ''
-                            v_table.AddRow(v_row, p_simple)
+                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
                             v_row = self.v_cur.fetchone()
                             k = k + 1
                     else:
                         while v_row is not None:
-                            v_row = list(v_row)
-                            if p_alltypesstr:
-                                for j in range(0, len(v_table.Columns)):
-                                    if v_row[j] != None:
-                                        v_row[j] = str(v_row[j])
-                                    else:
-                                        v_row[j] = ''
-                            v_table.AddRow(v_row, p_simple)
+                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
                             v_row = self.v_cur.fetchone()
                 if self.v_start:
                     self.v_start = False
@@ -962,7 +926,7 @@ class PostgreSQL(Generic):
             v_table = DataTable()
             if self.v_cur.description:
                 for c in self.v_cur.description:
-                    v_table.Columns.append(c[0])
+                    v_table.AddColumn(c[0])
                 v_table.Rows = self.v_cur.fetchall()
                 if p_alltypesstr:
                     for i in range(0, len(v_table.Rows)):
@@ -1161,7 +1125,7 @@ class PostgreSQL(Generic):
                 v_table = DataTable()
                 if self.v_cur.description:
                     for c in self.v_cur.description:
-                        v_table.Columns.append(c[0])
+                        v_table.AddColumn(c[0])
                     if p_blocksize > 0:
                         v_table.Rows = self.v_cur.fetchmany(p_blocksize)
                     else:
@@ -1299,7 +1263,10 @@ class MySQL(Generic):
     def __init__(self, p_host, p_port, p_service, p_user, p_password):
         if 'MySQL' in v_supported_rdbms:
             self.v_host = p_host
-            self.v_port = p_port
+            if p_port is None or p_port == '':
+                self.v_port = 3306
+            else:
+                self.v_port = p_port
             self.v_service = p_service
             self.v_user = p_user
             self.v_password = p_password
@@ -1316,8 +1283,7 @@ class MySQL(Generic):
                 port=int(self.v_port),
                 db=self.v_service,
                 user=self.v_user,
-                password=self.v_password,
-                cursorclass=pymysql.cursors.DictCursor)
+                password=self.v_password)
             self.v_cur = self.v_con.cursor()
             self.v_start = True
         except pymysql.Error as exc:
@@ -1336,15 +1302,11 @@ class MySQL(Generic):
             v_table = DataTable()
             if self.v_cur.description:
                 for c in self.v_cur.description:
-                    v_table.Columns.append(c[0])
-                v_table.Rows = self.v_cur.fetchall()
-                if p_alltypesstr:
-                    for i in range(0, len(v_table.Rows)):
-                        for j in range(0, len(v_table.Columns)):
-                            if v_table.Rows[i][j] != None:
-                                v_table.Rows[i][j] = str(v_table.Rows[i][j])
-                            else:
-                                v_table.Rows[i][j] = ''
+                    v_table.AddColumn(c[0])
+                v_row = self.v_cur.fetchone()
+                while v_row is not None:
+                    v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                    v_row = self.v_cur.fetchone()
             return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -1474,18 +1436,18 @@ class MySQL(Generic):
                 v_table = DataTable()
                 if self.v_cur.description:
                     for c in self.v_cur.description:
-                        v_table.Columns.append(c[0])
+                        v_table.AddColumn(c[0])
+                    v_row = self.v_cur.fetchone()
                     if p_blocksize > 0:
-                        v_table.Rows = self.v_cur.fetchmany(p_blocksize)
+                        k = 0
+                        while v_row is not None and k < p_blocksize:
+                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                            v_row = self.v_cur.fetchone()
+                            k = k + 1
                     else:
-                        v_table.Rows = self.v_cur.fetchall()
-                    if p_alltypesstr:
-                        for i in range(0, len(v_table.Rows)):
-                            for j in range(0, len(v_table.Columns)):
-                                if v_table.Rows[i][j] != None:
-                                    v_table.Rows[i][j] = str(v_table.Rows[i][j])
-                                else:
-                                    v_table.Rows[i][j] = ''
+                        while v_row is not None:
+                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                            v_row = self.v_cur.fetchone()
                 if self.v_start:
                     self.v_start = False
                 return v_table
@@ -1541,7 +1503,10 @@ class MariaDB(Generic):
     def __init__(self, p_host, p_port, p_service, p_user, p_password):
         if 'MariaDB' in v_supported_rdbms:
             self.v_host = p_host
-            self.v_port = p_port
+            if p_port is None or p_port == '':
+                self.v_port = 3306
+            else:
+                self.v_port = p_port
             self.v_service = p_service
             self.v_user = p_user
             self.v_password = p_password
@@ -1558,8 +1523,7 @@ class MariaDB(Generic):
                 port=int(self.v_port),
                 db=self.v_service,
                 user=self.v_user,
-                password=self.v_password,
-                cursorclass=pymysql.cursors.DictCursor)
+                password=self.v_password)
             self.v_cur = self.v_con.cursor()
             self.v_start = True
         except pymysql.Error as exc:
@@ -1578,15 +1542,11 @@ class MariaDB(Generic):
             v_table = DataTable()
             if self.v_cur.description:
                 for c in self.v_cur.description:
-                    v_table.Columns.append(c[0])
-                v_table.Rows = self.v_cur.fetchall()
-                if p_alltypesstr:
-                    for i in range(0, len(v_table.Rows)):
-                        for j in range(0, len(v_table.Columns)):
-                            if v_table.Rows[i][j] != None:
-                                v_table.Rows[i][j] = str(v_table.Rows[i][j])
-                            else:
-                                v_table.Rows[i][j] = ''
+                    v_table.AddColumn(c[0])
+                v_row = self.v_cur.fetchone()
+                while v_row is not None:
+                    v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                    v_row = self.v_cur.fetchone()
             return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -1716,18 +1676,18 @@ class MariaDB(Generic):
                 v_table = DataTable()
                 if self.v_cur.description:
                     for c in self.v_cur.description:
-                        v_table.Columns.append(c[0])
+                        v_table.AddColumn(c[0])
+                    v_row = self.v_cur.fetchone()
                     if p_blocksize > 0:
-                        v_table.Rows = self.v_cur.fetchmany(p_blocksize)
+                        k = 0
+                        while v_row is not None and k < p_blocksize:
+                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                            v_row = self.v_cur.fetchone()
+                            k = k + 1
                     else:
-                        v_table.Rows = self.v_cur.fetchall()
-                    if p_alltypesstr:
-                        for i in range(0, len(v_table.Rows)):
-                            for j in range(0, len(v_table.Columns)):
-                                if v_table.Rows[i][j] != None:
-                                    v_table.Rows[i][j] = str(v_table.Rows[i][j])
-                                else:
-                                    v_table.Rows[i][j] = ''
+                        while v_row is not None:
+                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                            v_row = self.v_cur.fetchone()
                 if self.v_start:
                     self.v_start = False
                 return v_table
@@ -1783,7 +1743,10 @@ class Firebird(Generic):
     def __init__(self, p_host, p_port, p_service, p_user, p_password):
         if 'Firebird' in v_supported_rdbms:
             self.v_host = p_host
-            self.v_port = p_port
+            if p_port is None or p_port == '':
+                self.v_port = 3050
+            else:
+                self.v_port = p_port
             self.v_service = p_service
             self.v_user = p_user
             self.v_password = p_password
@@ -1819,17 +1782,10 @@ class Firebird(Generic):
             v_table = DataTable()
             if self.v_cur.description:
                 for c in self.v_cur.description:
-                    v_table.Columns.append(c[0])
+                    v_table.AddColumn(c[0])
                 v_row = self.v_cur.fetchone()
                 while v_row is not None:
-                    v_row = list(v_row)
-                    if p_alltypesstr:
-                        for j in range(0, len(v_table.Columns)):
-                            if v_row[j] != None:
-                                v_row[j] = str(v_row[j])
-                            else:
-                                v_row[j] = ''
-                    v_table.AddRow(v_row, p_simple)
+                    v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
                     v_row = self.v_cur.fetchone()
             return v_table
         except Spartacus.Database.Exception as exc:
@@ -1960,31 +1916,17 @@ class Firebird(Generic):
                 v_table = DataTable()
                 if self.v_cur.description:
                     for c in self.v_cur.description:
-                        v_table.Columns.append(c[0])
+                        v_table.AddColumn(c[0])
                     v_row = self.v_cur.fetchone()
                     if p_blocksize > 0:
                         k = 0
                         while v_row is not None and k < p_blocksize:
-                            v_row = list(v_row)
-                            if p_alltypesstr:
-                                for j in range(0, len(v_table.Columns)):
-                                    if v_row[j] != None:
-                                        v_row[j] = str(v_row[j])
-                                    else:
-                                        v_row[j] = ''
-                            v_table.AddRow(v_row, p_simple)
+                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
                             v_row = self.v_cur.fetchone()
                             k = k + 1
                     else:
                         while v_row is not None:
-                            v_row = list(v_row)
-                            if p_alltypesstr:
-                                for j in range(0, len(v_table.Columns)):
-                                    if v_row[j] != None:
-                                        v_row[j] = str(v_row[j])
-                                    else:
-                                        v_row[j] = ''
-                            v_table.AddRow(v_row, p_simple)
+                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
                             v_row = self.v_cur.fetchone()
                 if self.v_start:
                     self.v_start = False
@@ -2092,17 +2034,10 @@ class Oracle(Generic):
             v_table = DataTable()
             if self.v_cur.description:
                 for c in self.v_cur.description:
-                    v_table.Columns.append(c[0])
+                    v_table.AddColumn(c[0])
                 v_row = self.v_cur.fetchone()
                 while v_row is not None:
-                    v_row = list(v_row)
-                    if p_alltypesstr:
-                        for j in range(0, len(v_table.Columns)):
-                            if v_row[j] != None:
-                                v_row[j] = str(v_row[j])
-                            else:
-                                v_row[j] = ''
-                    v_table.AddRow(v_row, p_simple)
+                    v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
                     v_row = self.v_cur.fetchone()
             return v_table
         except Spartacus.Database.Exception as exc:
@@ -2240,31 +2175,17 @@ class Oracle(Generic):
                 v_table = DataTable()
                 if self.v_cur.description:
                     for c in self.v_cur.description:
-                        v_table.Columns.append(c[0])
+                        v_table.AddColumn(c[0])
                     v_row = self.v_cur.fetchone()
                     if p_blocksize > 0:
                         k = 0
                         while v_row is not None and k < p_blocksize:
-                            v_row = list(v_row)
-                            if p_alltypesstr:
-                                for j in range(0, len(v_table.Columns)):
-                                    if v_row[j] != None:
-                                        v_row[j] = str(v_row[j])
-                                    else:
-                                        v_row[j] = ''
-                            v_table.AddRow(v_row, p_simple)
+                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
                             v_row = self.v_cur.fetchone()
                             k = k + 1
                     else:
                         while v_row is not None:
-                            v_row = list(v_row)
-                            if p_alltypesstr:
-                                for j in range(0, len(v_table.Columns)):
-                                    if v_row[j] != None:
-                                        v_row[j] = str(v_row[j])
-                                    else:
-                                        v_row[j] = ''
-                            v_table.AddRow(v_row, p_simple)
+                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
                             v_row = self.v_cur.fetchone()
                 if self.v_start:
                     self.v_start = False
@@ -2320,7 +2241,10 @@ class MSSQL(Generic):
     def __init__(self, p_host, p_port, p_service, p_user, p_password):
         if 'MSSQL' in v_supported_rdbms:
             self.v_host = p_host
-            self.v_port = p_port
+            if p_port is None or p_port == '':
+                self.v_port = 1433
+            else:
+                self.v_port = p_port
             self.v_service = p_service
             self.v_user = p_user
             self.v_password = p_password
@@ -2357,17 +2281,10 @@ class MSSQL(Generic):
             v_table = DataTable()
             if self.v_cur.description:
                 for c in self.v_cur.description:
-                    v_table.Columns.append(c[0])
+                    v_table.AddColumn(c[0])
                 v_row = self.v_cur.fetchone()
                 while v_row is not None:
-                    v_row = list(v_row)
-                    if p_alltypesstr:
-                        for j in range(0, len(v_table.Columns)):
-                            if v_row[j] != None:
-                                v_row[j] = str(v_row[j])
-                            else:
-                                v_row[j] = ''
-                    v_table.AddRow(v_row, p_simple)
+                    v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
                     v_row = self.v_cur.fetchone()
             return v_table
         except Spartacus.Database.Exception as exc:
@@ -2498,31 +2415,17 @@ class MSSQL(Generic):
                 v_table = DataTable()
                 if self.v_cur.description:
                     for c in self.v_cur.description:
-                        v_table.Columns.append(c[0])
+                        v_table.AddColumn(c[0])
                     v_row = self.v_cur.fetchone()
                     if p_blocksize > 0:
                         k = 0
                         while v_row is not None and k < p_blocksize:
-                            v_row = list(v_row)
-                            if p_alltypesstr:
-                                for j in range(0, len(v_table.Columns)):
-                                    if v_row[j] != None:
-                                        v_row[j] = str(v_row[j])
-                                    else:
-                                        v_row[j] = ''
-                            v_table.AddRow(v_row, p_simple)
+                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
                             v_row = self.v_cur.fetchone()
                             k = k + 1
                     else:
                         while v_row is not None:
-                            v_row = list(v_row)
-                            if p_alltypesstr:
-                                for j in range(0, len(v_table.Columns)):
-                                    if v_row[j] != None:
-                                        v_row[j] = str(v_row[j])
-                                    else:
-                                        v_row[j] = ''
-                            v_table.AddRow(v_row, p_simple)
+                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
                             v_row = self.v_cur.fetchone()
                 if self.v_start:
                     self.v_start = False
@@ -2579,7 +2482,10 @@ class IBMDB2(Generic):
     def __init__(self, p_host, p_port, p_service, p_user, p_password):
         if 'IBMDB2' in v_supported_rdbms:
             self.v_host = p_host
-            self.v_port = p_port
+            if p_port is None or p_port == '':
+                self.v_port = 50000
+            else:
+                self.v_port = p_port
             self.v_service = p_service
             self.v_user = p_user
             self.v_password = p_password
@@ -2619,17 +2525,10 @@ class IBMDB2(Generic):
             v_table = DataTable()
             if self.v_cur.description:
                 for c in self.v_cur.description:
-                    v_table.Columns.append(c[0])
+                    v_table.AddColumn(c[0])
                 v_row = self.v_cur.fetchone()
                 while v_row is not None:
-                    v_row = list(v_row)
-                    if p_alltypesstr:
-                        for j in range(0, len(v_table.Columns)):
-                            if v_row[j] != None:
-                                v_row[j] = str(v_row[j])
-                            else:
-                                v_row[j] = ''
-                    v_table.AddRow(v_row, p_simple)
+                    v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
                     v_row = self.v_cur.fetchone()
             return v_table
         except Spartacus.Database.Exception as exc:
@@ -2760,31 +2659,17 @@ class IBMDB2(Generic):
                 v_table = DataTable()
                 if self.v_cur.description:
                     for c in self.v_cur.description:
-                        v_table.Columns.append(c[0])
+                        v_table.AddColumn(c[0])
                     v_row = self.v_cur.fetchone()
                     if p_blocksize > 0:
                         k = 0
                         while v_row is not None and k < p_blocksize:
-                            v_row = list(v_row)
-                            if p_alltypesstr:
-                                for j in range(0, len(v_table.Columns)):
-                                    if v_row[j] != None:
-                                        v_row[j] = str(v_row[j])
-                                    else:
-                                        v_row[j] = ''
-                            v_table.AddRow(v_row, p_simple)
+                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
                             v_row = self.v_cur.fetchone()
                             k = k + 1
                     else:
                         while v_row is not None:
-                            v_row = list(v_row)
-                            if p_alltypesstr:
-                                for j in range(0, len(v_table.Columns)):
-                                    if v_row[j] != None:
-                                        v_row[j] = str(v_row[j])
-                                    else:
-                                        v_row[j] = ''
-                            v_table.AddRow(v_row, p_simple)
+                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
                             v_row = self.v_cur.fetchone()
                 if self.v_start:
                     self.v_start = False

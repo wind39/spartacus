@@ -34,24 +34,26 @@ class Exception(Exception):
     pass
 
 class DataTable(object):
-    def __init__(self, p_name=None):
+    def __init__(self, p_name=None, p_alltypesstr=False, p_simple=False):
         self.Name = p_name
         self.Columns = []
         self.Rows = []
+        self.AllTypesStr = p_alltypesstr
+        self.Simple = p_simple
     def AddColumn(self, p_columnname):
         self.Columns.append(p_columnname)
-    def AddRow(self, p_row, p_alltypesstr=False, p_simple=False):
+    def AddRow(self, p_row):
         if len(self.Columns) > 0 and len(p_row) > 0:
             if len(self.Columns) == len(p_row):
                 v_rowtmp2 = p_row
-                if p_alltypesstr:
+                if self.AllTypesStr:
                     for j in range(0, len(v_rowtmp2)):
                         if v_rowtmp2[j] != None:
                             v_rowtmp2[j] = str(v_rowtmp2[j])
                         else:
                             v_rowtmp2[j] = ''
                 v_rowtmp = OrderedDict(zip(self.Columns, tuple(v_rowtmp2)))
-                if p_simple:
+                if self.Simple:
                     v_row = []
                     for c in self.Columns:
                         v_row.append(v_rowtmp[c])
@@ -64,12 +66,23 @@ class DataTable(object):
             raise Spartacus.Database.Exception('Can not add row to a table with no columns.')
     def Select(self, p_key, p_value):
         try:
-            v_table = Spartacus.Database.DataTable()
+            v_table = Spartacus.Database.DataTable(p_name=None, p_alltypesstr=self.AllTypesStr, p_simple=self.Simple)
+            k = 0
+            found = False
             for c in self.Columns:
                 v_table.AddColumn(c)
-            for r in self.Rows:
-                if r[p_key] == p_value:
-                    v_table.Rows.append(r)
+                if not found and c == p_key:
+                    found = True
+                elif not found:
+                    k = k + 1
+            if self.Simple:
+                for r in self.Rows:
+                    if r[p_key] == p_value:
+                        v_table.Rows.append(r)
+            else:
+                for r in self.Rows:
+                    if r[k] == p_value:
+                        v_table.Rows.append(r)
             return v_table
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
@@ -150,66 +163,128 @@ class DataTable(object):
         else:
             raise Spartacus.Database.Exception('Can not compare tables with no columns.')
     def Pretty(self, p_transpose=False):
-        if p_transpose:
-            v_maxc = 0
-            for c in self.Columns:
-                if len(c) > v_maxc:
-                    v_maxc = len(c)
-            if v_maxc < (14 + len(str(len(self.Rows)))):
-                v_maxc = (14 + len(str(len(self.Rows))))
+        if self.Simple:
+            if p_transpose:
+                v_maxc = 0
+                for c in self.Columns:
+                    if len(c) > v_maxc:
+                        v_maxc = len(c)
+                if v_maxc < (14 + len(str(len(self.Rows)))):
+                    v_maxc = (14 + len(str(len(self.Rows))))
+                else:
+                    v_maxc = v_maxc + 1
+                k = 0
+                s = 0
+                v_maxf = 0
+                for r in self.Rows:
+                    for c in range(0, len(self.Columns)):
+                        for v_snippet in str(r[c]).split('\n'):
+                            k = k + 1
+                            s = s + len(v_snippet)
+                            if len(str(r[c])) > v_maxf:
+                                v_maxf = len(v_snippet)
+                if v_maxf > 30:
+                    v_maxf = int(s / k) + int((v_maxf - int(s / k)) / 2)
+                v_maxf = v_maxf + 10
+                v_string = ''
+                v_row = 1
+                for r in self.Rows:
+                    v_aux = '-[ RECORD {0} ]'.format(v_row)
+                    for k in range(len(v_aux), v_maxc):
+                        v_aux = v_aux + '-'
+                    v_string = v_string + v_aux + '+'
+                    for k in range(0, v_maxf):
+                        v_string = v_string + '-'
+                    v_string = v_string + '\n'
+                    for c in range(0, len(self.Columns)):
+                        v_first = True
+                        for v_snippet in str(r[c]).split('\n'):
+                            n = math.ceil(len(v_snippet) / (v_maxf-2))
+                            j = 0
+                            for i in range(0, n):
+                                if v_first:
+                                    x = c.ljust(v_maxc)
+                                    v_first = False
+                                else:
+                                    x = ' '.ljust(v_maxc)
+                                if i < n-1:
+                                    y = ' ' + v_snippet[j:j+v_maxf-2] + '+'
+                                    j = j + v_maxf-2
+                                else:
+                                    y = ' ' + v_snippet[j:]
+                                v_string = v_string + '{0}|{1}\n'.format(x, y)
+                    v_row = v_row + 1
+                return v_string
             else:
-                v_maxc = v_maxc + 1
-            k = 0
-            s = 0
-            v_maxf = 0
-            for r in self.Rows:
-                for c in self.Columns:
-                    for v_snippet in str(r[c]).split('\n'):
-                        k = k + 1
-                        s = s + len(v_snippet)
-                        if len(str(r[c])) > v_maxf:
-                            v_maxf = len(v_snippet)
-            if v_maxf > 30:
-                v_maxf = int(s / k) + int((v_maxf - int(s / k)) / 2)
-            v_maxf = v_maxf + 10
-            v_string = ''
-            v_row = 1
-            for r in self.Rows:
-                v_aux = '-[ RECORD {0} ]'.format(v_row)
-                for k in range(len(v_aux), v_maxc):
-                    v_aux = v_aux + '-'
-                v_string = v_string + v_aux + '+'
-                for k in range(0, v_maxf):
-                    v_string = v_string + '-'
-                v_string = v_string + '\n'
-                for c in self.Columns:
-                    v_first = True
-                    for v_snippet in str(r[c]).split('\n'):
-                        n = math.ceil(len(v_snippet) / (v_maxf-2))
-                        j = 0
-                        for i in range(0, n):
-                            if v_first:
-                                x = c.ljust(v_maxc)
-                                v_first = False
-                            else:
-                                x = ' '.ljust(v_maxc)
-                            if i < n-1:
-                                y = ' ' + v_snippet[j:j+v_maxf-2] + '+'
-                                j = j + v_maxf-2
-                            else:
-                                y = ' ' + v_snippet[j:]
-                            v_string = v_string + '{0}|{1}\n'.format(x, y)
-                v_row = v_row + 1
-            return v_string
+                v_pretty = prettytable.PrettyTable()
+                v_pretty._set_field_names(self.Columns)
+                for r in self.Rows:
+                    v_row = []
+                    for c in range(0, len(self.Columns)):
+                        v_row.append(r[c])
+                    v_pretty.add_row(v_row)
+                return v_pretty.get_string()
         else:
-            v_pretty = prettytable.PrettyTable()
-            v_pretty._set_field_names(self.Columns)
-            for r in self.Rows:
-                v_row = []
+            if p_transpose:
+                v_maxc = 0
                 for c in self.Columns:
-                    v_row.append(r[c])
-                v_pretty.add_row(v_row)
-            return v_pretty.get_string()
+                    if len(c) > v_maxc:
+                        v_maxc = len(c)
+                if v_maxc < (14 + len(str(len(self.Rows)))):
+                    v_maxc = (14 + len(str(len(self.Rows))))
+                else:
+                    v_maxc = v_maxc + 1
+                k = 0
+                s = 0
+                v_maxf = 0
+                for r in self.Rows:
+                    for c in self.Columns:
+                        for v_snippet in str(r[c]).split('\n'):
+                            k = k + 1
+                            s = s + len(v_snippet)
+                            if len(str(r[c])) > v_maxf:
+                                v_maxf = len(v_snippet)
+                if v_maxf > 30:
+                    v_maxf = int(s / k) + int((v_maxf - int(s / k)) / 2)
+                v_maxf = v_maxf + 10
+                v_string = ''
+                v_row = 1
+                for r in self.Rows:
+                    v_aux = '-[ RECORD {0} ]'.format(v_row)
+                    for k in range(len(v_aux), v_maxc):
+                        v_aux = v_aux + '-'
+                    v_string = v_string + v_aux + '+'
+                    for k in range(0, v_maxf):
+                        v_string = v_string + '-'
+                    v_string = v_string + '\n'
+                    for c in self.Columns:
+                        v_first = True
+                        for v_snippet in str(r[c]).split('\n'):
+                            n = math.ceil(len(v_snippet) / (v_maxf-2))
+                            j = 0
+                            for i in range(0, n):
+                                if v_first:
+                                    x = c.ljust(v_maxc)
+                                    v_first = False
+                                else:
+                                    x = ' '.ljust(v_maxc)
+                                if i < n-1:
+                                    y = ' ' + v_snippet[j:j+v_maxf-2] + '+'
+                                    j = j + v_maxf-2
+                                else:
+                                    y = ' ' + v_snippet[j:]
+                                v_string = v_string + '{0}|{1}\n'.format(x, y)
+                    v_row = v_row + 1
+                return v_string
+            else:
+                v_pretty = prettytable.PrettyTable()
+                v_pretty._set_field_names(self.Columns)
+                for r in self.Rows:
+                    v_row = []
+                    for c in self.Columns:
+                        v_row.append(r[c])
+                    v_pretty.add_row(v_row)
+                return v_pretty.get_string()
     def Transpose(self, p_column1, p_column2):
         if len(self.Rows) == 1:
             v_table = Spartacus.Database.DataTable()
@@ -405,13 +480,13 @@ class SQLite(Generic):
             else:
                 v_keep = True
             self.v_cur.execute(p_sql)
-            v_table = DataTable()
+            v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
             if self.v_cur.description:
                 for c in self.v_cur.description:
                     v_table.AddColumn(c[0])
                 v_row = self.v_cur.fetchone()
                 while v_row is not None:
-                    v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                    v_table.AddRow(list(v_row))
                     v_row = self.v_cur.fetchone()
             return v_table
         except Spartacus.Database.Exception as exc:
@@ -539,7 +614,7 @@ class SQLite(Generic):
             else:
                 if self.v_start:
                     self.v_cur.execute(p_sql)
-                v_table = DataTable()
+                v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
                 if self.v_cur.description:
                     for c in self.v_cur.description:
                         v_table.AddColumn(c[0])
@@ -547,12 +622,12 @@ class SQLite(Generic):
                     if p_blocksize > 0:
                         k = 0
                         while v_row is not None and k < p_blocksize:
-                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                            v_table.AddRow(list(v_row))
                             v_row = self.v_cur.fetchone()
                             k = k + 1
                     else:
                         while v_row is not None:
-                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                            v_table.AddRow(list(v_row))
                             v_row = self.v_cur.fetchone()
                 if self.v_start:
                     self.v_start = False
@@ -640,13 +715,13 @@ class Memory(Generic):
                 raise Spartacus.Database.Exception('This method should be called in the middle of Open() and Close() calls.')
             else:
                 self.v_cur.execute(p_sql)
-                v_table = DataTable()
+                v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
                 if self.v_cur.description:
                     for c in self.v_cur.description:
                         v_table.AddColumn(c[0])
                     v_row = self.v_cur.fetchone()
                     while v_row is not None:
-                        v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                        v_table.AddRow(list(v_row))
                         v_row = self.v_cur.fetchone()
                 return v_table
         except Spartacus.Database.Exception as exc:
@@ -753,7 +828,7 @@ class Memory(Generic):
             else:
                 if self.v_start:
                     self.v_cur.execute(p_sql)
-                v_table = DataTable()
+                v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
                 if self.v_cur.description:
                     for c in self.v_cur.description:
                         v_table.AddColumn(c[0])
@@ -761,12 +836,12 @@ class Memory(Generic):
                     if p_blocksize > 0:
                         k = 0
                         while v_row is not None and k < p_blocksize:
-                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                            v_table.AddRow(list(v_row))
                             v_row = self.v_cur.fetchone()
                             k = k + 1
                     else:
                         while v_row is not None:
-                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                            v_table.AddRow(list(v_row))
                             v_row = self.v_cur.fetchone()
                 if self.v_start:
                     self.v_start = False
@@ -1299,13 +1374,13 @@ class MySQL(Generic):
             else:
                 v_keep = True
             self.v_cur.execute(p_sql)
-            v_table = DataTable()
+            v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
             if self.v_cur.description:
                 for c in self.v_cur.description:
                     v_table.AddColumn(c[0])
                 v_row = self.v_cur.fetchone()
                 while v_row is not None:
-                    v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                    v_table.AddRow(list(v_row))
                     v_row = self.v_cur.fetchone()
             return v_table
         except Spartacus.Database.Exception as exc:
@@ -1433,7 +1508,7 @@ class MySQL(Generic):
             else:
                 if self.v_start:
                     self.v_cur.execute(p_sql)
-                v_table = DataTable()
+                v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
                 if self.v_cur.description:
                     for c in self.v_cur.description:
                         v_table.AddColumn(c[0])
@@ -1441,12 +1516,12 @@ class MySQL(Generic):
                     if p_blocksize > 0:
                         k = 0
                         while v_row is not None and k < p_blocksize:
-                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                            v_table.AddRow(list(v_row))
                             v_row = self.v_cur.fetchone()
                             k = k + 1
                     else:
                         while v_row is not None:
-                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                            v_table.AddRow(list(v_row))
                             v_row = self.v_cur.fetchone()
                 if self.v_start:
                     self.v_start = False
@@ -1539,13 +1614,13 @@ class MariaDB(Generic):
             else:
                 v_keep = True
             self.v_cur.execute(p_sql)
-            v_table = DataTable()
+            v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
             if self.v_cur.description:
                 for c in self.v_cur.description:
                     v_table.AddColumn(c[0])
                 v_row = self.v_cur.fetchone()
                 while v_row is not None:
-                    v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                    v_table.AddRow(list(v_row))
                     v_row = self.v_cur.fetchone()
             return v_table
         except Spartacus.Database.Exception as exc:
@@ -1673,7 +1748,7 @@ class MariaDB(Generic):
             else:
                 if self.v_start:
                     self.v_cur.execute(p_sql)
-                v_table = DataTable()
+                v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
                 if self.v_cur.description:
                     for c in self.v_cur.description:
                         v_table.AddColumn(c[0])
@@ -1681,12 +1756,12 @@ class MariaDB(Generic):
                     if p_blocksize > 0:
                         k = 0
                         while v_row is not None and k < p_blocksize:
-                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                            v_table.AddRow(list(v_row))
                             v_row = self.v_cur.fetchone()
                             k = k + 1
                     else:
                         while v_row is not None:
-                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                            v_table.AddRow(list(v_row))
                             v_row = self.v_cur.fetchone()
                 if self.v_start:
                     self.v_start = False
@@ -1779,13 +1854,13 @@ class Firebird(Generic):
             else:
                 v_keep = True
             self.v_cur.execute(p_sql)
-            v_table = DataTable()
+            v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
             if self.v_cur.description:
                 for c in self.v_cur.description:
                     v_table.AddColumn(c[0])
                 v_row = self.v_cur.fetchone()
                 while v_row is not None:
-                    v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                    v_table.AddRow(list(v_row))
                     v_row = self.v_cur.fetchone()
             return v_table
         except Spartacus.Database.Exception as exc:
@@ -1913,7 +1988,7 @@ class Firebird(Generic):
             else:
                 if self.v_start:
                     self.v_cur.execute(p_sql)
-                v_table = DataTable()
+                v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
                 if self.v_cur.description:
                     for c in self.v_cur.description:
                         v_table.AddColumn(c[0])
@@ -1921,12 +1996,12 @@ class Firebird(Generic):
                     if p_blocksize > 0:
                         k = 0
                         while v_row is not None and k < p_blocksize:
-                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                            v_table.AddRow(list(v_row))
                             v_row = self.v_cur.fetchone()
                             k = k + 1
                     else:
                         while v_row is not None:
-                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                            v_table.AddRow(list(v_row))
                             v_row = self.v_cur.fetchone()
                 if self.v_start:
                     self.v_start = False
@@ -2031,13 +2106,13 @@ class Oracle(Generic):
             else:
                 v_keep = True
             self.v_cur.execute(p_sql)
-            v_table = DataTable()
+            v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
             if self.v_cur.description:
                 for c in self.v_cur.description:
                     v_table.AddColumn(c[0])
                 v_row = self.v_cur.fetchone()
                 while v_row is not None:
-                    v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                    v_table.AddRow(list(v_row))
                     v_row = self.v_cur.fetchone()
             return v_table
         except Spartacus.Database.Exception as exc:
@@ -2172,7 +2247,7 @@ class Oracle(Generic):
             else:
                 if self.v_start:
                     self.v_cur.execute(p_sql)
-                v_table = DataTable()
+                v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
                 if self.v_cur.description:
                     for c in self.v_cur.description:
                         v_table.AddColumn(c[0])
@@ -2180,12 +2255,12 @@ class Oracle(Generic):
                     if p_blocksize > 0:
                         k = 0
                         while v_row is not None and k < p_blocksize:
-                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                            v_table.AddRow(list(v_row))
                             v_row = self.v_cur.fetchone()
                             k = k + 1
                     else:
                         while v_row is not None:
-                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                            v_table.AddRow(list(v_row))
                             v_row = self.v_cur.fetchone()
                 if self.v_start:
                     self.v_start = False
@@ -2278,13 +2353,13 @@ class MSSQL(Generic):
             else:
                 v_keep = True
             self.v_cur.execute(p_sql)
-            v_table = DataTable()
+            v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
             if self.v_cur.description:
                 for c in self.v_cur.description:
                     v_table.AddColumn(c[0])
                 v_row = self.v_cur.fetchone()
                 while v_row is not None:
-                    v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                    v_table.AddRow(list(v_row))
                     v_row = self.v_cur.fetchone()
             return v_table
         except Spartacus.Database.Exception as exc:
@@ -2412,7 +2487,7 @@ class MSSQL(Generic):
             else:
                 if self.v_start:
                     self.v_cur.execute(p_sql)
-                v_table = DataTable()
+                v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
                 if self.v_cur.description:
                     for c in self.v_cur.description:
                         v_table.AddColumn(c[0])
@@ -2420,12 +2495,12 @@ class MSSQL(Generic):
                     if p_blocksize > 0:
                         k = 0
                         while v_row is not None and k < p_blocksize:
-                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                            v_table.AddRow(list(v_row))
                             v_row = self.v_cur.fetchone()
                             k = k + 1
                     else:
                         while v_row is not None:
-                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                            v_table.AddRow(list(v_row))
                             v_row = self.v_cur.fetchone()
                 if self.v_start:
                     self.v_start = False
@@ -2522,13 +2597,13 @@ class IBMDB2(Generic):
             else:
                 v_keep = True
             self.v_cur.execute(p_sql)
-            v_table = DataTable()
+            v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
             if self.v_cur.description:
                 for c in self.v_cur.description:
                     v_table.AddColumn(c[0])
                 v_row = self.v_cur.fetchone()
                 while v_row is not None:
-                    v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                    v_table.AddRow(list(v_row))
                     v_row = self.v_cur.fetchone()
             return v_table
         except Spartacus.Database.Exception as exc:
@@ -2656,7 +2731,7 @@ class IBMDB2(Generic):
             else:
                 if self.v_start:
                     self.v_cur.execute(p_sql)
-                v_table = DataTable()
+                v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
                 if self.v_cur.description:
                     for c in self.v_cur.description:
                         v_table.AddColumn(c[0])
@@ -2664,12 +2739,12 @@ class IBMDB2(Generic):
                     if p_blocksize > 0:
                         k = 0
                         while v_row is not None and k < p_blocksize:
-                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                            v_table.AddRow(list(v_row))
                             v_row = self.v_cur.fetchone()
                             k = k + 1
                     else:
                         while v_row is not None:
-                            v_table.AddRow(list(v_row), p_alltypesstr, p_simple)
+                            v_table.AddRow(list(v_row))
                             v_row = self.v_cur.fetchone()
                 if self.v_start:
                     self.v_start = False

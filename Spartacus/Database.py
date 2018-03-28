@@ -66,7 +66,7 @@ class DataTable(object):
             raise Spartacus.Database.Exception('Can not add row to a table with no columns.')
     def Select(self, p_key, p_value):
         try:
-            v_table = Spartacus.Database.DataTable(p_name=None, p_alltypesstr=self.AllTypesStr, p_simple=self.Simple)
+            v_table = Spartacus.Database.DataTable(None, p_alltypesstr=self.AllTypesStr, p_simple=self.Simple)
             k = 0
             found = False
             for c in self.Columns:
@@ -480,7 +480,7 @@ class SQLite(Generic):
             else:
                 v_keep = True
             self.v_cur.execute(p_sql)
-            v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
+            v_table = DataTable(None, p_alltypesstr, p_simple)
             if self.v_cur.description:
                 for c in self.v_cur.description:
                     v_table.AddColumn(c[0])
@@ -614,7 +614,7 @@ class SQLite(Generic):
             else:
                 if self.v_start:
                     self.v_cur.execute(p_sql)
-                v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
+                v_table = DataTable(None, p_alltypesstr, p_simple)
                 if self.v_cur.description:
                     for c in self.v_cur.description:
                         v_table.AddColumn(c[0])
@@ -715,7 +715,7 @@ class Memory(Generic):
                 raise Spartacus.Database.Exception('This method should be called in the middle of Open() and Close() calls.')
             else:
                 self.v_cur.execute(p_sql)
-                v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
+                v_table = DataTable(None, p_alltypesstr, p_simple)
                 if self.v_cur.description:
                     for c in self.v_cur.description:
                         v_table.AddColumn(c[0])
@@ -828,7 +828,7 @@ class Memory(Generic):
             else:
                 if self.v_start:
                     self.v_cur.execute(p_sql)
-                v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
+                v_table = DataTable(None, p_alltypesstr, p_simple)
                 if self.v_cur.description:
                     for c in self.v_cur.description:
                         v_table.AddColumn(c[0])
@@ -1374,7 +1374,7 @@ class MySQL(Generic):
             else:
                 v_keep = True
             self.v_cur.execute(p_sql)
-            v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
+            v_table = DataTable(None, p_alltypesstr, p_simple)
             if self.v_cur.description:
                 for c in self.v_cur.description:
                     v_table.AddColumn(c[0])
@@ -1508,7 +1508,7 @@ class MySQL(Generic):
             else:
                 if self.v_start:
                     self.v_cur.execute(p_sql)
-                v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
+                v_table = DataTable(None, p_alltypesstr, p_simple)
                 if self.v_cur.description:
                     for c in self.v_cur.description:
                         v_table.AddColumn(c[0])
@@ -1614,7 +1614,7 @@ class MariaDB(Generic):
             else:
                 v_keep = True
             self.v_cur.execute(p_sql)
-            v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
+            v_table = DataTable(None, p_alltypesstr, p_simple)
             if self.v_cur.description:
                 for c in self.v_cur.description:
                     v_table.AddColumn(c[0])
@@ -1748,7 +1748,7 @@ class MariaDB(Generic):
             else:
                 if self.v_start:
                     self.v_cur.execute(p_sql)
-                v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
+                v_table = DataTable(None, p_alltypesstr, p_simple)
                 if self.v_cur.description:
                     for c in self.v_cur.description:
                         v_table.AddColumn(c[0])
@@ -1854,7 +1854,7 @@ class Firebird(Generic):
             else:
                 v_keep = True
             self.v_cur.execute(p_sql)
-            v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
+            v_table = DataTable(None, p_alltypesstr, p_simple)
             if self.v_cur.description:
                 for c in self.v_cur.description:
                     v_table.AddColumn(c[0])
@@ -1988,7 +1988,7 @@ class Firebird(Generic):
             else:
                 if self.v_start:
                     self.v_cur.execute(p_sql)
-                v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
+                v_table = DataTable(None, p_alltypesstr, p_simple)
                 if self.v_cur.description:
                     for c in self.v_cur.description:
                         v_table.AddColumn(c[0])
@@ -2106,7 +2106,7 @@ class Oracle(Generic):
             else:
                 v_keep = True
             self.v_cur.execute(p_sql)
-            v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
+            v_table = DataTable(None, p_alltypesstr, p_simple)
             if self.v_cur.description:
                 for c in self.v_cur.description:
                     v_table.AddColumn(c[0])
@@ -2247,7 +2247,7 @@ class Oracle(Generic):
             else:
                 if self.v_start:
                     self.v_cur.execute(p_sql)
-                v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
+                v_table = DataTable(None, p_alltypesstr, p_simple)
                 if self.v_cur.description:
                     for c in self.v_cur.description:
                         v_table.AddColumn(c[0])
@@ -2353,7 +2353,7 @@ class MSSQL(Generic):
             else:
                 v_keep = True
             self.v_cur.execute(p_sql)
-            v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
+            v_table = DataTable(None, p_alltypesstr, p_simple)
             if self.v_cur.description:
                 for c in self.v_cur.description:
                     v_table.AddColumn(c[0])
@@ -2487,7 +2487,7 @@ class MSSQL(Generic):
             else:
                 if self.v_start:
                     self.v_cur.execute(p_sql)
-                v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
+                v_table = DataTable(None, p_alltypesstr, p_simple)
                 if self.v_cur.description:
                     for c in self.v_cur.description:
                         v_table.AddColumn(c[0])
@@ -2597,7 +2597,7 @@ class IBMDB2(Generic):
             else:
                 v_keep = True
             self.v_cur.execute(p_sql)
-            v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
+            v_table = DataTable(None, p_alltypesstr, p_simple)
             if self.v_cur.description:
                 for c in self.v_cur.description:
                     v_table.AddColumn(c[0])
@@ -2731,7 +2731,7 @@ class IBMDB2(Generic):
             else:
                 if self.v_start:
                     self.v_cur.execute(p_sql)
-                v_table = DataTable(p_name=None, p_alltypesstr, p_simple)
+                v_table = DataTable(None, p_alltypesstr, p_simple)
                 if self.v_cur.description:
                     for c in self.v_cur.description:
                         v_table.AddColumn(c[0])

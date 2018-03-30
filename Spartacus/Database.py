@@ -1474,7 +1474,14 @@ class MySQL(Generic):
     def GetPID(self):
         return None
     def Terminate(self, p_pid):
-        pass
+        try:
+            self.Execute('kill {0}'.format(p_pid))
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except pymysql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
     def GetFields(self, p_sql):
         try:
             v_keep = None
@@ -1798,7 +1805,14 @@ class MariaDB(Generic):
     def GetPID(self):
         return None
     def Terminate(self, p_pid):
-        pass
+        try:
+            self.Execute('kill {0}'.format(p_pid))
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except pymysql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
     def GetFields(self, p_sql):
         try:
             v_keep = None

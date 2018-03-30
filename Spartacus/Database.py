@@ -77,11 +77,11 @@ class DataTable(object):
                     k = k + 1
             if self.Simple:
                 for r in self.Rows:
-                    if r[p_key] == p_value:
+                    if r[k] == p_value:
                         v_table.Rows.append(r)
             else:
                 for r in self.Rows:
-                    if r[k] == p_value:
+                    if r[p_key] == p_value:
                         v_table.Rows.append(r)
             return v_table
         except Exception as exc:
@@ -1320,8 +1320,6 @@ class PostgreSQL(Generic):
                 return ''
         except Spartacus.Database.Exception as exc:
             raise exc
-        except psycopg2.Error as exc:
-            raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
         finally:
@@ -1347,6 +1345,14 @@ class MySQL(Generic):
             self.v_password = p_password
             self.v_con = None
             self.v_cur = None
+            self.v_help = Spartacus.Database.DataTable()
+            self.v_help.Columns = ['Command', 'Syntax', 'Description']
+            self.v_help.AddRow(['\\?', '\\?', 'Show Commands.'])
+            self.v_help.AddRow(['\\x', '\\x', 'Toggle expanded output.'])
+            self.v_help.AddRow(['\\timing', '\\timing', 'Toggle timing of commands.'])
+            self.v_expanded = False
+            self.v_timing = False
+            self.v_status = 0
         else:
             raise Spartacus.Database.Exception("MySQL is not supported. Please install it with 'pip install Spartacus[mysql]'.")
     def GetConnectionString(self):
@@ -1361,6 +1367,7 @@ class MySQL(Generic):
                 password=self.v_password)
             self.v_cur = self.v_con.cursor()
             self.v_start = True
+            self.v_status = 0
         except pymysql.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
@@ -1373,7 +1380,7 @@ class MySQL(Generic):
                 v_keep = False
             else:
                 v_keep = True
-            self.v_cur.execute(p_sql)
+            self.v_status = self.v_cur.execute(p_sql)
             v_table = DataTable(None, p_alltypesstr, p_simple)
             if self.v_cur.description:
                 for c in self.v_cur.description:
@@ -1400,7 +1407,7 @@ class MySQL(Generic):
                 v_keep = False
             else:
                 v_keep = True
-            self.v_cur.execute(p_sql)
+            self.v_status = self.v_cur.execute(p_sql)
         except Spartacus.Database.Exception as exc:
             raise exc
         except pymysql.Error as exc:
@@ -1418,7 +1425,7 @@ class MySQL(Generic):
                 v_keep = False
             else:
                 v_keep = True
-            self.v_cur.execute(p_sql)
+            self.v_status = self.v_cur.execute(p_sql)
             r = self.v_cur.fetchone()
             if r != None:
                 s = r[0]
@@ -1473,7 +1480,7 @@ class MySQL(Generic):
             else:
                 v_keep = True
             v_fields = []
-            self.v_cur.execute('select * from ( ' + p_sql + ' ) t limit 1')
+            self.v_status = self.v_cur.execute('select * from ( ' + p_sql + ' ) t limit 1')
             r = self.v_cur.fetchone()
             if r != None:
                 k = 0
@@ -1500,14 +1507,24 @@ class MySQL(Generic):
     def ClearNotices(self):
         pass
     def GetStatus(self):
-        return None
+        try:
+            if self.v_con is None:
+                raise Spartacus.Database.Exception('This method should be called in the middle of Open() and Close() calls.')
+            else:
+                return self.v_status
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except pymysql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
     def QueryBlock(self, p_sql, p_blocksize, p_alltypesstr=False, p_simple=False):
         try:
             if self.v_con is None:
                 raise Spartacus.Database.Exception('This method should be called in the middle of Open() and Close() calls.')
             else:
                 if self.v_start:
-                    self.v_cur.execute(p_sql)
+                    self.v_status = self.v_cur.execute(p_sql)
                 v_table = DataTable(None, p_alltypesstr, p_simple)
                 if self.v_cur.description:
                     for c in self.v_cur.description:
@@ -1567,7 +1584,72 @@ class MySQL(Generic):
             raise Spartacus.Database.Exception(str(exc))
         return v_return
     def Special(self, p_sql):
-        return self.Query(p_sql).Pretty()
+        try:
+            v_keep = None
+            if self.v_con is None:
+                self.Open()
+                v_keep = False
+            else:
+                v_keep = True
+            v_command = p_sql.lstrip().split(' ')[0].rstrip('+')
+            v_title = None
+            v_table = None
+            v_status = None
+            if v_command == '\\?':
+                v_table = self.v_help
+            else:
+                v_aux = self.v_help.Select('Command', v_command)
+                if len(v_aux.Rows) > 0:
+                    if v_command == '\\x' and not self.v_expanded:
+                        v_status = 'Expanded display is on.'
+                        self.v_expanded = True
+                    elif v_command == '\\x' and self.v_expanded:
+                        v_status = 'Expanded display is off.'
+                        self.v_expanded = False
+                    elif v_command == '\\timing' and not self.v_timing:
+                        v_status = 'Timing is on.'
+                        self.v_timing = True
+                    elif v_command == '\\timing' and self.v_timing:
+                        v_status = 'Timing is off.'
+                        self.v_timing = False
+                else:
+                    if self.v_timing:
+                        v_timestart = datetime.datetime.now()
+                    v_table = self.Query(p_sql)
+                    v_tmp = self.GetStatus()
+                    if v_tmp == 1:
+                        v_status = '1 row '
+                    else:
+                        v_status = '{0} rows '.format(v_tmp)
+                    if v_command.lower() == 'select':
+                        v_status = v_status + 'in set'
+                    else:
+                        v_status = v_status + 'affected'
+                    if self.v_timing:
+                        v_status = v_status + '\nTime: {0}'.format(datetime.datetime.now() - v_timestart)
+            if v_title and v_table and len(v_table.Rows) > 0 and v_status:
+                return v_title + '\n' + v_table.Pretty(self.v_expanded) + '\n' + v_status
+            elif v_title and v_table and len(v_table.Rows) > 0:
+                return v_title + '\n' + v_table.Pretty(self.v_expanded)
+            elif v_title and v_status:
+                return v_title + '\n' + v_status
+            elif v_title:
+                return v_title
+            elif v_table and len(v_table.Rows) > 0 and v_status:
+                return v_table.Pretty(self.v_expanded) + '\n' + v_status
+            elif v_table and len(v_table.Rows) > 0:
+                return v_table.Pretty(self.v_expanded)
+            elif v_status:
+                return v_status
+            else:
+                return ''
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
 
 '''
 ------------------------------------------------------------------------
@@ -1587,6 +1669,14 @@ class MariaDB(Generic):
             self.v_password = p_password
             self.v_con = None
             self.v_cur = None
+            self.v_help = Spartacus.Database.DataTable()
+            self.v_help.Columns = ['Command', 'Syntax', 'Description']
+            self.v_help.AddRow(['\\?', '\\?', 'Show Commands.'])
+            self.v_help.AddRow(['\\x', '\\x', 'Toggle expanded output.'])
+            self.v_help.AddRow(['\\timing', '\\timing', 'Toggle timing of commands.'])
+            self.v_expanded = False
+            self.v_timing = False
+            self.v_status = 0
         else:
             raise Spartacus.Database.Exception("MariaDB is not supported. Please install it with 'pip install Spartacus[mariadb]'.")
     def GetConnectionString(self):
@@ -1601,6 +1691,7 @@ class MariaDB(Generic):
                 password=self.v_password)
             self.v_cur = self.v_con.cursor()
             self.v_start = True
+            self.v_status = 0
         except pymysql.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
@@ -1613,7 +1704,7 @@ class MariaDB(Generic):
                 v_keep = False
             else:
                 v_keep = True
-            self.v_cur.execute(p_sql)
+            self.v_status = self.v_cur.execute(p_sql)
             v_table = DataTable(None, p_alltypesstr, p_simple)
             if self.v_cur.description:
                 for c in self.v_cur.description:
@@ -1640,7 +1731,7 @@ class MariaDB(Generic):
                 v_keep = False
             else:
                 v_keep = True
-            self.v_cur.execute(p_sql)
+            self.v_status = self.v_cur.execute(p_sql)
         except Spartacus.Database.Exception as exc:
             raise exc
         except pymysql.Error as exc:
@@ -1658,7 +1749,7 @@ class MariaDB(Generic):
                 v_keep = False
             else:
                 v_keep = True
-            self.v_cur.execute(p_sql)
+            self.v_status = self.v_cur.execute(p_sql)
             r = self.v_cur.fetchone()
             if r != None:
                 s = r[0]
@@ -1713,7 +1804,7 @@ class MariaDB(Generic):
             else:
                 v_keep = True
             v_fields = []
-            self.v_cur.execute('select * from ( ' + p_sql + ' ) t limit 1')
+            self.v_status = self.v_cur.execute('select * from ( ' + p_sql + ' ) t limit 1')
             r = self.v_cur.fetchone()
             if r != None:
                 k = 0
@@ -1740,14 +1831,24 @@ class MariaDB(Generic):
     def ClearNotices(self):
         pass
     def GetStatus(self):
-        return None
+        try:
+            if self.v_con is None:
+                raise Spartacus.Database.Exception('This method should be called in the middle of Open() and Close() calls.')
+            else:
+                return self.v_status
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except pymysql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
     def QueryBlock(self, p_sql, p_blocksize, p_alltypesstr=False, p_simple=False):
         try:
             if self.v_con is None:
                 raise Spartacus.Database.Exception('This method should be called in the middle of Open() and Close() calls.')
             else:
                 if self.v_start:
-                    self.v_cur.execute(p_sql)
+                    self.v_status = self.v_cur.execute(p_sql)
                 v_table = DataTable(None, p_alltypesstr, p_simple)
                 if self.v_cur.description:
                     for c in self.v_cur.description:
@@ -1807,7 +1908,72 @@ class MariaDB(Generic):
             raise Spartacus.Database.Exception(str(exc))
         return v_return
     def Special(self, p_sql):
-        return self.Query(p_sql).Pretty()
+        try:
+            v_keep = None
+            if self.v_con is None:
+                self.Open()
+                v_keep = False
+            else:
+                v_keep = True
+            v_command = p_sql.lstrip().split(' ')[0].rstrip('+')
+            v_title = None
+            v_table = None
+            v_status = None
+            if v_command == '\\?':
+                v_table = self.v_help
+            else:
+                v_aux = self.v_help.Select('Command', v_command)
+                if len(v_aux.Rows) > 0:
+                    if v_command == '\\x' and not self.v_expanded:
+                        v_status = 'Expanded display is on.'
+                        self.v_expanded = True
+                    elif v_command == '\\x' and self.v_expanded:
+                        v_status = 'Expanded display is off.'
+                        self.v_expanded = False
+                    elif v_command == '\\timing' and not self.v_timing:
+                        v_status = 'Timing is on.'
+                        self.v_timing = True
+                    elif v_command == '\\timing' and self.v_timing:
+                        v_status = 'Timing is off.'
+                        self.v_timing = False
+                else:
+                    if self.v_timing:
+                        v_timestart = datetime.datetime.now()
+                    v_table = self.Query(p_sql)
+                    v_tmp = self.GetStatus()
+                    if v_tmp == 1:
+                        v_status = '1 row '
+                    else:
+                        v_status = '{0} rows '.format(v_tmp)
+                    if v_command.lower() == 'select':
+                        v_status = v_status + 'in set'
+                    else:
+                        v_status = v_status + 'affected'
+                    if self.v_timing:
+                        v_status = v_status + '\nTime: {0}'.format(datetime.datetime.now() - v_timestart)
+            if v_title and v_table and len(v_table.Rows) > 0 and v_status:
+                return v_title + '\n' + v_table.Pretty(self.v_expanded) + '\n' + v_status
+            elif v_title and v_table and len(v_table.Rows) > 0:
+                return v_title + '\n' + v_table.Pretty(self.v_expanded)
+            elif v_title and v_status:
+                return v_title + '\n' + v_status
+            elif v_title:
+                return v_title
+            elif v_table and len(v_table.Rows) > 0 and v_status:
+                return v_table.Pretty(self.v_expanded) + '\n' + v_status
+            elif v_table and len(v_table.Rows) > 0:
+                return v_table.Pretty(self.v_expanded)
+            elif v_status:
+                return v_status
+            else:
+                return ''
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
 
 '''
 ------------------------------------------------------------------------
@@ -2070,6 +2236,13 @@ class Oracle(Generic):
             self.v_password = p_password
             self.v_con = None
             self.v_cur = None
+            self.v_help = Spartacus.Database.DataTable()
+            self.v_help.Columns = ['Command', 'Syntax', 'Description']
+            self.v_help.AddRow(['\\?', '\\?', 'Show Commands.'])
+            self.v_help.AddRow(['\\x', '\\x', 'Toggle expanded output.'])
+            self.v_help.AddRow(['\\timing', '\\timing', 'Toggle timing of commands.'])
+            self.v_expanded = False
+            self.v_timing = False
         else:
             raise Spartacus.Database.Exception("Oracle is not supported. Please install it with 'pip install Spartacus[oracle]'.")
     def GetConnectionString(self):
@@ -2239,7 +2412,17 @@ class Oracle(Generic):
     def ClearNotices(self):
         pass
     def GetStatus(self):
-        return None
+        try:
+            if self.v_con is None:
+                raise Spartacus.Database.Exception('This method should be called in the middle of Open() and Close() calls.')
+            else:
+                return self.v_cur.rowcount
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except cx_Oracle.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
     def QueryBlock(self, p_sql, p_blocksize, p_alltypesstr=False, p_simple=False):
         try:
             if self.v_con is None:
@@ -2306,7 +2489,72 @@ class Oracle(Generic):
             raise Spartacus.Database.Exception(str(exc))
         return v_return
     def Special(self, p_sql):
-        return self.Query(p_sql).Pretty()
+        try:
+            v_keep = None
+            if self.v_con is None:
+                self.Open()
+                v_keep = False
+            else:
+                v_keep = True
+            v_command = p_sql.lstrip().split(' ')[0].rstrip('+')
+            v_title = None
+            v_table = None
+            v_status = None
+            if v_command == '\\?':
+                v_table = self.v_help
+            else:
+                v_aux = self.v_help.Select('Command', v_command)
+                if len(v_aux.Rows) > 0:
+                    if v_command == '\\x' and not self.v_expanded:
+                        v_status = 'Expanded display is on.'
+                        self.v_expanded = True
+                    elif v_command == '\\x' and self.v_expanded:
+                        v_status = 'Expanded display is off.'
+                        self.v_expanded = False
+                    elif v_command == '\\timing' and not self.v_timing:
+                        v_status = 'Timing is on.'
+                        self.v_timing = True
+                    elif v_command == '\\timing' and self.v_timing:
+                        v_status = 'Timing is off.'
+                        self.v_timing = False
+                else:
+                    if self.v_timing:
+                        v_timestart = datetime.datetime.now()
+                    v_table = self.Query(p_sql)
+                    v_tmp = self.GetStatus()
+                    if v_tmp == 1:
+                        v_status = '1 row '
+                    else:
+                        v_status = '{0} rows '.format(v_tmp)
+                    if v_command.lower() == 'select':
+                        v_status = v_status + 'in set'
+                    else:
+                        v_status = v_status + 'affected'
+                    if self.v_timing:
+                        v_status = v_status + '\nTime: {0}'.format(datetime.datetime.now() - v_timestart)
+            if v_title and v_table and len(v_table.Rows) > 0 and v_status:
+                return v_title + '\n' + v_table.Pretty(self.v_expanded) + '\n' + v_status
+            elif v_title and v_table and len(v_table.Rows) > 0:
+                return v_title + '\n' + v_table.Pretty(self.v_expanded)
+            elif v_title and v_status:
+                return v_title + '\n' + v_status
+            elif v_title:
+                return v_title
+            elif v_table and len(v_table.Rows) > 0 and v_status:
+                return v_table.Pretty(self.v_expanded) + '\n' + v_status
+            elif v_table and len(v_table.Rows) > 0:
+                return v_table.Pretty(self.v_expanded)
+            elif v_status:
+                return v_status
+            else:
+                return ''
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
 '''
 ------------------------------------------------------------------------
 MSSQL

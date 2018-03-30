@@ -290,8 +290,12 @@ class DataTable(object):
             v_table = Spartacus.Database.DataTable()
             v_table.AddColumn(p_column1)
             v_table.AddColumn(p_column2)
-            for k in range(len(self.Columns)):
-                v_table.AddRow([self.Columns[k], self.Rows[0][k]])
+            if self.Simple:
+                for k in range(len(self.Columns)):
+                    v_table.AddRow([self.Columns[k], self.Rows[0][k]])
+            else:
+                for c in self.Columns:
+                    v_table.AddRow([c, self.Rows[0][c]])
             return v_table
         else:
             raise Spartacus.Database.Exception('Can only transpose a table with a single row.')

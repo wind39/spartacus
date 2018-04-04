@@ -30,7 +30,7 @@ rootdir = os.path.abspath(os.path.dirname(__file__))
 long_description = open(os.path.join(rootdir, 'README')).read()
 
 setup(name='Spartacus',
-      version='2.23',
+      version='2.24',
       description='Generic database wrapper',
       long_description=long_description,
       url='http://github.com/wind39/spartacus',
@@ -38,15 +38,15 @@ setup(name='Spartacus',
       author_email='william.ivanski@gmail.com',
       license='MIT',
       packages=['Spartacus'],
-      install_requires=['pyscrypt', 'pyaes', 'PrettyTable'],
+      install_requires=['pyscrypt', 'pyaes'],
       extras_require={
-        'postgresql': ['psycopg2', 'pgspecial'],
+        'postgresql': ['psycopg2-binary', 'pgspecial'],
         'mysql':      ['PyMySQL'],
         'mariadb':    ['PyMySQL'],
         'firebird':   ['fdb'],
         'oracle':     ['cx_Oracle'],
         'mssql':      ['pymssql'],
         'ibmdb2':     ['ibm_db'],
-        'complete':   ['psycopg2', 'pgspecial', 'PyMySQL', 'fdb', 'cx_Oracle', 'pymssql', 'ibm_db']
+        'complete':   ['psycopg2-binary', 'pgspecial', 'PyMySQL', 'fdb', 'cx_Oracle', 'pymssql', 'ibm_db']
       },
       zip_safe=False)

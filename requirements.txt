@@ -1,5 +1,4 @@
 pyscrypt
 pyaes
-PrettyTable
 openpyxl
 pgspecial

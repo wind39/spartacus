@@ -1,4 +1,5 @@
 pyscrypt
 pyaes
 openpyxl
-pgspecial
+click
+sqlparse

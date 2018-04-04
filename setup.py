@@ -30,7 +30,7 @@ rootdir = os.path.abspath(os.path.dirname(__file__))
 long_description = open(os.path.join(rootdir, 'README')).read()
 
 setup(name='Spartacus',
-      version='2.24',
+      version='2.25',
       description='Generic database wrapper',
       long_description=long_description,
       url='http://github.com/wind39/spartacus',

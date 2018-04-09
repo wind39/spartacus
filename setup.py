@@ -30,14 +30,14 @@ rootdir = os.path.abspath(os.path.dirname(__file__))
 long_description = open(os.path.join(rootdir, 'README')).read()
 
 setup(name='Spartacus',
-      version='2.28',
+      version='2.29',
       description='Generic database wrapper',
       long_description=long_description,
       url='http://github.com/wind39/spartacus',
       author='William Ivanski',
       author_email='william.ivanski@gmail.com',
       license='MIT',
-      packages=['Spartacus', 'Spartacus.pgspecial'],
+      packages=['Spartacus', 'Spartacus.pgspecial', 'Spartacus.pgspecial.help'],
       install_requires=['pyscrypt', 'pyaes'],
       extras_require={
         'postgresql': ['psycopg2-binary'],

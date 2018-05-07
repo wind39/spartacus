@@ -389,7 +389,7 @@ class Generic(ABC):
     def Close(self):
         pass
     @abstractmethod
-    def Cancel(self):
+    def Cancel(self, p_usesameconn=True):
         pass
     @abstractmethod
     def GetPID(self):
@@ -559,7 +559,7 @@ class SQLite(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def Cancel(self):
+    def Cancel(self, p_usesameconn=True):
         try:
             if self.v_con:
                 self.v_con.cancel()
@@ -779,7 +779,7 @@ class Memory(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def Cancel(self):
+    def Cancel(self, p_usesameconn=True):
         try:
             if self.v_con:
                 self.v_con.cancel()
@@ -1081,10 +1081,10 @@ class PostgreSQL(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def Cancel(self, p_usepqcancel=True):
+    def Cancel(self, p_usesameconn=True):
         try:
             if self.v_con:
-                if p_usepqcancel:
+                if p_usesameconn:
                     self.v_con.cancel()
                 else:
                     v_con2 = psycopg2.connect(
@@ -1473,7 +1473,7 @@ class MySQL(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def Cancel(self):
+    def Cancel(self, p_usesameconn=True):
         try:
             if self.v_con:
                 v_con2 = pymysql.connect(
@@ -1815,7 +1815,7 @@ class MariaDB(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def Cancel(self):
+    def Cancel(self, p_usesameconn=True):
         try:
             if self.v_con:
                 v_con2 = pymysql.connect(
@@ -2146,7 +2146,7 @@ class Firebird(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def Cancel(self):
+    def Cancel(self, p_usesameconn=True):
         try:
             if self.v_con:
                 self.v_con.cancel()
@@ -2418,7 +2418,7 @@ class Oracle(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def Cancel(self):
+    def Cancel(self, p_usesameconn=True):
         try:
             if self.v_con:
                 self.v_con.cancel()
@@ -2740,7 +2740,7 @@ class MSSQL(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def Cancel(self):
+    def Cancel(self, p_usesameconn=True):
         try:
             if self.v_con:
                 self.v_con.cancel()
@@ -2984,7 +2984,7 @@ class IBMDB2(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def Cancel(self):
+    def Cancel(self, p_usesameconn=True):
         try:
             if self.v_con:
                 self.v_con.cancel()

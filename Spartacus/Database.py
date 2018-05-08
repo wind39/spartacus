@@ -25,6 +25,7 @@ SOFTWARE.
 from collections import OrderedDict
 from abc import ABC, abstractmethod
 import datetime
+import decimal
 import math
 
 import Spartacus
@@ -2327,9 +2328,13 @@ class Oracle(Generic):
                     self.v_port,
                     self.v_service
                 )
+    def Handler(self, p_cursor, p_name, p_type, p_size, p_precision, p_scale):
+        if p_type == cx_Oracle.NUMBER:
+            return p_cursor.var(str, 100, p_cursor.arraysize, outconverter = decimal.Decimal)
     def Open(self, p_autocommit=True):
         try:
             self.v_con = cx_Oracle.connect(self.GetConnectionString())
+            self.v_con.outputtypehandler = self.Handler
             self.v_cur = self.v_con.cursor()
             self.v_start = True
         except cx_Oracle.Error as exc:

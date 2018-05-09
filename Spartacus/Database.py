@@ -113,8 +113,8 @@ class DataTable(object):
                         pklist1 = []
                         pklist2 = []
                         for pkcol in p_pkcols:
-                            pklist1.append(str(r1[pkcol])
-                            pklist2.append(str(r2[pkcol])
+                            pklist1.append(str(r1[pkcol]))
+                            pklist2.append(str(r2[pkcol]))
                         pk1 = '_'.join(pklist1)
                         pk2 = '_'.join(pklist2)
                         if pk1 == pk2:

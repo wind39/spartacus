@@ -1015,6 +1015,7 @@ class PostgreSQL(Generic):
             self.v_help.AddRow(['\\timing', '\\timing', 'Toggle timing of commands.'])
             self.v_expanded = False
             self.v_timing = False
+            self.v_types = None
             psycopg2.extras.register_default_json(loads=lambda x: x)
             psycopg2.extras.register_default_jsonb(loads=lambda x: x)
         else:
@@ -1055,10 +1056,11 @@ class PostgreSQL(Generic):
             self.v_cur = self.v_con.cursor()
             self.v_start = True
             # PostgreSQL types
-            self.v_cur.execute('select oid, typname from pg_type')
-            self.v_types = dict([(r['oid'], r['typname']) for r in self.v_cur.fetchall()])
-            if not p_autocommit:
-                self.v_con.commit()
+            if self.v_types is None:
+                self.v_cur.execute('select oid, typname from pg_type')
+                self.v_types = dict([(r['oid'], r['typname']) for r in self.v_cur.fetchall()])
+                if not p_autocommit:
+                    self.v_con.commit()
             self.v_con.notices = DataList()
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -1442,6 +1444,36 @@ class MySQL(Generic):
             self.v_timing = False
             self.v_status = 0
             self.v_con_id = 0
+            self.v_types = {
+                0: 'DECIMAL',
+                1: 'TINY',
+                2: 'SHORT',
+                3: 'LONG',
+                4: 'FLOAT',
+                5: 'DOUBLE',
+                6: 'NULL',
+                7: 'TIMESTAMP',
+                8: 'LONGLONG',
+                9: 'INT24',
+                10: 'DATE',
+                11: 'TIME',
+                12: 'DATETIME',
+                13: 'YEAR',
+                14: 'NEWDATE',
+                15: 'VARCHAR',
+                16: 'BIT',
+                245: 'JSON',
+                246: 'NEWDECIMAL',
+                247: 'ENUM',
+                248: 'SET',
+                249: 'TINY_BLOB',
+                250: 'MEDIUM_BLOB',
+                251: 'LONG_BLOB',
+                252: 'BLOB',
+                253: 'VAR_STRING',
+                254: 'STRING',
+                255: 'GEOMETRY'
+            }
         else:
             raise Spartacus.Database.Exception("MySQL is not supported. Please install it with 'pip install Spartacus[mysql]'.")
     def GetConnectionString(self):
@@ -1591,12 +1623,12 @@ class MySQL(Generic):
             if r != None:
                 k = 0
                 for c in self.v_cur.description:
-                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
+                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=self.v_types[c[1]]))
                     k = k + 1
             else:
                 k = 0
                 for c in self.v_cur.description:
-                    v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
+                    v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=self.v_types[c[1]]))
                     k = k + 1
             return v_fields
         except Spartacus.Database.Exception as exc:
@@ -1784,6 +1816,36 @@ class MariaDB(Generic):
             self.v_timing = False
             self.v_status = 0
             self.v_con_id = 0
+            self.v_types = {
+                0: 'DECIMAL',
+                1: 'TINY',
+                2: 'SHORT',
+                3: 'LONG',
+                4: 'FLOAT',
+                5: 'DOUBLE',
+                6: 'NULL',
+                7: 'TIMESTAMP',
+                8: 'LONGLONG',
+                9: 'INT24',
+                10: 'DATE',
+                11: 'TIME',
+                12: 'DATETIME',
+                13: 'YEAR',
+                14: 'NEWDATE',
+                15: 'VARCHAR',
+                16: 'BIT',
+                245: 'JSON',
+                246: 'NEWDECIMAL',
+                247: 'ENUM',
+                248: 'SET',
+                249: 'TINY_BLOB',
+                250: 'MEDIUM_BLOB',
+                251: 'LONG_BLOB',
+                252: 'BLOB',
+                253: 'VAR_STRING',
+                254: 'STRING',
+                255: 'GEOMETRY'
+            }
         else:
             raise Spartacus.Database.Exception("MariaDB is not supported. Please install it with 'pip install Spartacus[mariadb]'.")
     def GetConnectionString(self):
@@ -1933,12 +1995,12 @@ class MariaDB(Generic):
             if r != None:
                 k = 0
                 for c in self.v_cur.description:
-                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=type(r[k])))
+                    v_fields.append(DataField(c[0], p_type=type(r[k]), p_dbtype=self.v_types[c[1]]))
                     k = k + 1
             else:
                 k = 0
                 for c in self.v_cur.description:
-                    v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=type(None)))
+                    v_fields.append(DataField(c[0], p_type=type(None), p_dbtype=self.v_types[c[1]]))
                     k = k + 1
             return v_fields
         except Spartacus.Database.Exception as exc:

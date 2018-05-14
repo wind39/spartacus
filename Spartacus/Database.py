@@ -1023,28 +1023,28 @@ class PostgreSQL(Generic):
     def GetConnectionString(self):
         if self.v_host is None or self.v_host == '':
             if self.v_password is None or self.v_password == '':
-                return "port={0} dbname='{1}' user='{2}' application_name='{3}'".format(
+                return """port={0} dbname='{1}' user='{2}' application_name='{3}'""".format(
                     self.v_port,
-                    self.v_service,
-                    self.v_user,
-                    self.v_application_name
+                    self.v_service.replace("'","\\'"),
+                    self.v_user.replace("'","\\'"),
+                    self.v_application_name.replace("'","\\'")
                 )
             else:
-                return "port={0} dbname='{1}' user='{2}' password='{3}' application_name='{4}'".format(
+                return """port={0} dbname='{1}' user='{2}' password='{3}' application_name='{4}'""".format(
                     self.v_port,
-                    self.v_service,
-                    self.v_user,
-                    self.v_password,
-                    self.v_application_name
+                    self.v_service.replace("'","\\'"),
+                    self.v_user.replace("'","\\'"),
+                    self.v_password.replace("'","\\'"),
+                    self.v_application_name.replace("'","\\'")
                 )
         else:
-            return "host='{0}' port={1} dbname='{2}' user='{3}' password='{4}' application_name='{5}'".format(
-                self.v_host,
+            return """host='{0}' port={1} dbname='{2}' user='{3}' password='{4}' application_name='{5}'""".format(
+                self.v_host.replace("'","\\'"),
                 self.v_port,
-                self.v_service,
-                self.v_user,
-                self.v_password,
-                self.v_application_name
+                self.v_service.replace("'","\\'"),
+                self.v_user.replace("'","\\'"),
+                self.v_password.replace("'","\\'"),
+                self.v_application_name.replace("'","\\'")
             )
     def Open(self, p_autocommit=True):
         try:
@@ -2434,31 +2434,31 @@ class Oracle(Generic):
     def GetConnectionString(self):
         if self.v_host is None and self.v_port is None: # tnsnames.ora
             if self.v_password is None or self.v_password == '':
-                return '{0}/@{1}'.format(
-                    self.v_user,
-                    self.v_service
+                return """{0}/@{1}""".format(
+                    self.v_user.replace("'","\\'"),
+                    self.v_service.replace("'","\\'")
                 )
             else:
-                return '{0}/{1}@{2}'.format(
-                    self.v_user,
-                    self.v_password,
-                    self.v_service
+                return """{0}/{1}@{2}""".format(
+                    self.v_user.replace("'","\\'"),
+                    self.v_password.replace("'","\\'"),
+                    self.v_service.replace("'","\\'")
                 )
         else:
             if self.v_password is None or self.v_password == '':
-                return '{0}/@{1}:{2}/{3}'.format(
-                    self.v_user,
-                    self.v_host,
+                return """{0}/@{1}:{2}/{3}""".format(
+                    self.v_user.replace("'","\\'"),
+                    self.v_host.replace("'","\\'"),
                     self.v_port,
-                    self.v_service
+                    self.v_service.replace("'","\\'")
                 )
             else:
-                return '{0}/{1}@{2}:{3}/{4}'.format(
-                    self.v_user,
-                    self.v_password,
-                    self.v_host,
+                return """{0}/{1}@{2}:{3}/{4}""".format(
+                    self.v_user.replace("'","\\'"),
+                    self.v_password.replace("'","\\'"),
+                    self.v_host.replace("'","\\'"),
                     self.v_port,
-                    self.v_service
+                    self.v_service.replace("'","\\'")
                 )
     def Handler(self, p_cursor, p_name, p_type, p_size, p_precision, p_scale):
         if p_type == cx_Oracle.NUMBER:
@@ -3020,12 +3020,12 @@ class IBMDB2(Generic):
         else:
             raise Spartacus.Database.Exception("IBM DB2 is not supported. Please install it with 'pip install Spartacus[ibmdb2]'.")
     def GetConnectionString(self):
-        return 'DATABASE={0};HOSTNAME={1};PORT={2};PROTOCOL=TCPIP;UID={3};PWD={4}'.format(
-            self.v_service,
-            self.v_host,
+        return """DATABASE={0};HOSTNAME={1};PORT={2};PROTOCOL=TCPIP;UID={3};PWD={4}""".format(
+            self.v_service.replace("'","\\'"),
+            self.v_host.replace("'","\\'"),
             self.v_port,
-            self.v_user,
-            self.v_password
+            self.v_user.replace("'","\\'"),
+            self.v_password.replace("'","\\'")
         )
     def Open(self, p_autocommit=True):
         try:

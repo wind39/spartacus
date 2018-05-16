@@ -104,6 +104,13 @@ class DataTable(object):
                     v_table.AddColumn(c)
                 v_table.AddColumn(p_statuscolname)
                 v_table.AddColumn(p_diffcolname)
+                v_pkcols = []
+                if len(p_pkcols) > 0:
+                    for c in p_pkcols:
+                        v_pkcols.append(c)
+                else:
+                    for c in self.Columns:
+                        v_pkcols.append(c)
                 if p_ordered:
                     k1 = 0
                     k2 = 0
@@ -112,7 +119,7 @@ class DataTable(object):
                         r2 = self.Rows[k2]
                         pklist1 = []
                         pklist2 = []
-                        for pkcol in p_pkcols:
+                        for pkcol in v_pkcols:
                             pklist1.append(str(r1[pkcol]))
                             pklist2.append(str(r2[pkcol]))
                         pk1 = '_'.join(pklist1)
@@ -178,7 +185,7 @@ class DataTable(object):
                         v_pkmatch = False
                         for r2 in p_datatable.Rows:
                             v_pkmatch = True
-                            for pkcol in p_pkcols:
+                            for pkcol in v_pkcols:
                                 if r1[pkcol] != r2[pkcol]:
                                     v_pkmatch = False
                                     break
@@ -215,7 +222,7 @@ class DataTable(object):
                         v_pkmatch = False
                         for r1 in self.Rows:
                             v_pkmatch = True
-                            for pkcol in p_pkcols:
+                            for pkcol in v_pkcols:
                                 if r1[pkcol] != r2[pkcol]:
                                     v_pkmatch = False
                                     break

@@ -116,7 +116,7 @@ class DataTable(object):
                     k2 = 0
                     while k1 < len(self.Rows) and k2 < len(p_datatable.Rows):
                         r1 = self.Rows[k1]
-                        r2 = self.Rows[k2]
+                        r2 = p_datatable.Rows[k2]
                         pklist1 = []
                         pklist2 = []
                         for pkcol in v_pkcols:
@@ -172,7 +172,7 @@ class DataTable(object):
                         v_table.AddRow(v_row)
                         k1 = k1 + 1
                     while k2 < len(p_datatable.Rows):
-                        r2 = self.Rows[k2]
+                        r2 = p_datatable.Rows[k2]
                         v_row = []
                         for c in p_datatable.Columns:
                             v_row.append(r2[c])

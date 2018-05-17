@@ -130,6 +130,8 @@ class DataTable(object):
                             v_diff = []
                             for c in self.Columns:
                                 if r1[c] != r2[c]:
+                                    print('HERE 1 {0}, {1}'.format(type(r1[c]), str(r1[c])))
+                                    print('HERE 2 {0}, {1}'.format(type(r2[c]), str(r2[c])))
                                     v_row.append('{0} --> {1}'.format(r1[c], r2[c]))
                                     v_diff.append(c)
                                     v_allmatch = False
@@ -2559,7 +2561,10 @@ class Oracle(Generic):
                 self.v_con.close()
                 self.v_con = None
         except cx_Oracle.Error as exc:
-            raise Spartacus.Database.Exception(str(exc))
+            if str(exc) != 'DPI-1040: LOB was already closed'
+                raise Spartacus.Database.Exception(str(exc))
+            else:
+                pass
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
     def Cancel(self, p_usesameconn=True):

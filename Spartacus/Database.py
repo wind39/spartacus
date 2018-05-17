@@ -96,6 +96,16 @@ class DataTable(object):
                 raise Spartacus.Database.Exception('Can not merge tables with different columns.')
         else:
             raise Spartacus.Database.Exception('Can not merge tables with no columns.')
+    def Equal(self, p_val1, p_val2):
+        if type(p_val1) is float:
+            v_val1 = decimal.Decimal(repr(p_val1))
+        else:
+            v_val1 = p_val1
+        if type(p_val2) is float:
+            v_val2 = decimal.Decimal(repr(p_val2))
+        else:
+            v_val2 = p_val2
+        return v_val1 == v_val2
     def Compare(self, p_datatable, p_pkcols, p_statuscolname, p_diffcolname, p_ordered=False, p_keepequal=False):
         if len(self.Columns) > 0 and len(p_datatable.Columns) > 0:
             if self.Columns == p_datatable.Columns:
@@ -129,9 +139,7 @@ class DataTable(object):
                             v_row = []
                             v_diff = []
                             for c in self.Columns:
-                                if r1[c] != r2[c]:
-                                    print('HERE 1 {0}, {1}'.format(type(r1[c]), str(r1[c])))
-                                    print('HERE 2 {0}, {1}'.format(type(r2[c]), str(r2[c])))
+                                if not self.Equal(r1[c], r2[c]):
                                     v_row.append('{0} --> {1}'.format(r1[c], r2[c]))
                                     v_diff.append(c)
                                     v_allmatch = False
@@ -188,7 +196,7 @@ class DataTable(object):
                         for r2 in p_datatable.Rows:
                             v_pkmatch = True
                             for pkcol in v_pkcols:
-                                if r1[pkcol] != r2[pkcol]:
+                                if not self.Equal(r1[pkcol], r2[pkcol]):
                                     v_pkmatch = False
                                     break
                             if v_pkmatch:
@@ -198,7 +206,7 @@ class DataTable(object):
                             v_row = []
                             v_diff = []
                             for c in self.Columns:
-                                if r1[c] != r2[c]:
+                                if not self.Equal(r1[c], r2[c]):
                                     v_row.append('{0} --> {1}'.format(r1[c], r2[c]))
                                     v_diff.append(c)
                                     v_allmatch = False
@@ -225,7 +233,7 @@ class DataTable(object):
                         for r1 in self.Rows:
                             v_pkmatch = True
                             for pkcol in v_pkcols:
-                                if r1[pkcol] != r2[pkcol]:
+                                if not self.Equal(r1[pkcol], r2[pkcol]):
                                     v_pkmatch = False
                                     break
                             if v_pkmatch:
@@ -2561,10 +2569,7 @@ class Oracle(Generic):
                 self.v_con.close()
                 self.v_con = None
         except cx_Oracle.Error as exc:
-            if str(exc) != 'DPI-1040: LOB was already closed'
-                raise Spartacus.Database.Exception(str(exc))
-            else:
-                pass
+            raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
     def Cancel(self, p_usesameconn=True):

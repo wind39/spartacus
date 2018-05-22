@@ -106,7 +106,7 @@ class DataTable(object):
         else:
             v_val2 = p_val2
         return v_val1 == v_val2
-    def Compare(self, p_datatable, p_pkcols, p_statuscolname, p_diffcolname, p_ordered=False, p_keepequal=False):
+    def Compare(self, p_datatable, p_pkcols, p_statuscolname, p_diffcolname, p_ordered=False, p_keepequal=False, p_debugupdates=False):
         if len(self.Columns) > 0 and len(p_datatable.Columns) > 0:
             if self.Columns == p_datatable.Columns:
                 v_table = DataTable()
@@ -140,7 +140,10 @@ class DataTable(object):
                             v_diff = []
                             for c in self.Columns:
                                 if not self.Equal(r1[c], r2[c]):
-                                    v_row.append('[{0}]({1}) --> [{2}]({3})'.format(repr(r1[c]), type(r1[c]), repr(r2[c]), type(r2[c])))
+                                    if p_debugupdates:
+                                        v_row.append('[{0}]({1}) --> [{2}]({3})'.format(repr(r1[c]), type(r1[c]), repr(r2[c]), type(r2[c])))
+                                    else:
+                                        v_row.append('{0} --> {1}'.format(repr(r1[c]), repr(r2[c]))
                                     v_diff.append(c)
                                     v_allmatch = False
                                 else:
@@ -2479,7 +2482,11 @@ class Oracle(Generic):
                 )
     def Handler(self, p_cursor, p_name, p_type, p_size, p_precision, p_scale):
         if p_type == cx_Oracle.NUMBER:
-            return p_cursor.var(str, 100, p_cursor.arraysize, outconverter = decimal.Decimal)
+            return p_cursor.var(str, size = 100, arraysize = p_cursor.arraysize, outconverter = decimal.Decimal)
+        elif p_type == cx_Oracle.CLOB:
+            return p_cursor.var(cx_Oracle.LONG_STRING, arraysize = p_cursor.arraysize)
+        elif p_type == cx_Oracle.BLOB:
+            return p_cursor.var(cx_Oracle.LONG_BINARY, arraysize = p_cursor.arraysize)
     def Open(self, p_autocommit=True):
         try:
             self.v_con = cx_Oracle.connect(self.GetConnectionString())

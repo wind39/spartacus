@@ -140,7 +140,7 @@ class DataTable(object):
                             v_diff = []
                             for c in self.Columns:
                                 if not self.Equal(r1[c], r2[c]):
-                                    v_row.append('{0} --> {1}'.format(r1[c], r2[c]))
+                                    v_row.append('[{0}]({1}) --> [{2}]({3})'.format(r1[c], type(r1[c]), r2[c], type(r2[c])))
                                     v_diff.append(c)
                                     v_allmatch = False
                                 else:

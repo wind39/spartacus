@@ -147,7 +147,7 @@ class DataTable(object):
                                     if p_debugupdates:
                                         v_row.append('[{0}]({1}) --> [{2}]({3})'.format(repr(r1[c]), type(r1[c]), repr(r2[c]), type(r2[c])))
                                     else:
-                                        v_row.append('{0} --> {1}'.format(repr(r1[c]), repr(r2[c]))
+                                        v_row.append('{0} --> {1}'.format(repr(r1[c]), repr(r2[c])))
                                     v_diff.append(c)
                                     v_allmatch = False
                                 else:

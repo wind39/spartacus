@@ -105,6 +105,10 @@ class DataTable(object):
             v_val2 = decimal.Decimal(repr(p_val2))
         else:
             v_val2 = p_val2
+        if v_val1 is None and v_val2 == '':
+            v_val1 = ''
+        elif v_val1 == '' and v_val2 is None:
+            v_val2 = ''
         return v_val1 == v_val2
     def Compare(self, p_datatable, p_pkcols, p_statuscolname, p_diffcolname, p_ordered=False, p_keepequal=False, p_debugupdates=False):
         if len(self.Columns) > 0 and len(p_datatable.Columns) > 0:

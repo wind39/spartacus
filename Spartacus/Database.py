@@ -46,47 +46,66 @@ class DataTable(object):
     def AddRow(self, p_row):
         if len(self.Columns) > 0 and len(p_row) > 0:
             if len(self.Columns) == len(p_row):
-                v_rowtmp2 = p_row
-                if self.AllTypesStr:
-                    for j in range(0, len(v_rowtmp2)):
-                        if v_rowtmp2[j] != None:
-                            v_rowtmp2[j] = str(v_rowtmp2[j])
-                        else:
-                            v_rowtmp2[j] = ''
-                v_rowtmp = OrderedDict(zip(self.Columns, tuple(v_rowtmp2)))
-                if self.Simple:
-                    v_row = []
-                    for c in self.Columns:
-                        v_row.append(v_rowtmp[c])
+                if not isinstance(p_row, OrderedDict):
+                    v_rowtmp2 = p_row
+                    if self.AllTypesStr:
+                        for j in range(0, len(v_rowtmp2)):
+                            if v_rowtmp2[j] != None:
+                                v_rowtmp2[j] = str(v_rowtmp2[j])
+                            else:
+                                v_rowtmp2[j] = ''
+                    v_rowtmp = OrderedDict(zip(self.Columns, tuple(v_rowtmp2)))
+                    if self.Simple:
+                        v_row = []
+                        for c in self.Columns:
+                            v_row.append(v_rowtmp[c])
+                    else:
+                        v_row = v_rowtmp
                 else:
-                    v_row = v_rowtmp
+                    v_row = p_row
                 self.Rows.append(v_row)
             else:
                 raise Spartacus.Database.Exception('Can not add row to a table with different columns.')
         else:
             raise Spartacus.Database.Exception('Can not add row to a table with no columns.')
     def Select(self, p_key, p_value):
-        try:
-            v_table = Spartacus.Database.DataTable(None, p_alltypesstr=self.AllTypesStr, p_simple=self.Simple)
-            k = 0
-            found = False
-            for c in self.Columns:
-                v_table.AddColumn(c)
-                if not found and c == p_key:
-                    found = True
-                elif not found:
-                    k = k + 1
-            if self.Simple:
+        if isinstance(p_key, list):
+            v_key = p_key
+        else:
+            v_key = [p_key]
+        if isinstance(p_value, list):
+            v_value = p_value
+        else:
+            v_value = [p_value]
+        if len(v_key) == len(v_value):
+            try:
+                v_table = Spartacus.Database.DataTable(None, p_alltypesstr=self.AllTypesStr, p_simple=self.Simple)
+                for c in self.Columns:
+                    v_table.AddColumn(c)
+                if self.Simple:
+                    v_keytmp = v_key
+                    v_key = []
+                    for x in v_keytmp:
+                        k = 0
+                        found = False
+                        while not found and k < len(self.Columns):
+                            if self.Columns[k] == x:
+                                found = True
+                                v_key.append(k)
+                            else:
+                                k = k + 1
                 for r in self.Rows:
-                    if r[k] == p_value:
+                    v_match = True
+                    for k in range(len(v_key)):
+                        if not self.Equal(r[v_key[k]], v_value[k]):
+                            v_match = False
+                    if v_match:
                         v_table.Rows.append(r)
-            else:
-                for r in self.Rows:
-                    if r[p_key] == p_value:
-                        v_table.Rows.append(r)
-            return v_table
-        except Exception as exc:
-            raise Spartacus.Database.Exception(str(exc))
+                return v_table
+            except Exception as exc:
+                raise Spartacus.Database.Exception(str(exc))
+        else:
+            raise Spartacus.Database.Exception('Can not select with different key-value dimension.')
     def Merge(self, p_datatable):
         if len(self.Columns) > 0 and len(p_datatable.Columns) > 0:
             if self.Columns == p_datatable.Columns:
@@ -396,6 +415,31 @@ class DataTable(object):
             return v_table
         else:
             raise Spartacus.Database.Exception('Can only transpose a table with a single row.')
+    def Distinct(self, p_pkcols):
+        v_table = Spartacus.Database.DataTable(None, p_alltypesstr=self.AllTypesStr, p_simple=self.Simple)
+        for c in self.Columns:
+            v_table.AddColumn(c)
+        a = 0
+        for r in self.Rows:
+            v_value = []
+            if self.Simple:
+                for x in p_pkcols:
+                    k = 0
+                    found = False
+                    while not found and k < len(self.Columns):
+                        if self.Columns[k] == x:
+                            found = True
+                            v_value.append(r[k])
+                        else:
+                            k = k + 1
+            else:
+                for x in p_pkcols:
+                    v_value.append(r[x])
+            v_tmp = v_table.Select(p_pkcols, v_value)
+            if len(v_tmp.Rows) == 0:
+                v_table.AddRow(r)
+            a = a + 1
+        return v_table
 
 class DataField(object):
     def __init__(self, p_name, p_type=None, p_dbtype=None, p_mask='#'):

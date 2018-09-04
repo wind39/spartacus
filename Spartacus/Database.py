@@ -768,8 +768,9 @@ class SQLite(Generic):
                         k = 0
                         while v_row is not None and k < p_blocksize:
                             v_table.AddRow(list(v_row))
-                            v_row = self.v_cur.fetchone()
                             k = k + 1
+                            if k < p_blocksize:
+                                v_row = self.v_cur.fetchone()
                     else:
                         while v_row is not None:
                             v_table.AddRow(list(v_row))
@@ -982,8 +983,9 @@ class Memory(Generic):
                         k = 0
                         while v_row is not None and k < p_blocksize:
                             v_table.AddRow(list(v_row))
-                            v_row = self.v_cur.fetchone()
                             k = k + 1
+                            if k < p_blocksize:
+                                v_row = self.v_cur.fetchone()
                     else:
                         while v_row is not None:
                             v_table.AddRow(list(v_row))
@@ -1741,8 +1743,9 @@ class MySQL(Generic):
                         k = 0
                         while v_row is not None and k < p_blocksize:
                             v_table.AddRow(list(v_row))
-                            v_row = self.v_cur.fetchone()
                             k = k + 1
+                            if k < p_blocksize:
+                                v_row = self.v_cur.fetchone()
                     else:
                         while v_row is not None:
                             v_table.AddRow(list(v_row))
@@ -2113,8 +2116,9 @@ class MariaDB(Generic):
                         k = 0
                         while v_row is not None and k < p_blocksize:
                             v_table.AddRow(list(v_row))
-                            v_row = self.v_cur.fetchone()
                             k = k + 1
+                            if k < p_blocksize:
+                                v_row = self.v_cur.fetchone()
                     else:
                         while v_row is not None:
                             v_table.AddRow(list(v_row))
@@ -2418,8 +2422,9 @@ class Firebird(Generic):
                         k = 0
                         while v_row is not None and k < p_blocksize:
                             v_table.AddRow(list(v_row))
-                            v_row = self.v_cur.fetchone()
                             k = k + 1
+                            if k < p_blocksize:
+                                v_row = self.v_cur.fetchone()
                     else:
                         while v_row is not None:
                             v_table.AddRow(list(v_row))
@@ -2715,8 +2720,9 @@ class Oracle(Generic):
                         k = 0
                         while v_row is not None and k < p_blocksize:
                             v_table.AddRow(list(v_row))
-                            v_row = self.v_cur.fetchone()
                             k = k + 1
+                            if k < p_blocksize:
+                                v_row = self.v_cur.fetchone()
                     else:
                         while v_row is not None:
                             v_table.AddRow(list(v_row))
@@ -3020,8 +3026,9 @@ class MSSQL(Generic):
                         k = 0
                         while v_row is not None and k < p_blocksize:
                             v_table.AddRow(list(v_row))
-                            v_row = self.v_cur.fetchone()
                             k = k + 1
+                            if k < p_blocksize:
+                                v_row = self.v_cur.fetchone()
                     else:
                         while v_row is not None:
                             v_table.AddRow(list(v_row))
@@ -3264,8 +3271,9 @@ class IBMDB2(Generic):
                         k = 0
                         while v_row is not None and k < p_blocksize:
                             v_table.AddRow(list(v_row))
-                            v_row = self.v_cur.fetchone()
                             k = k + 1
+                            if k < p_blocksize:
+                                v_row = self.v_cur.fetchone()
                     else:
                         while v_row is not None:
                             v_table.AddRow(list(v_row))

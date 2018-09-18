@@ -4,3 +4,4 @@ openpyxl
 click
 sqlparse
 psqlparse
+formulas[all]

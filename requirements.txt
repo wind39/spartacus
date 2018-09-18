@@ -3,3 +3,4 @@ pyaes
 openpyxl
 click
 sqlparse
+psqlparse

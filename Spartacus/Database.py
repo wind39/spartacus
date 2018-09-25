@@ -31,6 +31,53 @@ import math
 import Spartacus
 import Spartacus.prettytable as prettytable
 
+v_supported_rdbms = []
+try:
+    import sqlite3
+    v_supported_rdbms.append('SQLite')
+    v_supported_rdbms.append('Memory')
+except ImportError:
+    pass
+try:
+    import psycopg2
+    from psycopg2 import extras
+    from pgspecial.main import PGSpecial
+    from pgspecial.namedqueries import NamedQueries
+    import uuid
+    import sqlparse
+    import psqlparse
+    v_supported_rdbms.append('PostgreSQL')
+except ImportError:
+    pass
+try:
+    import pymysql
+    v_supported_rdbms.append('MySQL')
+    v_supported_rdbms.append('MariaDB')
+except ImportError:
+    pass
+try:
+    import fdb
+    v_supported_rdbms.append('Firebird')
+except ImportError:
+    pass
+try:
+    import cx_Oracle
+    v_supported_rdbms.append('Oracle')
+except ImportError:
+    pass
+try:
+    import pymssql
+    v_supported_rdbms.append('MSSQL')
+except ImportError:
+    pass
+try:
+    import ibm_db
+    import ibm_db_dbi
+    v_supported_rdbms.append('IBMDB2')
+except ImportError:
+    pass
+
+
 class Exception(Exception):
     pass
 
@@ -460,51 +507,6 @@ class DataList(object):
     def append(self, p_item):
         self.v_list.append(p_item)
 
-v_supported_rdbms = []
-try:
-    import sqlite3
-    v_supported_rdbms.append('SQLite')
-    v_supported_rdbms.append('Memory')
-except ImportError:
-    pass
-try:
-    import psycopg2
-    from psycopg2 import extras
-    from Spartacus.pgspecial.main import PGSpecial
-    from Spartacus.pgspecial.namedqueries import NamedQueries
-    import uuid
-    import sqlparse
-    import psqlparse
-    v_supported_rdbms.append('PostgreSQL')
-except ImportError:
-    pass
-try:
-    import pymysql
-    v_supported_rdbms.append('MySQL')
-    v_supported_rdbms.append('MariaDB')
-except ImportError:
-    pass
-try:
-    import fdb
-    v_supported_rdbms.append('Firebird')
-except ImportError:
-    pass
-try:
-    import cx_Oracle
-    v_supported_rdbms.append('Oracle')
-except ImportError:
-    pass
-try:
-    import pymssql
-    v_supported_rdbms.append('MSSQL')
-except ImportError:
-    pass
-try:
-    import ibm_db
-    import ibm_db_dbi
-    v_supported_rdbms.append('IBMDB2')
-except ImportError:
-    pass
 
 '''
 ------------------------------------------------------------------------
@@ -1371,17 +1373,20 @@ class PostgreSQL(Generic):
                     if v_analysis[i].type == 'SelectStmt':
                         v_cursors.append('{0}_{1}'.format(self.v_application_name, uuid.uuid4().hex))
                 if len(v_cursors) > 0:
-                    v_sql = 'BEGIN;'
+                    v_sql = ''
                     j = 0
                     for i in range(0, len(v_statement)):
                         if v_analysis[i].type == 'SelectStmt':
                             if j < len(v_cursors)-1:
-                                if v_statement[i][-1] == ';':
-                                    v_sql = v_sql + ' DECLARE {0} CURSOR WITHOUT HOLD FOR {1} FETCH {0};'.format(v_cursors[j], v_statement[i])
-                                else:
-                                    v_sql = v_sql + ' DECLARE {0} CURSOR WITHOUT HOLD FOR {1}; FETCH {0};'.format(v_cursors[j], v_statement[i])
+                                v_sql = v_sql + v_statement[i]
                             else:
-                                v_sql = v_sql + ' DECLARE {0} CURSOR WITHOUT HOLD FOR {1}'.format(v_cursors[j], v_statement[i])
+                                if self.v_con.autocommit:
+                                    v_sql = v_sql + ' DECLARE {0} CURSOR WITH HOLD FOR {1}'.format(v_cursors[j], v_statement[i])
+                                else:
+                                    if self.v_con.get_transaction_status() == 2:
+                                        v_sql = v_sql + ' DECLARE {0} CURSOR WITHOUT HOLD FOR {1}'.format(v_cursors[j], v_statement[i])
+                                    else:
+                                        v_sql = v_sql + ' BEGIN; DECLARE {0} CURSOR WITHOUT HOLD FOR {1}'.format(v_cursors[j], v_statement[i])
                                 self.v_cursor = v_cursors[j]
                             j = j + 1
                         else:
@@ -1426,6 +1431,9 @@ class PostgreSQL(Generic):
                                     v_table.Rows[i][j] = ''
                 if self.v_start:
                     self.v_start = False
+                if self.v_cursor is not None and len(v_table.Rows) < p_blocksize:
+                    self.v_start = True
+                    self.v_cursor = None
                 return v_table
         except Spartacus.Database.Exception as exc:
             raise exc

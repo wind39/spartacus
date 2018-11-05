@@ -2641,7 +2641,7 @@ Oracle
 ------------------------------------------------------------------------
 '''
 class Oracle(Generic):
-    def __init__(self, p_host, p_port, p_service, p_user, p_password, p_encoding):
+    def __init__(self, p_host, p_port, p_service, p_user, p_password, p_encoding=None):
         if 'Oracle' in v_supported_rdbms:
             self.v_host = p_host
             if p_host is not None and (p_port is None or p_port == ''):

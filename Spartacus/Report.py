@@ -38,7 +38,6 @@ class Exception(Exception):
         Examples:
             raise Spartacus.Report.Exception('Problem occurred while doing something.')
     """
-
     pass
 
 

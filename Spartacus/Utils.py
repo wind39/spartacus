@@ -32,6 +32,7 @@ import openpyxl
 from collections import OrderedDict
 import tempfile
 import formulas
+import hashlib
 
 import Spartacus
 import Spartacus.Database
@@ -63,6 +64,11 @@ class Cryptor(object):
         try:
             v_aes = pyaes.AESModeOfOperationCTR(self.v_hash)
             return v_aes.decrypt(base64.b64decode(p_cyphertext)).decode(self.v_encoding)
+        except Exception as exc:
+            raise Spartacus.Utils.Exception(str(exc))
+    def Hash(self, p_text):
+        try:
+            return hashlib.md5(p_text.encode(self.v_encoding)).hexdigest()
         except Exception as exc:
             raise Spartacus.Utils.Exception(str(exc))
 
@@ -212,8 +218,8 @@ class DataFileWriter(object):
         try:
             if self.v_extension == 'csv':
                 self.v_file = open(self.v_filename, 'w', encoding=self.v_encoding)
-                self.v_object = csv.DictWriter(self.v_file, fieldnames=self.v_header, delimiter=self.v_delimiter, lineterminator=self.v_lineterminator)
-                self.v_object.writeheader()
+                self.v_object = csv.writer(self.v_file, delimiter=self.v_delimiter, lineterminator=self.v_lineterminator)
+                self.v_object.writerow(self.v_header)
                 self.v_open = True
             elif self.v_extension == 'xlsx':
                 self.v_object = openpyxl.Workbook(write_only=True)
@@ -230,7 +236,7 @@ class DataFileWriter(object):
                 raise Spartacus.Utils.Exception('You need to call Open() first.')
             if self.v_extension == 'csv':
                 for v_row in p_datatable.Rows:
-                    self.v_object.writerow(dict(v_row))
+                    self.v_object.writerow(v_row)
             else:
                 if self.v_currentrow == 1:
                     if p_sheetname:
@@ -244,7 +250,7 @@ class DataFileWriter(object):
                 for r in range(0, len(p_datatable.Rows)):
                     v_row = []
                     for c in range(0, len(p_datatable.Columns)):
-                        v_row.append(p_datatable.Rows[r][p_datatable.Columns[c]])
+                        v_row.append(p_datatable.Rows[r][c])
                     v_worksheet.append(v_row)
                 self.v_currentrow = self.v_currentrow + len(p_datatable.Rows)
         except Spartacus.Utils.Exception as exc:

@@ -2,7 +2,7 @@ import Spartacus
 from Spartacus import Database
 
 try:
-    v_database = Spartacus.Database.SQLite('../employees.db')
+    v_database = Spartacus.Database.SQLite('samples/employees.db')
     #v_database = Spartacus.Database.PostgreSQL('127.0.0.1', '5432', 'employees', 'william', 'password')
     #v_database = Spartacus.Database.MySQL('127.0.0.1', '3306', 'employees', 'root', 'password')
     #v_database = Spartacus.Database.Firebird('127.0.0.1', '3050', '/path/to/employees.fdb', 'sysdba', 'masterkey')

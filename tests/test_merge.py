@@ -2,7 +2,7 @@ import Spartacus
 from Spartacus import Database
 
 try:
-    v_database = Spartacus.Database.SQLite('../employees.db')
+    v_database = Spartacus.Database.SQLite('samples/employees.db')
     #v_database = Spartacus.Database.PostgreSQL('127.0.0.1', '5432', 'employees', 'william', 'password')
 
     v_table_a = v_database.Query("select dept_no, dept_name, 'A' as test from departments")

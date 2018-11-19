@@ -2,6 +2,7 @@
 The MIT License (MIT)
 
 Copyright (c) 2014-2018 William Ivanski
+Copyright (c) 2018 Israel Barth Rubio
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -45,7 +46,6 @@ try:
     from pgspecial.namedqueries import NamedQueries
     import uuid
     import sqlparse
-    import psqlparse
     v_supported_rdbms.append('PostgreSQL')
 except ImportError:
     pass
@@ -622,7 +622,7 @@ SQLite
 ------------------------------------------------------------------------
 '''
 class SQLite(Generic):
-    def __init__(self, p_service, p_foreignkeys=True, p_timeout=30):
+    def __init__(self, p_service, p_foreignkeys=True, p_timeout=30, p_encoding=None):
         if 'SQLite' in v_supported_rdbms:
             self.v_host = None
             self.v_port = None
@@ -633,6 +633,7 @@ class SQLite(Generic):
             self.v_cur = None
             self.v_foreignkeys = p_foreignkeys
             self.v_timeout = p_timeout
+            self.v_encoding = p_encoding
         else:
             raise Spartacus.Database.Exception("SQLite is not supported. Please install it.")
     def GetConnectionString(self):
@@ -868,7 +869,7 @@ Memory
 ------------------------------------------------------------------------
 '''
 class Memory(Generic):
-    def __init__(self, p_foreignkeys=True, p_timeout=30):
+    def __init__(self, p_foreignkeys=True, p_timeout=30, p_encoding=None):
         if 'Memory' in v_supported_rdbms:
             self.v_host = None
             self.v_port = None
@@ -879,6 +880,7 @@ class Memory(Generic):
             self.v_cur = None
             self.v_foreignkeys = p_foreignkeys
             self.v_timeout = p_timeout
+            self.v_encoding = p_encoding
         else:
             raise Spartacus.Database.Exception("SQLite is not supported. Please install it.")
     def GetConnectionString(self):
@@ -1087,7 +1089,7 @@ PostgreSQL
 ------------------------------------------------------------------------
 '''
 class PostgreSQL(Generic):
-    def __init__(self, p_host, p_port, p_service, p_user, p_password, p_application_name='spartacus'):
+    def __init__(self, p_host, p_port, p_service, p_user, p_password, p_application_name='spartacus', p_encoding=None):
         if 'PostgreSQL' in v_supported_rdbms:
             self.v_host = p_host
             if p_port is None or p_port == '':
@@ -1105,6 +1107,8 @@ class PostgreSQL(Generic):
             self.v_cur = None
             self.v_start = True
             self.v_cursor = None
+            self.v_autocommit = True
+            self.v_last_fetched_size = 0
             self.v_special = PGSpecial()
             self.v_help = Spartacus.Database.DataTable()
             self.v_help.Columns = ['Command', 'Syntax', 'Description']
@@ -1135,6 +1139,7 @@ class PostgreSQL(Generic):
             psycopg2.extras.register_default_json(loads=lambda x: x)
             psycopg2.extras.register_default_jsonb(loads=lambda x: x)
             psycopg2.extensions.register_type(psycopg2.extensions.new_type(psycopg2.extensions.INTERVAL.values, 'INTERVAL_STR', psycopg2.STRING), self.v_cur)
+            self.v_encoding = p_encoding
         else:
             raise Spartacus.Database.Exception("PostgreSQL is not supported. Please install it with 'pip install Spartacus[postgresql]'.")
     def GetConnectionString(self):
@@ -1427,7 +1432,11 @@ class PostgreSQL(Generic):
                 return 0
             else:
                 if self.v_con.closed == 0:
-                    return self.v_con.status
+                    v_status = self.v_con.get_transaction_status()
+                    if v_status == 4:
+                        return 0
+                    else:
+                        return v_status+1
                 else:
                     return 0
         except Spartacus.Database.Exception as exc:
@@ -1438,28 +1447,25 @@ class PostgreSQL(Generic):
             raise Spartacus.Database.Exception(str(exc))
     def Parse(self, p_sql):
         try:
-            v_analysis = psqlparse.parse(p_sql)
             v_statement = sqlparse.split(p_sql)
+            v_analysis = sqlparse.parse(p_sql)
             if len(v_statement) == len(v_analysis):
                 v_cursors = []
-                for i in range(0, len(v_analysis)):
-                    if v_analysis[i].type == 'SelectStmt':
+                for i in range(0, len(v_statement)):
+                    if v_analysis[i].get_type() == 'SELECT':
                         v_cursors.append('{0}_{1}'.format(self.v_application_name, uuid.uuid4().hex))
                 if len(v_cursors) > 0:
                     v_sql = ''
                     j = 0
                     for i in range(0, len(v_statement)):
-                        if v_analysis[i].type == 'SelectStmt':
+                        if v_analysis[i].get_type() == 'SELECT':
                             if j < len(v_cursors)-1:
                                 v_sql = v_sql + v_statement[i]
                             else:
-                                if self.v_con.autocommit:
+                                if self.v_autocommit:
                                     v_sql = v_sql + ' DECLARE {0} CURSOR WITH HOLD FOR {1}'.format(v_cursors[j], v_statement[i])
                                 else:
-                                    if self.v_con.get_transaction_status() == 2:
-                                        v_sql = v_sql + ' DECLARE {0} CURSOR WITHOUT HOLD FOR {1}'.format(v_cursors[j], v_statement[i])
-                                    else:
-                                        v_sql = v_sql + ' BEGIN; DECLARE {0} CURSOR WITHOUT HOLD FOR {1}'.format(v_cursors[j], v_statement[i])
+                                    v_sql = v_sql + ' DECLARE {0} CURSOR WITHOUT HOLD FOR {1}'.format(v_cursors[j], v_statement[i])
                                 self.v_cursor = v_cursors[j]
                             j = j + 1
                         else:
@@ -1480,9 +1486,14 @@ class PostgreSQL(Generic):
                 raise Spartacus.Database.Exception('This method should be called in the middle of Open() and Close() calls.')
             else:
                 if self.v_start:
-                    if self.v_cursor and self.v_con.autocommit:
-                        self.v_cur.execute('CLOSE {0}'.format(self.v_cursor))
+                    if self.v_cursor:
+                        try:
+                            self.v_cur.execute('CLOSE {0}'.format(self.v_cursor))
+                        except:
+                            None
                     v_sql = self.Parse(p_sql)
+                    if not self.v_autocommit and not self.GetConStatus() == 3 and not self.GetConStatus() == 4:
+                        self.v_cur.execute('BEGIN;')
                     self.v_cur.execute(v_sql)
                 v_table = DataTable()
                 if self.v_cursor is not None:
@@ -1507,8 +1518,7 @@ class PostgreSQL(Generic):
                 if self.v_start:
                     self.v_start = False
                 if self.v_cursor is not None and len(v_table.Rows) < p_blocksize:
-                    if self.v_con.autocommit:
-                        self.v_cur.execute('CLOSE {0}'.format(self.v_cursor))
+                    self.v_cur.execute('CLOSE {0}'.format(self.v_cursor))
                     self.v_start = True
                     self.v_cursor = None
                 return v_table
@@ -1558,6 +1568,7 @@ class PostgreSQL(Generic):
             v_title = None
             v_table = None
             v_status = None
+            self.v_last_fetched_size = 0
             if v_command == '\\?':
                 v_table = self.v_help
             else:
@@ -1589,7 +1600,8 @@ class PostgreSQL(Generic):
                 else:
                     if self.v_timing:
                         v_timestart = datetime.datetime.now()
-                    v_table = self.Query(p_sql, True)
+                    v_table = self.QueryBlock(p_sql, 50, True, True)
+                    self.v_last_fetched_size = len(v_table.Rows)
                     v_status = self.GetStatus()
                     if self.v_timing:
                         v_status = v_status + '\nTime: {0}'.format(datetime.datetime.now() - v_timestart)
@@ -1624,7 +1636,7 @@ MySQL
 ------------------------------------------------------------------------
 '''
 class MySQL(Generic):
-    def __init__(self, p_host, p_port, p_service, p_user, p_password):
+    def __init__(self, p_host, p_port, p_service, p_user, p_password, p_encoding=None):
         if 'MySQL' in v_supported_rdbms:
             self.v_host = p_host
             if p_port is None or p_port == '':
@@ -1675,6 +1687,7 @@ class MySQL(Generic):
                 254: 'STRING',
                 255: 'GEOMETRY'
             }
+            self.v_encoding = p_encoding
         else:
             raise Spartacus.Database.Exception("MySQL is not supported. Please install it with 'pip install Spartacus[mysql]'.")
     def GetConnectionString(self):
@@ -1863,7 +1876,7 @@ class MySQL(Generic):
             raise Spartacus.Database.Exception(str(exc))
     def GetConStatus(self):
         try:
-            if self.v_con is None:
+            if self.v_con is None or not self.v_con.open:
                 return 0
             else:
                 return 1
@@ -2001,7 +2014,7 @@ MariaDB
 ------------------------------------------------------------------------
 '''
 class MariaDB(Generic):
-    def __init__(self, p_host, p_port, p_service, p_user, p_password):
+    def __init__(self, p_host, p_port, p_service, p_user, p_password, p_encoding=None):
         if 'MariaDB' in v_supported_rdbms:
             self.v_host = p_host
             if p_port is None or p_port == '':
@@ -2052,6 +2065,7 @@ class MariaDB(Generic):
                 254: 'STRING',
                 255: 'GEOMETRY'
             }
+            self.v_encoding = p_encoding
         else:
             raise Spartacus.Database.Exception("MariaDB is not supported. Please install it with 'pip install Spartacus[mariadb]'.")
     def GetConnectionString(self):
@@ -2378,7 +2392,7 @@ Firebird
 ------------------------------------------------------------------------
 '''
 class Firebird(Generic):
-    def __init__(self, p_host, p_port, p_service, p_user, p_password):
+    def __init__(self, p_host, p_port, p_service, p_user, p_password, p_encoding=None):
         if 'Firebird' in v_supported_rdbms:
             self.v_host = p_host
             if p_port is None or p_port == '':
@@ -2390,6 +2404,10 @@ class Firebird(Generic):
             self.v_password = p_password
             self.v_con = None
             self.v_cur = None
+            if p_encoding is not None:
+                self.v_encoding = p_encoding
+            else:
+                self.v_encoding = 'UTF8'
         else:
             raise Spartacus.Database.Exception("Firebird is not supported. Please install it with 'pip install Spartacus[firebird]'.")
     def GetConnectionString(self):
@@ -2401,7 +2419,8 @@ class Firebird(Generic):
                 port=int(self.v_port),
                 database=self.v_service,
                 user=self.v_user,
-                password=self.v_password)
+                password=self.v_password,
+                charset=self.v_encoding)
             self.v_cur = self.v_con.cursor()
             self.v_start = True
         except fdb.Error as exc:
@@ -2623,7 +2642,7 @@ Oracle
 ------------------------------------------------------------------------
 '''
 class Oracle(Generic):
-    def __init__(self, p_host, p_port, p_service, p_user, p_password):
+    def __init__(self, p_host, p_port, p_service, p_user, p_password, p_encoding=None):
         if 'Oracle' in v_supported_rdbms:
             self.v_host = p_host
             if p_host is not None and (p_port is None or p_port == ''):
@@ -2645,6 +2664,7 @@ class Oracle(Generic):
             self.v_help.AddRow(['\\timing', '\\timing', 'Toggle timing of commands.'])
             self.v_expanded = False
             self.v_timing = False
+            self.v_encoding = p_encoding
         else:
             raise Spartacus.Database.Exception("Oracle is not supported. Please install it with 'pip install Spartacus[oracle]'.")
     def GetConnectionString(self):
@@ -2855,7 +2875,11 @@ class Oracle(Generic):
             if self.v_con is None:
                 return 0
             else:
-                return 1
+                try:
+                    self.v_con.ping()
+                    return 1
+                except:
+                    return 0
         except Spartacus.Database.Exception as exc:
             raise exc
         except cx_Oracle.Error as exc:
@@ -2989,7 +3013,7 @@ MSSQL
 ------------------------------------------------------------------------
 '''
 class MSSQL(Generic):
-    def __init__(self, p_host, p_port, p_service, p_user, p_password):
+    def __init__(self, p_host, p_port, p_service, p_user, p_password, p_encoding=None):
         if 'MSSQL' in v_supported_rdbms:
             self.v_host = p_host
             if p_port is None or p_port == '':
@@ -3001,6 +3025,7 @@ class MSSQL(Generic):
             self.v_password = p_password
             self.v_con = None
             self.v_cur = None
+            self.v_encoding = p_encoding
         else:
             raise Spartacus.Database.Exception("MSSQL is not supported. Please install it with 'pip install Spartacus[mssql]'.")
     def GetConnectionString(self):
@@ -3235,7 +3260,7 @@ IBM DB2
 ------------------------------------------------------------------------
 '''
 class IBMDB2(Generic):
-    def __init__(self, p_host, p_port, p_service, p_user, p_password):
+    def __init__(self, p_host, p_port, p_service, p_user, p_password, p_encoding=None):
         if 'IBMDB2' in v_supported_rdbms:
             self.v_host = p_host
             if p_port is None or p_port == '':
@@ -3247,6 +3272,7 @@ class IBMDB2(Generic):
             self.v_password = p_password
             self.v_con = None
             self.v_cur = None
+            self.v_encoding = p_encoding
         else:
             raise Spartacus.Database.Exception("IBM DB2 is not supported. Please install it with 'pip install Spartacus[ibmdb2]'.")
     def GetConnectionString(self):

@@ -7,6 +7,9 @@ try:
     v_plain = 'This text is secret and must be hidden!'
     print('Plain: {0}'.format(v_plain))
 
+    v_hashed = v_cryptor.Hash(v_plain)
+    print('Hashed: {0}'.format(v_hashed))
+
     v_encrypted = v_cryptor.Encrypt(v_plain)
     print('Encrypted: {0}'.format(v_encrypted))
 

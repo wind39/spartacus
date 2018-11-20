@@ -623,15 +623,15 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
                         #column_columname#: will be replaced by the letter of the column.
                 Examples:
                     p_data = Spartacus.Database.DataTable that contains:
-                        Columns: ['campo1', 'campo_two'].
+                        Columns: ['field_one', 'field_two'].
                         Rows: [
                             [
                                 'HAHAHA',
-                                '=if(#column_campo1##row# = "HAHAHA", 1, 0)'
+                                '=if(#column_field_one##row# = "HAHAHA", 1, 0)'
                             ],
                             [
                                 'HEHEHE',
-                                '=if(#column_campo1##row# = "HAHAHA", 1, 0)'
+                                '=if(#column_field_one##row# = "HAHAHA", 1, 0)'
                             ]
                         ]
             p_mainTable (bool): if this table is the main table of the current worksheet. Defaults to False.
@@ -885,6 +885,399 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
             yield v_line
 
     v_lastLine = len(p_data.Rows) + p_startRow
+
+    #Apply conditional formatting, if any
+    if p_conditionalFormatting is not None:
+        v_startLetter = openpyxl.utils.get_column_letter(p_startColumn)
+        v_finalLetter = openpyxl.utils.get_column_letter(len(v_headerList) + p_startColumn - 1)
+
+        v_rule = openpyxl.formatting.rule.Rule(
+            type = 'expression',
+            formula = [p_conditionalFormatting.formula.replace('#row#', str(p_startRow + 1))],
+            dxf = p_conditionalFormatting.differentialStyle
+        )
+
+        p_workSheet.conditional_formatting.add(
+            '{0}{1}:{2}{3}'.format(v_startLetter, p_startRow + 1, v_finalLetter, v_lastLine),
+            v_rule
+        )
+
+    #Build Summary
+    for i in range(len(v_headerList)):
+        v_headerSummaryList = p_headerDict[v_headerList[i]].summaryList
+
+        for v_headerSummary in v_headerSummaryList:
+            v_letter = openpyxl.utils.get_column_letter(i + p_startColumn)
+
+            v_index = p_startRow - 1
+
+            if v_headerSummary.index < 0:
+                v_index = p_startRow + v_headerSummary.index
+            elif v_headerSummary.index > 0:
+                v_index = v_lastLine + v_headerSummary.index
+
+            v_cell = p_workSheet['{0}{1}'.format(v_letter, v_index)]
+            v_cell.value = v_headerSummary.function.replace('#column#', v_letter).replace('#start_row#', str(p_startRow + 1)).replace('#end_row#', str(v_lastLine))
+
+            if v_headerSummary.border is not None:
+                v_cell.border = v_headerSummary.border
+
+            if v_headerSummary.font is not None:
+                v_cell.font = v_headerSummary.font
+
+            if v_headerSummary.fill is not None:
+                v_cell.fill = v_headerSummary.fill
+
+            if v_headerSummary.type == 'int':
+                v_cell.number_format = '0'
+            elif v_headerSummary.type == 'float':
+                v_cell.number_format = '#,##0.00'
+            elif v_headerSummary.type == 'float4':
+                v_cell.number_format = '#,##0.0000'
+            elif v_headerSummary.type == 'percent':
+                v_cell.number_format = '0.00%'
+
+    #Create a new table and add it to worksheet
+    v_name = 'Table_{0}_{1}'.format(p_workSheet.title.replace(' ', ''), len(p_workSheet._tables) + 1) #excel doesn't accept same displayName in more than one table.
+    v_name = ''.join([c for c in v_name if c.isalnum()]) #Excel doesn't accept non-alphanumeric characters.
+
+    v_table = openpyxl.worksheet.table.Table(
+        displayName = v_name,
+        ref = '{0}{1}:{2}{3}'.format(
+            openpyxl.utils.get_column_letter(p_startColumn),
+            p_startRow,
+            openpyxl.utils.get_column_letter(p_startColumn + len(v_headerList) - 1),
+            v_lastLine
+        )
+    )
+
+    if p_tableStyleInfo is not None:
+        v_table.tableStyleInfo = p_tableStyleInfo
+
+    if not p_withFilters:
+        v_table.headerRowCount = 0
+
+    p_workSheet.add_table(v_table)
+
+
+def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_startRow = 1, p_headerHeight = None, p_database = None, p_query = None, p_mainTable = False, p_conditionalFormatting = None, p_tableStyleInfo = None, p_withFilters = True):
+    """Insert a table in a given worksheet.
+
+        Args:
+            p_workSheet (openpyxl.worksheet.worksheet.Worksheet): the worksheet where the table will be inserted. Defaults to None.
+            p_headerDict (collections.OrderedDict): an ordered dict that contains table header columns.
+                Notes:
+                    Each entry is in the following form:
+                        Key: Name of the column to be searched in p_data.Columns.
+                        Value: Spartacus.Report.Field instance.
+                Examples:
+                    p_headerDict = collections.OrderedDict([
+                        (
+                            'field_one',
+                            Field(
+                                p_name = 'Code',
+                                p_width = 15,
+                                p_data = Data(
+                                    p_type = 'int'
+                                )
+                            )
+                        ),
+                        (
+                            'field_two',
+                            Field(
+                                p_name = 'Result',
+                                p_width = 15,
+                                p_data = Data(
+                                    p_type = 'int_formula'
+                                )
+                            )
+                        )
+                    ])
+            p_startColumn (int): the column number where the table should start. Defaults to 1.
+                Notes:
+                    Must be a positive integer.
+            p_startRow (int): the row number where the table should start. Defaults to 1.
+                Notes:
+                    Must be a positive integer.
+            p_headerHeight (float): the header row height in pt. Defaults to None.
+                Notes:
+                    Must be a non-negative number or None.
+            p_database (Spartacus.Database.Generic): the database from where the data will be fetched. Defaults to None.
+                Notes:
+                    Must be already instantiated and must not be opened yet.
+            p_query (str): the query to fetch the data that will be inserted into the excel table. Defaults to None.
+                Notes:
+                    If the corresponding column data type in p_headerDict is some kind of formula, then below wildcards can be used:
+                        #row#: the current row.
+                        #column_columname#: will be replaced by the letter of the column.
+                Examples:
+                    "SELECT field_one, '=if(#column_field_one##row# = "HAHAHA", 1, 0)' as field_two FROM sometable"
+            p_mainTable (bool): if this table is the main table of the current worksheet. Defaults to False.
+                Notes:
+                    If it's the main table, then it will consider p_width, p_hidden and freeze panes in the first table row. The 3 parameters are ignored otherwise.
+            p_conditionalFormatting (Spartacus.Report.ConditionalFormatting): a conditional formatting that should be applied to data rows. Defaults to None.
+                Notes:
+                    Will be applied to all data rows of this table.
+                    A wildcard can be used and be replaced properly:
+                        #row#: the current data row.
+                Examples:
+                    p_conditionalFormatting = ConditionalFormatting(
+                        p_formula = '$Y#row# = 2',
+                        p_differentialStyle = openpyxl.styles.differential.DifferentialStyle(
+                            fill = openpyxl.styles.PatternFill(
+                                bgColor = 'D3D3D3'
+                            )
+                        )
+                    )
+            p_tableStyleInfo (openpyxl.worksheet.table.TableStyleInfo): a style to be applied to this table. Defaults to None.
+                Notes:
+                    Will not be applied to summaries, if any.
+                Examples:
+                    p_tableStyleInfo = openpyxl.worksheet.table.TableStyleInfo(
+                        name = 'TableStyleMedium23',
+                        showFirstColumn = True,
+                        showLastColumn = True,
+                        showRowStripes = True,
+                        showColumnStripes = False
+                    )
+
+            p_withFilters (bool): if the table must contain auto-filters.
+
+        Yields:
+            int: Every 1000 lines inserted into the table, yields actual line number.
+
+        Raises:
+            Spartacus.Report.Exception: custom exceptions occurred in this script.
+    """
+
+    if not isinstance(p_workSheet, openpyxl.worksheet.worksheet.Worksheet):
+        raise Spartacus.Report.Exception('Error during execution of method "Static.AddTable": Parameter "p_workSheet" must be of type "openpyxl.worksheet.worksheet.Worksheet".')
+
+    if not isinstance(p_headerDict, collections.OrderedDict):
+        raise Spartacus.Report.Exception('Error during execution of method "Static.AddTable": Parameter "p_headerDict" must be of type "collections.OrderedDict".')
+
+    if not isinstance(p_startColumn, int):
+        raise Spartacus.Report.Exception('Error during execution of method "Static.AddTable": Parameter "p_startColumn" must be of type "int".')
+
+    if p_startColumn < 1:
+        raise Spartacus.Report.Exception('Error during execution of method "Static.AddTable": Parameter "p_startColumn" must be a positive integer.')
+
+    if not isinstance(p_startRow, int):
+        raise Spartacus.Report.Exception('Error during execution of method "Static.AddTable": Parameter "p_startRow" must be of type "int".')
+
+    if p_startRow < 1:
+        raise Spartacus.Report.Exception('Error during execution of method "Static.AddTable": Parameter "p_startRow" must be a positive integer.')
+
+    if p_headerHeight is not None and not isinstance(p_headerHeight, int) and not isinstance(p_headerHeight, float):
+        raise Spartacus.Report.Exception('Error during execution of method "Static.AddTable": Parameter "p_headerHeight" must be None or of type "int" or "float".')
+
+    if not isinstance(p_database, Spartacus.Database.Generic):
+        raise Spartacus.Report.Exception('Error during execution of method "Static.AddTable": Parameter "p_database" must be of type "Spartacus.Database.Generic".')
+
+    if not isinstance(p_query, str):
+        raise Spartacus.Report.Exception('Error during execution of method "Static.AddTable": Parameter "p_query" must be of type "str".')
+
+    if not isinstance(p_mainTable, bool):
+        raise Spartacus.Report.Exception('Error during execution of method "Static.AddTable": Parameter "p_mainTable" must be of type "bool".')
+
+    if p_conditionalFormatting is not None and not isinstance(p_conditionalFormatting, ConditionalFormatting):
+        raise Spartacus.Report.Exception('Error during execution of method "Static.AddTable": Parameter "p_conditionalFormatting" must be None or of type "Spartacus.Report.ConditionalFormatting".')
+
+    if p_tableStyleInfo is not None and not isinstance(p_tableStyleInfo, openpyxl.worksheet.table.TableStyleInfo):
+        raise Spartacus.Report.Exception('Error during execution of method "Static.AddTable": Parameter "p_tableStyleInfo" must be None or of type "openpyxl.worksheet.table.TableStyleInfo".')
+
+    if p_withFilters is not None and not isinstance(p_withFilters, bool):
+        raise Spartacus.Report.Exception('Error during execution of method "Static.AddTable": Parameter "p_withFilters" must be None or of type "bool".')
+
+    #Format Header
+    if p_headerHeight is not None:
+        p_workSheet.row_dimensions[p_startRow].height = p_headerHeight
+
+    v_headerList = list(p_headerDict.keys())
+
+    for i in range(len(v_headerList)):
+        v_header = p_headerDict[v_headerList[i]]
+        v_letter = openpyxl.utils.get_column_letter(i + p_startColumn)
+
+        v_cell = p_workSheet['{0}{1}'.format(v_letter, p_startRow)]
+        v_cell.value = v_header.name
+
+        if p_mainTable:
+            p_workSheet.column_dimensions[v_letter].width = v_header.width
+            p_workSheet.column_dimensions[v_letter].hidden = v_header.hidden
+
+        if v_header.comment is not None:
+            v_cell.comment = v_header.comment
+
+        if v_header.border is not None:
+            v_cell.border = v_header.border
+
+        if v_header.font is not None:
+            v_cell.font = v_header.font
+
+        if v_header.fill is not None:
+            v_cell.fill = v_header.fill
+
+        if v_header.alignment is not None:
+            v_cell.alignment = v_header.alignment
+
+    if p_mainTable:
+        p_workSheet.freeze_panes = 'A{0}'.format(p_startRow + 1)
+
+    #used in formula fields, if it's the case
+    v_pattern = re.compile(r'#column_[^\n\r#]*#')
+
+    p_database.Open()
+
+    v_line = 0
+    v_hasmorerecords = True
+    while v_hasmorerecords:
+        v_data = p_database.QueryBlock(p_query, 1000)
+
+        if len(v_data.Rows) > 0:
+
+            #Fill content
+            for v_row in v_data.Rows:
+                v_line += 1
+
+                for i in range(len(v_headerList)):
+                    v_headerData = p_headerDict[v_headerList[i]].data
+                    v_letter = openpyxl.utils.get_column_letter(i + p_startColumn)
+
+                    v_cell = p_workSheet['{0}{1}'.format(v_letter, v_line + p_startRow)] #Plus p_startRow to "jump" report header lines
+
+                    if v_headerData.border is not None:
+                        v_cell.border = v_headerData.border
+
+                    if v_headerData.font is not None:
+                        v_cell.font = v_headerData.font
+
+                    if v_headerData.fill is not None:
+                        v_cell.fill = v_headerData.fill
+
+                    if v_headerData.alignment is not None:
+                        v_cell.alignment = v_headerData.alignment
+
+                    if v_headerData.type == 'int':
+                        try:
+                            v_cell.value = int(v_row[v_headerList[i]]) or 0
+                        except Exception as exc:
+                            v_cell.value = v_row[v_headerList[i]] or 0
+
+                        v_cell.number_format = '0'
+                    elif v_headerData.type == 'float':
+                        try:
+                            v_cell.value = float(v_row[v_headerList[i]]) or 0.0
+                        except Exception as exc:
+                            v_cell.value = v_row[v_headerList[i]] or 0.0
+
+                        v_cell.number_format = '#,##0.00'
+                    elif v_headerData.type == 'float4':
+                        try:
+                            v_cell.value = float(v_row[v_headerList[i]]) or 0.0
+                        except Exception as exc:
+                            v_cell.value = v_row[v_headerList[i]] or 0.0
+
+                        v_cell.number_format = '#,##0.0000'
+                    elif v_headerData.type == 'percent':
+                        try:
+                            v_cell.value = float(v_row[v_headerList[i]]) or 0.0
+                        except Exception as exc:
+                            v_cell.value = v_row[v_headerList[i]] or 0.0
+
+                        v_cell.number_format = '0.00%'
+                    elif v_headerData.type == 'date':
+                        v_cell.value = v_row[v_headerList[i]] or ''
+                        v_cell.number_format = 'DD/MM/YYYY'
+                    elif v_headerData.type == 'str':
+                        v_cell.value = v_row[v_headerList[i]] or ''
+                    if v_headerData.type == 'int_formula':
+                        v_value = v_row[v_headerList[i]].replace('#row#', str(p_startRow + v_line))
+                        v_match = re.search(v_pattern, v_value)
+
+                        while v_match is not None:
+                            v_start = v_match.start()
+                            v_end = v_match.end()
+                            v_matchColumn = openpyxl.utils.get_column_letter(p_startColumn + v_headerList.index(v_value[v_start + 8 : v_end - 1])) #Discard starting #column_ and ending # in match
+                            v_value = v_value[:v_start] + v_matchColumn + v_value[v_end:]
+                            v_match = re.search(v_pattern, v_value)
+
+                        v_cell.value = v_value
+                        v_cell.number_format = '0'
+                    elif v_headerData.type == 'float_formula':
+                        v_value = v_row[v_headerList[i]].replace('#row#', str(p_startRow + v_line))
+                        v_match = re.search(v_pattern, v_value)
+
+                        while v_match is not None:
+                            v_start = v_match.start()
+                            v_end = v_match.end()
+                            v_matchColumn = openpyxl.utils.get_column_letter(p_startColumn + v_headerList.index(v_value[v_start + 8 : v_end - 1])) #Discard starting #column_ and ending # in match
+                            v_value = v_value[:v_start] + v_matchColumn + v_value[v_end:]
+                            v_match = re.search(v_pattern, v_value)
+
+                        v_cell.value = v_value
+                        v_cell.number_format = '#,##0.00'
+                    elif v_headerData.type == 'float4_formula':
+                        v_value = v_row[v_headerList[i]].replace('#row#', str(p_startRow + v_line))
+                        v_match = re.search(v_pattern, v_value)
+
+                        while v_match is not None:
+                            v_start = v_match.start()
+                            v_end = v_match.end()
+                            v_matchColumn = openpyxl.utils.get_column_letter(p_startColumn + v_headerList.index(v_value[v_start + 8 : v_end - 1])) #Discard starting #column_ and ending # in match
+                            v_value = v_value[:v_start] + v_matchColumn + v_value[v_end:]
+                            v_match = re.search(v_pattern, v_value)
+
+                        v_cell.value = v_value
+                        v_cell.number_format = '#,##0.0000'
+                    elif v_headerData.type == 'percent_formula':
+                        v_value = v_row[v_headerList[i]].replace('#row#', str(p_startRow + v_line))
+                        v_match = re.search(v_pattern, v_value)
+
+                        while v_match is not None:
+                            v_start = v_match.start()
+                            v_end = v_match.end()
+                            v_matchColumn = openpyxl.utils.get_column_letter(p_startColumn + v_headerList.index(v_value[v_start + 8 : v_end - 1])) #Discard starting #column_ and ending # in match
+                            v_value = v_value[:v_start] + v_matchColumn + v_value[v_end:]
+                            v_match = re.search(v_pattern, v_value)
+
+                        v_cell.value = v_value
+                        v_cell.number_format = '0.00%'
+                    elif v_headerData.type == 'date_formula':
+                        v_value = v_row[v_headerList[i]].replace('#row#', str(p_startRow + v_line))
+                        v_match = re.search(v_pattern, v_value)
+
+                        while v_match is not None:
+                            v_start = v_match.start()
+                            v_end = v_match.end()
+                            v_matchColumn = openpyxl.utils.get_column_letter(p_startColumn + v_headerList.index(v_value[v_start + 8 : v_end - 1])) #Discard starting #column_ and ending # in match
+                            v_value = v_value[:v_start] + v_matchColumn + v_value[v_end:]
+                            v_match = re.search(v_pattern, v_value)
+
+                        v_cell.value = v_value
+                        v_cell.number_format = 'DD/MM/YYYY'
+                    elif v_headerData.type == 'str_formula':
+                        v_value = v_row[v_headerList[i]].replace('#row#', str(p_startRow + v_line))
+                        v_match = re.search(v_pattern, v_value)
+
+                        while v_match is not None:
+                            v_start = v_match.start()
+                            v_end = v_match.end()
+                            v_matchColumn = openpyxl.utils.get_column_letter(p_startColumn + v_headerList.index(v_value[v_start + 8 : v_end - 1])) #Discard starting #column_ and ending # in match
+                            v_value = v_value[:v_start] + v_matchColumn + v_value[v_end:]
+                            v_match = re.search(v_pattern, v_value)
+
+                        v_cell.value = v_value
+
+                yield v_line
+
+            v_hasmorerecords = True
+        else:
+            v_hasmorerecords = False
+
+    p_database.Close()
+
+    v_lastLine = v_line + p_startRow
 
     #Apply conditional formatting, if any
     if p_conditionalFormatting is not None:

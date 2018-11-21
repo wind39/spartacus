@@ -30,7 +30,7 @@ rootdir = os.path.abspath(os.path.dirname(__file__))
 long_description = open(os.path.join(rootdir, 'README')).read()
 
 setup(name='Spartacus',
-      version='3.2',
+      version='3.4',
       description='Generic database wrapper',
       long_description=long_description,
       url='http://github.com/wind39/spartacus',
@@ -38,7 +38,7 @@ setup(name='Spartacus',
       author_email='william.ivanski@gmail.com',
       license='MIT',
       packages=['Spartacus'],
-      install_requires=['pyscrypt', 'pyaes', 'openpyxl', 'click', 'sqlparse', 'formulas', 'bs4'],
+      install_requires=['pyscrypt', 'pyaes', 'openpyxl', 'click', 'sqlparse', 'bs4', 'lxml'],
       extras_require={
         'postgresql': ['psycopg2-binary', 'pgspecial', 'sqlparse'],
         'mysql':      ['PyMySQL'],
@@ -47,6 +47,6 @@ setup(name='Spartacus',
         'oracle':     ['cx_Oracle'],
         'mssql':      ['pymssql'],
         'ibmdb2':     ['ibm_db'],
-        'complete':   ['psycopg2-binary', 'pgspecial', 'sqlparse', 'PyMySQL', 'fdb', 'cx_Oracle', 'pymssql', 'ibm_db']
+        'complete':   ['psycopg2-binary', 'pgspecial', 'sqlparse', 'PyMySQL', 'fdb', 'cx_Oracle', 'pymssql', 'ibm_db', 'bs4', 'lxml']
       },
       zip_safe=False)

@@ -4,5 +4,5 @@ openpyxl
 click
 sqlparse
 pgspecial
-formulas[all]
 bs4
+lxml

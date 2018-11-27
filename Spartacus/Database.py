@@ -44,6 +44,7 @@ try:
     from psycopg2 import extras
     from pgspecial.main import PGSpecial
     from pgspecial.namedqueries import NamedQueries
+    from pgspecial.help.commands import helpcommands as HelpCommands
     import uuid
     import sqlparse
     v_supported_rdbms.append('PostgreSQL')
@@ -1133,6 +1134,10 @@ class PostgreSQL(Generic):
             self.v_help.AddRow(['\\dT', '\\dT[+] [pattern]', 'List data types.'])
             self.v_help.AddRow(['\\x', '\\x', 'Toggle expanded output.'])
             self.v_help.AddRow(['\\timing', '\\timing', 'Toggle timing of commands.'])
+            self.v_helpcommands = Spartacus.Database.DataTable()
+            self.v_helpcommands.Columns = ['SQL Command']
+            for s in list(HelpCommands.keys()):
+                self.v_helpcommands.AddRow([s])
             self.v_expanded = False
             self.v_timing = False
             self.v_types = None
@@ -1571,6 +1576,9 @@ class PostgreSQL(Generic):
             self.v_last_fetched_size = 0
             if v_command == '\\?':
                 v_table = self.v_help
+            elif v_command == '\\h' and len(p_sql.lstrip().split(' ')[1:]) == 0:
+                v_title = 'Type "\h [parameter]" where "parameter" is a SQL Command from the list below:'
+                v_table = self.v_helpcommands
             else:
                 v_aux = self.v_help.Select('Command', v_command)
                 if len(v_aux.Rows) > 0:

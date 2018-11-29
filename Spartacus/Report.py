@@ -1160,28 +1160,28 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
 
                     if v_headerData.type == 'int':
                         try:
-                            v_cell.value = int(v_row[v_headerList[i]]) or 0
+                            v_cell.value = int(v_row[v_headerList[i]] or '0')
                         except Exception as exc:
                             v_cell.value = v_row[v_headerList[i]] or 0
 
                         v_cell.number_format = '0'
                     elif v_headerData.type == 'float':
                         try:
-                            v_cell.value = float(v_row[v_headerList[i]]) or 0.0
+                            v_cell.value = float(v_row[v_headerList[i]] or '0.0')
                         except Exception as exc:
                             v_cell.value = v_row[v_headerList[i]] or 0.0
 
                         v_cell.number_format = '#,##0.00'
                     elif v_headerData.type == 'float4':
                         try:
-                            v_cell.value = float(v_row[v_headerList[i]]) or 0.0
+                            v_cell.value = float(v_row[v_headerList[i]] or '0.0')
                         except Exception as exc:
                             v_cell.value = v_row[v_headerList[i]] or 0.0
 
                         v_cell.number_format = '#,##0.0000'
                     elif v_headerData.type == 'percent':
                         try:
-                            v_cell.value = float(v_row[v_headerList[i]]) or 0.0
+                            v_cell.value = float(v_row[v_headerList[i]] or '0.0')
                         except Exception as exc:
                             v_cell.value = v_row[v_headerList[i]] or 0.0
 
@@ -1271,7 +1271,10 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
 
                 yield v_line
 
-            v_hasmorerecords = True
+            if p_database.v_start:
+                v_hasmorerecords = False
+            else:
+                v_hasmorerecords = True
         else:
             v_hasmorerecords = False
 

@@ -6,3 +6,4 @@ sqlparse
 pgspecial
 bs4
 lxml
+Pillow

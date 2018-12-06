@@ -531,6 +531,7 @@ class ConditionalFormatting:
                 Notes:
                     A wildcard may be used, and will be replaced by the corresponding value when the table is built:
                         #row#: the current row.
+                        #column_columname#: will be replaced by the letter of the column.
                 Examples:
                     '$Y#row# = 2'
             differentialStyle (openpyxl.styles.differential.DifferentialStyle): the format to be applied when formula returns true. Defaults to None.
@@ -550,6 +551,7 @@ class ConditionalFormatting:
                     Notes:
                         A wildcard may be used, and will be replaced by the corresponding value when the table is built:
                             #row#: the current row.
+                            #column_columname#: will be replaced by the letter of the column.
                     Examples:
                         p_formula = '$Y#row# = 2'
                 p_differentialStyle (openpyxl.styles.differential.DifferentialStyle): the format to be applied when formula returns true. Defaults to None.
@@ -642,6 +644,7 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
                     Will be applied to all data rows of this table.
                     A wildcard can be used and be replaced properly:
                         #row#: the current data row.
+                        #column_columname#: will be replaced by the letter of the column.
                 Examples:
                     p_conditionalFormatting = ConditionalFormatting(
                         p_formula = '$Y#row# = 2',
@@ -891,9 +894,20 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
         v_startLetter = openpyxl.utils.get_column_letter(p_startColumn)
         v_finalLetter = openpyxl.utils.get_column_letter(len(v_headerList) + p_startColumn - 1)
 
+        v_formula = p_conditionalFormatting.formula.replace('#row#', str(p_startRow + 1))
+
+        v_match = re.search(v_pattern, v_formula)
+
+        while v_match is not None:
+            v_start = v_match.start()
+            v_end = v_match.end()
+            v_matchColumn = openpyxl.utils.get_column_letter(p_startColumn + v_headerList.index(v_formula[v_start + 8 : v_end - 1])) #Discard starting #column_ and ending # in match
+            v_formula = v_formula[:v_start] + v_matchColumn + v_formula[v_end:]
+            v_match = re.search(v_pattern, v_formula)
+
         v_rule = openpyxl.formatting.rule.Rule(
             type = 'expression',
-            formula = [p_conditionalFormatting.formula.replace('#row#', str(p_startRow + 1))],
+            formula = [v_formula],
             dxf = p_conditionalFormatting.differentialStyle
         )
 

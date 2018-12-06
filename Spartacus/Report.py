@@ -238,6 +238,7 @@ class Summary:
                     #column#: will be replaced by the column corresponding to where this summary was placed in excel.
                     #start_row#: will be replaced by the first data line number of the table this summary belongs to.
                     #end_row#: will be replaced by the last data line number of the table this summary belongs to.
+                    #column_columname#: will be replaced by the letter of the column.
                 Examples:
                     '=SUM(#column##start_row#:#column##end_row#)'. This example use all available wildcards.
             index (int): the line relative to the table where this summary should be placed. Defaults to -1.
@@ -281,6 +282,7 @@ class Summary:
                         #column#: will be replaced by the column corresponding to where this summary was placed in excel.
                         #start_row#: will be replaced by the first data line number of the table this summary belongs to.
                         #end_row#: will be replaced by the last data line number of the table this summary belongs to.
+                        #column_columname#: will be replaced by the letter of the column.
                     Examples:
                         p_function = '=SUM(#column##start_row#:#column##end_row#)'. This example use all available wildcards.
                 p_index (int): the line relative to the table where this summary should be placed. Defaults to -1.
@@ -930,8 +932,19 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
             elif v_headerSummary.index > 0:
                 v_index = v_lastLine + v_headerSummary.index
 
+            v_value = v_headerSummary.function.replace('#column#', v_letter).replace('#start_row#', str(p_startRow + 1)).replace('#end_row#', str(v_lastLine))
+
+            v_match = re.search(v_pattern, v_value)
+
+            while v_match is not None:
+                v_start = v_match.start()
+                v_end = v_match.end()
+                v_matchColumn = openpyxl.utils.get_column_letter(p_startColumn + v_headerList.index(v_value[v_start + 8 : v_end - 1])) #Discard starting #column_ and ending # in match
+                v_value = v_value[:v_start] + v_matchColumn + v_value[v_end:]
+                v_match = re.search(v_pattern, v_value)
+
             v_cell = p_workSheet['{0}{1}'.format(v_letter, v_index)]
-            v_cell.value = v_headerSummary.function.replace('#column#', v_letter).replace('#start_row#', str(p_startRow + 1)).replace('#end_row#', str(v_lastLine))
+            v_cell.value = v_value
 
             if v_headerSummary.border is not None:
                 v_cell.border = v_headerSummary.border
@@ -1034,6 +1047,7 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
                     Will be applied to all data rows of this table.
                     A wildcard can be used and be replaced properly:
                         #row#: the current data row.
+                        #column_columname#: will be replaced by the letter of the column.
                 Examples:
                     p_conditionalFormatting = ConditionalFormatting(
                         p_formula = '$Y#row# = 2',
@@ -1301,9 +1315,20 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
         v_startLetter = openpyxl.utils.get_column_letter(p_startColumn)
         v_finalLetter = openpyxl.utils.get_column_letter(len(v_headerList) + p_startColumn - 1)
 
+        v_formula = p_conditionalFormatting.formula.replace('#row#', str(p_startRow + 1))
+
+        v_match = re.search(v_pattern, v_formula)
+
+        while v_match is not None:
+            v_start = v_match.start()
+            v_end = v_match.end()
+            v_matchColumn = openpyxl.utils.get_column_letter(p_startColumn + v_headerList.index(v_formula[v_start + 8 : v_end - 1])) #Discard starting #column_ and ending # in match
+            v_formula = v_formula[:v_start] + v_matchColumn + v_formula[v_end:]
+            v_match = re.search(v_pattern, v_formula)
+
         v_rule = openpyxl.formatting.rule.Rule(
             type = 'expression',
-            formula = [p_conditionalFormatting.formula.replace('#row#', str(p_startRow + 1))],
+            formula = [v_formula],
             dxf = p_conditionalFormatting.differentialStyle
         )
 
@@ -1326,8 +1351,19 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
             elif v_headerSummary.index > 0:
                 v_index = v_lastLine + v_headerSummary.index
 
+            v_value = v_headerSummary.function.replace('#column#', v_letter).replace('#start_row#', str(p_startRow + 1)).replace('#end_row#', str(v_lastLine))
+
+            v_match = re.search(v_pattern, v_value)
+
+            while v_match is not None:
+                v_start = v_match.start()
+                v_end = v_match.end()
+                v_matchColumn = openpyxl.utils.get_column_letter(p_startColumn + v_headerList.index(v_value[v_start + 8 : v_end - 1])) #Discard starting #column_ and ending # in match
+                v_value = v_value[:v_start] + v_matchColumn + v_value[v_end:]
+                v_match = re.search(v_pattern, v_value)
+
             v_cell = p_workSheet['{0}{1}'.format(v_letter, v_index)]
-            v_cell.value = v_headerSummary.function.replace('#column#', v_letter).replace('#start_row#', str(p_startRow + 1)).replace('#end_row#', str(v_lastLine))
+            v_cell.value = v_value
 
             if v_headerSummary.border is not None:
                 v_cell.border = v_headerSummary.border

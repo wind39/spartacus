@@ -103,7 +103,7 @@ class Data:
 
         Attributes:
             type (str): the data type of each cell of this column. Defaults to 'str'.
-                Must be one of: int, float, float4, percent, date, str, int_formula, float_formula, float4_formula, percent_formula, date_formula, str_formula.
+                Must be one of: int, float, float4, percent, date, str, bool, int_formula, float_formula, float4_formula, percent_formula, date_formula, str_formula.
             border (openpyxl.styles.borders.Border): the border to be applied data to cells of this column. Defaults to None.
                 Examples:
                     openpyxl.styles.borders.Border(
@@ -130,19 +130,30 @@ class Data:
                     )
             alignment (openpyxl.styles.Alignment): the alignment to be applied to cells of this column. Defaults to None.
                 Examples:
-                    p_alignment = openpyxl.styles.Alignment(
+                    openpyxl.styles.Alignment(
                         horizontal = 'center',
                         vertical = 'center',
                         wrapText = True
                     )
+            valueMapping (dict): a mapping of internal values do report display values. If a a given data value match to some key in the dict, it will be replaced by the corresponding dict entry value.
+                Notes:
+                    Applied just if non-formula data fields.
+
+                Examples:
+                    {
+                        'True': 'Y',
+                        'False': 'N'
+                    }
+
+                    We've used a 'bool' Data.type in the example above. As you can see, it matches by dict key, so False will be checked as corresponding str form of it, that means, 'False' in this case.
     """
 
-    def __init__(self, p_type = 'str', p_border = None, p_font = None, p_fill = None, p_alignment = None):
+    def __init__(self, p_type = 'str', p_border = None, p_font = None, p_fill = None, p_alignment = None, p_valueMapping = {}):
         """Create a new Spartacus.Reports.Data instance.
 
             Args:
                 p_type (str): the data type of each cell of this column. Defaults to 'str'.
-                    Must be one of: int, float, float4, percent, date, str, int_formula, float_formula, float4_formula, percent_formula, date_formula, str_formula.
+                    Must be one of: int, float, float4, percent, date, str, bool, int_formula, float_formula, float4_formula, percent_formula, date_formula, str_formula.
                 p_border (openpyxl.styles.borders.Border): the border to be applied to cells of this column. Defaults to None.
                     Examples:
                         p_border = openpyxl.styles.borders.Border(
@@ -174,6 +185,17 @@ class Data:
                             vertical = 'center',
                             wrapText = True
                         )
+                p_valueMapping (dict): a mapping of internal values do report display values. If a a given data value match to some key in the dict, it will be replaced by the corresponding dict entry value. Defaults to {}.
+                    Notes:
+                        Applied just if non-formula data fields.
+
+                    Examples:
+                        {
+                            'True': 'Y',
+                            'False': 'N'
+                        }
+
+                        We've used a 'bool' Data.type in the example above. As you can see, it matches by dict key, so False will be checked as corresponding str form of it, that means, 'False' in this case.
 
             Raises:
                 Spartacus.Report.Exception: custom exceptions occurred in this script.
@@ -182,8 +204,8 @@ class Data:
         if not isinstance(p_type, str):
             raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Reports.Data": Parameter "p_type" must be of type "str".')
 
-        if not p_type in ['int', 'float', 'float4', 'percent', 'date', 'str', 'int_formula', 'float_formula', 'float4_formula', 'percent_formula', 'date_formula', 'str_formula']:
-            raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Reports.Data": Parameter "p_type" must be one of: "int", "float", "float4", "percent", "date", "str", "int_formula", "float_formula", "float4_formula", "percent_formula", "date_formula", "str_formula".')
+        if not p_type in ['int', 'float', 'float4', 'percent', 'date', 'str', 'bool', 'int_formula', 'float_formula', 'float4_formula', 'percent_formula', 'date_formula', 'str_formula']:
+            raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Reports.Data": Parameter "p_type" must be one of: "int", "float", "float4", "percent", "date", "str", "bool", "int_formula", "float_formula", "float4_formula", "percent_formula", "date_formula", "str_formula".')
 
         if p_border is not None and not isinstance(p_border, openpyxl.styles.borders.Border):
             raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Reports.Data": Parameter "p_border" must be None or of type "openpyxl.styles.borders.Border".')
@@ -197,11 +219,15 @@ class Data:
         if p_alignment is not None and not isinstance(p_alignment, openpyxl.styles.Alignment):
             raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Reports.Data": Parameter "p_alignment" must be of type "openpyxl.styles.Alignment".')
 
+        if not isinstance(p_valueMapping, dict):
+            raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Reports.Data": Parameter "p_valueMapping" must be of type "dict".')
+
         self.type = p_type
         self.border = p_border
         self.font = p_font
         self.fill = p_fill
         self.alignment = p_alignment
+        self.valueMapping = p_valueMapping
 
 
 class Summary:
@@ -776,38 +802,79 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
                 v_cell.alignment = v_headerData.alignment
 
             if v_headerData.type == 'int':
-                try:
-                    v_cell.value = int(v_row[v_headerList[i]]) or 0
-                except Exception as exc:
-                    v_cell.value = v_row[v_headerList[i]] or 0
+                v_key = str(v_row[v_headerList[i]])
+
+                if v_key in v_headerData.valueMapping:
+                    v_cell.value = v_headerData.valueMapping[v_key]
+                else:
+                    try:
+                        v_cell.value = int(v_row[v_headerList[i]]) or 0
+                    except Exception as exc:
+                        v_cell.value = v_row[v_headerList[i]] or 0
 
                 v_cell.number_format = '0'
             elif v_headerData.type == 'float':
-                try:
-                    v_cell.value = float(v_row[v_headerList[i]]) or 0.0
-                except Exception as exc:
-                    v_cell.value = v_row[v_headerList[i]] or 0.0
+                v_key = str(v_row[v_headerList[i]])
+
+                if v_key in v_headerData.valueMapping:
+                    v_cell.value = v_headerData.valueMapping[v_key]
+                else:
+                    try:
+                        v_cell.value = float(v_row[v_headerList[i]]) or 0.0
+                    except Exception as exc:
+                        v_cell.value = v_row[v_headerList[i]] or 0.0
 
                 v_cell.number_format = '#,##0.00'
             elif v_headerData.type == 'float4':
-                try:
-                    v_cell.value = float(v_row[v_headerList[i]]) or 0.0
-                except Exception as exc:
-                    v_cell.value = v_row[v_headerList[i]] or 0.0
+                v_key = str(v_row[v_headerList[i]])
+
+                if v_key in v_headerData.valueMapping:
+                    v_cell.value = v_headerData.valueMapping[v_key]
+                else:
+                    try:
+                        v_cell.value = float(v_row[v_headerList[i]]) or 0.0
+                    except Exception as exc:
+                        v_cell.value = v_row[v_headerList[i]] or 0.0
 
                 v_cell.number_format = '#,##0.0000'
             elif v_headerData.type == 'percent':
-                try:
-                    v_cell.value = float(v_row[v_headerList[i]]) or 0.0
-                except Exception as exc:
-                    v_cell.value = v_row[v_headerList[i]] or 0.0
+                v_key = str(v_row[v_headerList[i]])
+
+                if v_key in v_headerData.valueMapping:
+                    v_cell.value = v_headerData.valueMapping[v_key]
+                else:
+                    try:
+                        v_cell.value = float(v_row[v_headerList[i]]) or 0.0
+                    except Exception as exc:
+                        v_cell.value = v_row[v_headerList[i]] or 0.0
 
                 v_cell.number_format = '0.00%'
             elif v_headerData.type == 'date':
-                v_cell.value = v_row[v_headerList[i]] or ''
+                v_key = str(v_row[v_headerList[i]])
+
+                if v_key in v_headerData.valueMapping:
+                    v_cell.value = v_headerData.valueMapping[v_key]
+                else:
+                    v_cell.value = v_row[v_headerList[i]] or ''
+
                 v_cell.number_format = 'DD/MM/YYYY'
             elif v_headerData.type == 'str':
-                v_cell.value = v_row[v_headerList[i]] or ''
+                v_key = str(v_row[v_headerList[i]])
+
+                if v_key in v_headerData.valueMapping:
+                    v_cell.value = v_headerData.valueMapping[v_key]
+                else:
+                    v_cell.value = v_row[v_headerList[i]] or ''
+            elif v_headerData.type == 'bool':
+                v_key = str(v_row[v_headerList[i]])
+
+                if v_key in v_headerData.valueMapping:
+                    v_cell.value = v_headerData.valueMapping[v_key]
+                else:
+                    try:
+                        v_cell.value = bool(v_row[v_headerList[i]])
+                    except Exception as exc:
+                        v_cell.value = v_row[v_headerList[i]] or 0.0
             if v_headerData.type == 'int_formula':
                 v_value = v_row[v_headerList[i]].replace('#row#', str(p_startRow + v_line))
                 v_match = re.search(v_pattern, v_value)
@@ -1187,38 +1254,79 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
                         v_cell.alignment = v_headerData.alignment
 
                     if v_headerData.type == 'int':
-                        try:
-                            v_cell.value = int(v_row[v_headerList[i]] or '0')
-                        except Exception as exc:
-                            v_cell.value = v_row[v_headerList[i]] or 0
+                        v_key = str(v_row[v_headerList[i]])
+
+                        if v_key in v_headerData.valueMapping:
+                            v_cell.value = v_headerData.valueMapping[v_key]
+                        else:
+                            try:
+                                v_cell.value = int(v_row[v_headerList[i]] or '0')
+                            except Exception as exc:
+                                v_cell.value = v_row[v_headerList[i]] or 0
 
                         v_cell.number_format = '0'
                     elif v_headerData.type == 'float':
-                        try:
-                            v_cell.value = float(v_row[v_headerList[i]] or '0.0')
-                        except Exception as exc:
-                            v_cell.value = v_row[v_headerList[i]] or 0.0
+                        v_key = str(v_row[v_headerList[i]])
+
+                        if v_key in v_headerData.valueMapping:
+                            v_cell.value = v_headerData.valueMapping[v_key]
+                        else:
+                            try:
+                                v_cell.value = float(v_row[v_headerList[i]] or '0.0')
+                            except Exception as exc:
+                                v_cell.value = v_row[v_headerList[i]] or 0.0
 
                         v_cell.number_format = '#,##0.00'
                     elif v_headerData.type == 'float4':
-                        try:
-                            v_cell.value = float(v_row[v_headerList[i]] or '0.0')
-                        except Exception as exc:
-                            v_cell.value = v_row[v_headerList[i]] or 0.0
+                        v_key = str(v_row[v_headerList[i]])
+
+                        if v_key in v_headerData.valueMapping:
+                            v_cell.value = v_headerData.valueMapping[v_key]
+                        else:
+                            try:
+                                v_cell.value = float(v_row[v_headerList[i]] or '0.0')
+                            except Exception as exc:
+                                v_cell.value = v_row[v_headerList[i]] or 0.0
 
                         v_cell.number_format = '#,##0.0000'
                     elif v_headerData.type == 'percent':
-                        try:
-                            v_cell.value = float(v_row[v_headerList[i]] or '0.0')
-                        except Exception as exc:
-                            v_cell.value = v_row[v_headerList[i]] or 0.0
+                        v_key = str(v_row[v_headerList[i]])
+
+                        if v_key in v_headerData.valueMapping:
+                            v_cell.value = v_headerData.valueMapping[v_key]
+                        else:
+                            try:
+                                v_cell.value = float(v_row[v_headerList[i]] or '0.0')
+                            except Exception as exc:
+                                v_cell.value = v_row[v_headerList[i]] or 0.0
 
                         v_cell.number_format = '0.00%'
                     elif v_headerData.type == 'date':
-                        v_cell.value = v_row[v_headerList[i]] or ''
+                        v_key = str(v_row[v_headerList[i]])
+
+                        if v_key in v_headerData.valueMapping:
+                            v_cell.value = v_headerData.valueMapping[v_key]
+                        else:
+                            v_cell.value = v_row[v_headerList[i]] or ''
+
                         v_cell.number_format = 'DD/MM/YYYY'
                     elif v_headerData.type == 'str':
-                        v_cell.value = v_row[v_headerList[i]] or ''
+                        v_key = str(v_row[v_headerList[i]])
+
+                        if v_key in v_headerData.valueMapping:
+                            v_cell.value = v_headerData.valueMapping[v_key]
+                        else:
+                            v_cell.value = v_row[v_headerList[i]] or ''
+                    elif v_headerData.type == 'bool':
+                        v_key = str(v_row[v_headerList[i]])
+
+                        if v_key in v_headerData.valueMapping:
+                            v_cell.value = v_headerData.valueMapping[v_key]
+                        else:
+                            try:
+                                v_cell.value = bool(v_row[v_headerList[i]])
+                            except Exception as exc:
+                                v_cell.value = v_row[v_headerList[i]] or 0.0
                     if v_headerData.type == 'int_formula':
                         v_value = v_row[v_headerList[i]].replace('#row#', str(p_startRow + v_line))
                         v_match = re.search(v_pattern, v_value)

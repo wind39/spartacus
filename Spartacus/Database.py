@@ -31,6 +31,7 @@ import math
 
 import Spartacus
 import Spartacus.prettytable as prettytable
+from urllib.parse import urlparse
 
 v_supported_rdbms = []
 try:
@@ -573,21 +574,53 @@ class Generic(ABC):
     def Special(self, p_sql):
         pass
     @classmethod
+    def String(self, p_value):
+        if type(p_value) == type(list()):
+            ret = self.MogrifyArray(p_value)
+        else:
+            ret = str(p_value)
+        return ret
+    @classmethod
+    def MogrifyValue(self, p_value):
+        if type(p_value) == type(list()):
+            ret = self.MogrifyArray(p_value)
+        elif type(p_value) == type(None):
+            ret = 'null'
+        elif type(p_value) == type(str()):
+            ret = "'{0}'".format(p_value.replace("'", "''"))
+        elif type(p_value) == datetime.datetime:
+            ret = "'{0}'".format(p_value)
+        else:
+            ret = '{0}'.format(p_value)
+        return ret
+    @classmethod
+    def MogrifyArray(self, p_array):
+        ret = '{'
+        if len(p_array) > 0:
+            ret = ret + self.MogrifyArrayValue(p_array[0])
+            for i in range(1, len(p_array)):
+                ret = ret + ', ' + self.MogrifyArrayValue(p_array[i])
+        ret = ret + '}'
+        return ret
+    @classmethod
+    def MogrifyArrayValue(self, p_value):
+        if type(p_value) == type(list()):
+            ret = self.MogrifyArray(p_value)
+        elif type(p_value) == type(None):
+            ret = 'null'
+        elif type(p_value) == type(str()):
+            ret = '"{0}"'.format(p_value.replace('"', '""'))
+        elif type(p_value) == datetime.datetime:
+            ret = '"{0}"'.format(p_value)
+        else:
+            ret = '{0}'.format(p_value)
+        return ret
+    @classmethod
     def Mogrify(self, p_row, p_fields):
         if len(p_row) == len(p_fields):
-            k = 0
             v_mog = []
-            while k < len(p_row):
-                v_value = p_row[p_fields[k].v_name]
-                if type(v_value) == type(None):
-                    v_mog.append('null')
-                elif type(v_value) == type(str()):
-                    v_mog.append(p_fields[k].v_mask.replace('#', "'{0}'".format(v_value.replace("'", "''"))))
-                elif type(v_value) == datetime.datetime:
-                    v_mog.append(p_fields[k].v_mask.replace('#', "'{0}'".format(v_value)))
-                else:
-                    v_mog.append(p_fields[k].v_mask.replace('#', "{0}".format(v_value)))
-                k = k + 1
+            for k in range(0, len(p_row)):
+                v_mog.append(p_fields[k].v_mask.replace('#', self.MogrifyValue(p_row[p_fields[k].v_name])))
             return '(' + ','.join(v_mog) + ')'
         else:
             raise Spartacus.Database.Exception('Can not mogrify with different number of parameters.')
@@ -1090,7 +1123,7 @@ PostgreSQL
 ------------------------------------------------------------------------
 '''
 class PostgreSQL(Generic):
-    def __init__(self, p_host, p_port, p_service, p_user, p_password, p_application_name='spartacus', p_encoding=None):
+    def __init__(self, p_host, p_port, p_service, p_user, p_password, p_application_name='spartacus', p_conn_string='', p_encoding=None):
         if 'PostgreSQL' in v_supported_rdbms:
             self.v_host = p_host
             if p_port is None or p_port == '':
@@ -1101,6 +1134,8 @@ class PostgreSQL(Generic):
                 self.v_service = 'postgres'
             else:
                 self.v_service = p_service
+            self.v_conn_string = p_conn_string
+            self.v_conn_string_parsed = urlparse(p_conn_string)
             self.v_user = p_user
             self.v_password = p_password
             self.v_application_name = p_application_name
@@ -1114,7 +1149,7 @@ class PostgreSQL(Generic):
             self.v_help = Spartacus.Database.DataTable()
             self.v_help.Columns = ['Command', 'Syntax', 'Description']
             self.v_help.AddRow(['\\?', '\\?', 'Show Commands.'])
-            self.v_help.AddRow(['\\h', '\\h', 'Show SQL syntax and help.'])
+            self.v_help.AddRow(['\\h', '\\h [pattern]', 'Show SQL syntax and help.'])
             self.v_help.AddRow(['\\list', '\\list', 'List databases.'])
             self.v_help.AddRow(['\\l', '\\l[+] [pattern]', 'List databases.'])
             self.v_help.AddRow(['\\du', '\\du[+] [pattern]', 'List roles.'])
@@ -1126,7 +1161,7 @@ class PostgreSQL(Generic):
             self.v_help.AddRow(['\\ds', '\\ds[+] [pattern]', 'List sequences.'])
             self.v_help.AddRow(['\\d', '\\d[+] [pattern]', 'List or describe tables, views and sequences.'])
             self.v_help.AddRow(['DESCRIBE', 'DESCRIBE [pattern]', 'Describe tables, views and sequences.'])
-            self.v_help.AddRow(['describe', 'DESCRIBE [pattern]', 'Describe tables, views and sequences.'])
+            self.v_help.AddRow(['describe', 'describe [pattern]', 'Describe tables, views and sequences.'])
             self.v_help.AddRow(['\\di', '\\di[+] [pattern]', 'List indexes.'])
             self.v_help.AddRow(['\\dm', '\\dm[+] [pattern]', 'List materialized views.'])
             self.v_help.AddRow(['\\df', '\\df[+] [pattern]', 'List functions.'])
@@ -1148,7 +1183,21 @@ class PostgreSQL(Generic):
         else:
             raise Spartacus.Database.Exception("PostgreSQL is not supported. Please install it with 'pip install Spartacus[postgresql]'.")
     def GetConnectionString(self):
-        if self.v_host is None or self.v_host == '':
+        if self.v_conn_string != '':
+            if self.v_conn_string_parsed.query == '':
+                v_new_query = '?dbname={0}&port={1}'.format(self.v_service.replace("'", "\\'"), self.v_port)
+            else:
+                v_new_query = '&dbname={0}&port={1}'.format(self.v_service.replace("'", "\\'"), self.v_port)
+            if self.v_host is None or self.v_host == '':
+                None
+            else:
+                v_new_query = '{0}&host={1}'.format(v_new_query, self.v_host.replace("'","\\'"))
+            if self.v_password is None or self.v_password == '':
+                v_return_string = '{0}{1}'.format(self.v_conn_string, v_new_query)
+            else:
+                v_return_string = '{0}{1}&password={2}'.format(self.v_conn_string, v_new_query, self.v_password.replace("'","\\'"))
+            return v_return_string
+        elif self.v_host is None or self.v_host == '':
             if self.v_password is None or self.v_password == '':
                 return """port={0} dbname='{1}' user='{2}' application_name='{3}'""".format(
                     self.v_port,
@@ -1173,6 +1222,8 @@ class PostgreSQL(Generic):
                 self.v_password.replace("'","\\'"),
                 self.v_application_name.replace("'","\\'")
             )
+    def Handler(self, value, cursor):
+        return value
     def Open(self, p_autocommit=True):
         try:
             self.v_con = psycopg2.connect(
@@ -1187,6 +1238,13 @@ class PostgreSQL(Generic):
             if self.v_types is None:
                 self.v_cur.execute('select oid, typname from pg_type')
                 self.v_types = dict([(r['oid'], r['typname']) for r in self.v_cur.fetchall()])
+                tmp = []
+                for oid, name in self.v_types.items():
+                    if name == 'date' or name == 'timestamp' or name == 'timestamptz':
+                        tmp.append(oid)
+                oids = tuple(tmp)
+                v_new_date_type = psycopg2.extensions.new_type(oids, 'DATE', self.Handler)
+                psycopg2.extensions.register_type(v_new_date_type)
                 if not p_autocommit:
                     self.v_con.commit()
             self.v_con.notices = DataList()
@@ -1214,7 +1272,7 @@ class PostgreSQL(Generic):
                     for i in range(0, len(v_table.Rows)):
                         for j in range(0, len(v_table.Columns)):
                             if v_table.Rows[i][j] != None:
-                                v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                                v_table.Rows[i][j] = self.String(v_table.Rows[i][j])
                             else:
                                 v_table.Rows[i][j] = ''
             return v_table
@@ -1525,7 +1583,7 @@ class PostgreSQL(Generic):
                         for i in range(0, len(v_table.Rows)):
                             for j in range(0, len(v_table.Columns)):
                                 if v_table.Rows[i][j] != None:
-                                    v_table.Rows[i][j] = str(v_table.Rows[i][j])
+                                    v_table.Rows[i][j] = self.String(v_table.Rows[i][j])
                                 else:
                                     v_table.Rows[i][j] = ''
                 if self.v_start:
@@ -1653,13 +1711,15 @@ MySQL
 ------------------------------------------------------------------------
 '''
 class MySQL(Generic):
-    def __init__(self, p_host, p_port, p_service, p_user, p_password, p_encoding=None):
+    def __init__(self, p_host, p_port, p_service, p_user, p_password, p_conn_string='', p_encoding=None):
         if 'MySQL' in v_supported_rdbms:
             self.v_host = p_host
             if p_port is None or p_port == '':
                 self.v_port = 3306
             else:
                 self.v_port = p_port
+            self.v_conn_string = p_conn_string
+            self.v_conn_string_parsed = urlparse(p_conn_string)
             self.v_service = p_service
             self.v_user = p_user
             self.v_password = p_password
@@ -2032,13 +2092,15 @@ MariaDB
 ------------------------------------------------------------------------
 '''
 class MariaDB(Generic):
-    def __init__(self, p_host, p_port, p_service, p_user, p_password, p_encoding=None):
+    def __init__(self, p_host, p_port, p_service, p_user, p_password, p_conn_string='', p_encoding=None):
         if 'MariaDB' in v_supported_rdbms:
             self.v_host = p_host
             if p_port is None or p_port == '':
                 self.v_port = 3306
             else:
                 self.v_port = p_port
+            self.v_conn_string = p_conn_string
+            self.v_conn_string_parsed = urlparse(p_conn_string)
             self.v_service = p_service
             self.v_user = p_user
             self.v_password = p_password
@@ -2661,7 +2723,7 @@ Oracle
 ------------------------------------------------------------------------
 '''
 class Oracle(Generic):
-    def __init__(self, p_host, p_port, p_service, p_user, p_password, p_encoding=None):
+    def __init__(self, p_host, p_port, p_service, p_user, p_password, p_conn_string='', p_encoding=None):
         if 'Oracle' in v_supported_rdbms:
             self.v_host = p_host
             if p_host is not None and (p_port is None or p_port == ''):
@@ -2672,6 +2734,8 @@ class Oracle(Generic):
                 self.v_service = 'xe'
             else:
                 self.v_service = p_service
+            self.v_conn_string = p_conn_string
+            self.v_conn_string_parsed = urlparse(p_conn_string)
             self.v_user = p_user
             self.v_password = p_password
             self.v_con = None
@@ -3032,13 +3096,15 @@ MSSQL
 ------------------------------------------------------------------------
 '''
 class MSSQL(Generic):
-    def __init__(self, p_host, p_port, p_service, p_user, p_password, p_encoding=None):
+    def __init__(self, p_host, p_port, p_service, p_user, p_password, p_conn_string='', p_encoding=None):
         if 'MSSQL' in v_supported_rdbms:
             self.v_host = p_host
             if p_port is None or p_port == '':
                 self.v_port = 1433
             else:
                 self.v_port = p_port
+            self.v_conn_string = p_conn_string
+            self.v_conn_string_parsed = urlparse(p_conn_string)
             self.v_service = p_service
             self.v_user = p_user
             self.v_password = p_password

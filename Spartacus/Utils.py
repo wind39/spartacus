@@ -143,7 +143,6 @@ class DataFileReader(object):
                 else:
                     v_worksheet = self.v_object.active
                     v_table = Spartacus.Database.DataTable()
-                v_worksheet.max_row = v_worksheet.max_column = None
                 v_first = True
                 x = 0
                 for v_row in v_worksheet.rows:

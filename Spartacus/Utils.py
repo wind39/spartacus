@@ -233,11 +233,18 @@ class DataFileWriter(object):
                     self.v_currentrow = self.v_currentrow + 1
                 else:
                     v_worksheet = self.v_object.active
-                for r in range(0, len(p_datatable.Rows)):
-                    v_row = []
-                    for c in range(0, len(p_datatable.Columns)):
-                        v_row.append(p_datatable.Rows[r][c])
-                    v_worksheet.append(v_row)
+                if p_datatable.Simple:
+                    for r in range(0, len(p_datatable.Rows)):
+                        v_row = []
+                        for c in range(0, len(p_datatable.Columns)):
+                            v_row.append(p_datatable.Rows[r][c])
+                        v_worksheet.append(v_row)
+                else:
+                    for r in range(0, len(p_datatable.Rows)):
+                        v_row = []
+                        for c in p_datatable.Columns:
+                            v_row.append(p_datatable.Rows[r][c])
+                        v_worksheet.append(v_row)
                 self.v_currentrow = self.v_currentrow + len(p_datatable.Rows)
         except Spartacus.Utils.Exception as exc:
             raise exc

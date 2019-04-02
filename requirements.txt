@@ -7,3 +7,6 @@ pgspecial
 bs4
 lxml
 Pillow
+pyexcel
+pyexcel-xls
+pyexcel-xlsx

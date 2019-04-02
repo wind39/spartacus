@@ -30,6 +30,7 @@ import os
 import csv
 import openpyxl
 from collections import OrderedDict
+import pyexcel
 import tempfile
 import hashlib
 
@@ -104,6 +105,12 @@ class DataFileReader(object):
                 self.v_open = True
             elif self.v_extension == 'xlsx':
                 self.v_object = openpyxl.load_workbook(self.v_filename, read_only=True)
+                self.v_open = True
+            elif self.v_extension == 'xls':
+                v_tmp_file = tempfile.NamedTemporaryFile(suffix='.xlsx')
+                v_tmp_file.file.close()
+                pyexcel.save_book_as(file_name=self.v_filename, dest_file_name=v_tmp_file.name)
+                self.v_object = openpyxl.load_workbook(v_tmp_file.name, read_only=True)
                 self.v_open = True
             else:
                 raise Spartacus.Utils.Exception('File extension "{0}" not supported.'.format(self.v_extension))

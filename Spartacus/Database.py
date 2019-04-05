@@ -1780,7 +1780,8 @@ class MySQL(Generic):
                 db=self.v_service,
                 user=self.v_user,
                 password=self.v_password,
-                autocommit=p_autocommit)
+                autocommit=p_autocommit,
+                read_default_file='~/.my.cnf')
             self.v_cur = self.v_con.cursor()
             self.v_start = True
             self.v_status = 0
@@ -2161,7 +2162,8 @@ class MariaDB(Generic):
                 db=self.v_service,
                 user=self.v_user,
                 password=self.v_password,
-                autocommit=p_autocommit)
+                autocommit=p_autocommit,
+                read_default_file='~/.my.cnf')
             self.v_cur = self.v_con.cursor()
             self.v_start = True
             self.v_status = 0

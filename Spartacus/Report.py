@@ -808,9 +808,9 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
                     v_cell.value = v_headerData.valueMapping[v_key]
                 else:
                     try:
-                        v_cell.value = int(v_row[v_headerList[i]]) or 0
+                        v_cell.value = int(v_row[v_headerList[i]])
                     except Exception as exc:
-                        v_cell.value = v_row[v_headerList[i]] or 0
+                        v_cell.value = v_row[v_headerList[i]] if v_row[v_headerList[i]] is not None else ''
 
                 v_cell.number_format = '0'
             elif v_headerData.type == 'float':
@@ -820,9 +820,9 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
                     v_cell.value = v_headerData.valueMapping[v_key]
                 else:
                     try:
-                        v_cell.value = float(v_row[v_headerList[i]]) or 0.0
+                        v_cell.value = float(v_row[v_headerList[i]])
                     except Exception as exc:
-                        v_cell.value = v_row[v_headerList[i]] or 0.0
+                        v_cell.value = v_row[v_headerList[i]] if v_row[v_headerList[i]] is not None else ''
 
                 v_cell.number_format = '#,##0.00'
             elif v_headerData.type == 'float4':
@@ -832,9 +832,9 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
                     v_cell.value = v_headerData.valueMapping[v_key]
                 else:
                     try:
-                        v_cell.value = float(v_row[v_headerList[i]]) or 0.0
+                        v_cell.value = float(v_row[v_headerList[i]])
                     except Exception as exc:
-                        v_cell.value = v_row[v_headerList[i]] or 0.0
+                        v_cell.value = v_row[v_headerList[i]] if v_row[v_headerList[i]] is not None else ''
 
                 v_cell.number_format = '#,##0.0000'
             elif v_headerData.type == 'percent':
@@ -844,9 +844,9 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
                     v_cell.value = v_headerData.valueMapping[v_key]
                 else:
                     try:
-                        v_cell.value = float(v_row[v_headerList[i]]) or 0.0
+                        v_cell.value = float(v_row[v_headerList[i]])
                     except Exception as exc:
-                        v_cell.value = v_row[v_headerList[i]] or 0.0
+                        v_cell.value = v_row[v_headerList[i]] if v_row[v_headerList[i]] is not None else ''
 
                 v_cell.number_format = '0.00%'
             elif v_headerData.type == 'date':
@@ -855,7 +855,7 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
                 if v_key in v_headerData.valueMapping:
                     v_cell.value = v_headerData.valueMapping[v_key]
                 else:
-                    v_cell.value = v_row[v_headerList[i]] or ''
+                    v_cell.value = v_row[v_headerList[i]] if v_row[v_headerList[i]] is not None else ''
 
                 v_cell.number_format = 'DD/MM/YYYY'
             elif v_headerData.type == 'str':
@@ -864,7 +864,7 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
                 if v_key in v_headerData.valueMapping:
                     v_cell.value = v_headerData.valueMapping[v_key]
                 else:
-                    v_cell.value = v_row[v_headerList[i]] or ''
+                    v_cell.value = v_row[v_headerList[i]] if v_row[v_headerList[i]] is not None else ''
             elif v_headerData.type == 'bool':
                 v_key = str(v_row[v_headerList[i]])
 
@@ -874,7 +874,7 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
                     try:
                         v_cell.value = bool(v_row[v_headerList[i]])
                     except Exception as exc:
-                        v_cell.value = v_row[v_headerList[i]] or 0.0
+                        v_cell.value = v_row[v_headerList[i]] if v_row[v_headerList[i]] is not None else ''
             if v_headerData.type == 'int_formula':
                 v_value = v_row[v_headerList[i]].replace('#row#', str(p_startRow + v_line))
                 v_match = re.search(v_pattern, v_value)

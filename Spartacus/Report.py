@@ -872,7 +872,7 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
                     v_cell.value = v_headerData.valueMapping[v_key]
                 else:
                     try:
-                        v_cell.value = bool(v_row[v_headerList[i]])
+                        v_cell.value = bool(v_row[v_headerList[i]]) if v_row[v_headerList[i]] is not None and str(v_row[v_headerList[i]]).strip() != '' else ''
                     except (Exception, TypeError, ValueError):
                         v_cell.value = v_row[v_headerList[i]] if v_row[v_headerList[i]] is not None else ''
             if v_headerData.type == 'int_formula':
@@ -1324,7 +1324,7 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
                             v_cell.value = v_headerData.valueMapping[v_key]
                         else:
                             try:
-                                v_cell.value = bool(v_row[v_headerList[i]])
+                                v_cell.value = bool(v_row[v_headerList[i]]) if v_row[v_headerList[i]] is not None and str(v_row[v_headerList[i]]).strip() != '' else ''
                             except (Exception, TypeError, ValueError):
                                 v_cell.value = v_row[v_headerList[i]] if v_headerList[i] is not None else ''
                     if v_headerData.type == 'int_formula':

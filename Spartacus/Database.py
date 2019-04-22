@@ -1224,7 +1224,7 @@ class PostgreSQL(Generic):
             )
     def Handler(self, value, cursor):
         return value
-    def Open(self, p_autocommit=True):
+    def Open(self, p_autocommit=True, p_datetime=False):
         try:
             self.v_con = psycopg2.connect(
                 self.GetConnectionString(),
@@ -1238,13 +1238,14 @@ class PostgreSQL(Generic):
             if self.v_types is None:
                 self.v_cur.execute('select oid, typname from pg_type')
                 self.v_types = dict([(r['oid'], r['typname']) for r in self.v_cur.fetchall()])
-                tmp = []
-                for oid, name in self.v_types.items():
-                    if name == 'date' or name == 'timestamp' or name == 'timestamptz':
-                        tmp.append(oid)
-                oids = tuple(tmp)
-                v_new_date_type = psycopg2.extensions.new_type(oids, 'DATE', self.Handler)
-                psycopg2.extensions.register_type(v_new_date_type)
+                if not p_datetime:
+                    tmp = []
+                    for oid, name in self.v_types.items():
+                        if name == 'date' or name == 'timestamp' or name == 'timestamptz':
+                            tmp.append(oid)
+                    oids = tuple(tmp)
+                    v_new_date_type = psycopg2.extensions.new_type(oids, 'DATE', self.Handler)
+                    psycopg2.extensions.register_type(v_new_date_type, self.v_cur)
                 if not p_autocommit:
                     self.v_con.commit()
             self.v_con.notices = DataList()
@@ -1254,11 +1255,11 @@ class PostgreSQL(Generic):
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
-    def Query(self, p_sql, p_alltypesstr=False, p_simple=False):
+    def Query(self, p_sql, p_alltypesstr=False, p_simple=False, p_datetime=False):
         try:
             v_keep = None
             if self.v_con is None:
-                self.Open()
+                self.Open(p_datetime=p_datetime)
                 v_keep = False
             else:
                 v_keep = True
@@ -1303,11 +1304,11 @@ class PostgreSQL(Generic):
         finally:
             if not v_keep:
                 self.Close()
-    def ExecuteScalar(self, p_sql):
+    def ExecuteScalar(self, p_sql, p_datetime=False):
         try:
             v_keep = None
             if self.v_con is None:
-                self.Open()
+                self.Open(p_datetime=p_datetime)
                 v_keep = False
             else:
                 v_keep = True

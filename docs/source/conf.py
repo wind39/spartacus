@@ -24,6 +24,9 @@ author = 'William Ivanski , Israel Barth Rubio'
 # The full version, including alpha/beta/rc tags
 release = '3.25'
 
+# Path to the initial page
+master_doc = 'index'
+
 
 # -- General configuration ---------------------------------------------------
 

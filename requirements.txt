@@ -3,7 +3,7 @@ pyaes
 openpyxl==2.5.14
 click
 sqlparse
-pgspecial
+tabulate
 bs4
 lxml
 Pillow

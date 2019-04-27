@@ -23,15 +23,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
 
-from collections import OrderedDict
-from abc import ABC, abstractmethod
 import datetime
 import decimal
 import math
+import uuid
+import sqlparse
+from collections import OrderedDict
+from abc import ABC, abstractmethod
+from tabulate import tabulate
+from urllib.parse import urlparse
 
 import Spartacus
-import Spartacus.prettytable as prettytable
-from urllib.parse import urlparse
 
 v_supported_rdbms = []
 try:
@@ -46,8 +48,6 @@ try:
     from pgspecial.main import PGSpecial
     from pgspecial.namedqueries import NamedQueries
     from pgspecial.help.commands import helpcommands as HelpCommands
-    import uuid
-    import sqlparse
     v_supported_rdbms.append('PostgreSQL')
 except ImportError:
     pass
@@ -379,15 +379,14 @@ class DataTable(object):
                     v_row = v_row + 1
                 return v_string
             else:
-                v_pretty = prettytable.PrettyTable()
-                v_pretty._set_field_names(self.Columns)
-                v_pretty._set_align('l')
+                v_rows = []
                 for r in self.Rows:
                     v_row = []
                     for c in range(0, len(self.Columns)):
                         v_row.append(r[c])
-                    v_pretty.add_row(v_row)
-                return v_pretty.get_string()
+                    v_rows.append(v_row)
+                return tabulate(v_rows, self.Columns, tablefmt="psql")
+
         else:
             if p_transpose:
                 v_maxc = 0
@@ -441,15 +440,13 @@ class DataTable(object):
                     v_row = v_row + 1
                 return v_string
             else:
-                v_pretty = prettytable.PrettyTable()
-                v_pretty._set_field_names(self.Columns)
-                v_pretty._set_align('l')
+                v_rows = []
                 for r in self.Rows:
                     v_row = []
                     for c in self.Columns:
                         v_row.append(r[c])
-                    v_pretty.add_row(v_row)
-                return v_pretty.get_string()
+                    v_rows.append(v_row)
+                return tabulate(v_rows, self.Columns, tablefmt="psql")
     def Transpose(self, p_column1, p_column2):
         if len(self.Rows) == 1:
             v_table = Spartacus.Database.DataTable()
@@ -675,10 +672,9 @@ class SQLite(Generic):
     def Open(self, p_autocommit=True):
         try:
             if p_autocommit:
-                self.v_con = sqlite3.connect(self.v_service, self.v_timeout, isolation_level=None)
+                self.v_con = sqlite3.connect(self.v_service, self.v_timeout, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES, isolation_level=None)
             else:
-                self.v_con = sqlite3.connect(self.v_service, self.v_timeout)
-            #self.v_con.row_factory = sqlite3.Row
+                self.v_con = sqlite3.connect(self.v_service, self.v_timeout, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES, isolation_level='DEFERRED')
             self.v_cur = self.v_con.cursor()
             if self.v_foreignkeys:
                 self.v_cur.execute('PRAGMA foreign_keys = ON')
@@ -759,12 +755,16 @@ class SQLite(Generic):
     def Close(self, p_commit=True):
         try:
             if self.v_con:
-                self.v_con.commit()
+                if p_commit:
+                    self.v_con.commit()
+                else:
+                    self.v_con.rollback()
                 if self.v_cur:
                     self.v_cur.close()
                     self.v_cur = None
                 self.v_con.close()
                 self.v_con = None
+                self.v_start = True
         except sqlite3.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
@@ -776,12 +776,13 @@ class SQLite(Generic):
     def Cancel(self, p_usesameconn=True):
         try:
             if self.v_con:
-                self.v_con.cancel()
+                self.v_con.rollback()
                 if self.v_cur:
                     self.v_cur.close()
                     self.v_cur = None
                 self.v_con.close()
                 self.v_con = None
+                self.v_start = True
         except sqlite3.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
@@ -873,6 +874,12 @@ class SQLite(Generic):
             raise Spartacus.Database.Exception(str(exc))
     def InsertBlock(self, p_block, p_tablename, p_fields=None):
         try:
+            v_keep = None
+            if self.v_con is None:
+                self.Open()
+                v_keep = False
+            else:
+                v_keep = True
             v_columnames = []
             if p_fields is None:
                 v_fields = []
@@ -887,13 +894,16 @@ class SQLite(Generic):
             for r in p_block.Rows:
                 v_insert = v_insert + 'insert into ' + p_tablename + '(' + ','.join(v_columnames) + ') values ' + self.Mogrify(r, v_fields) + '; '
             v_insert = v_insert + 'commit;'
-            self.Execute(v_insert)
+            self.v_cur.executescript(v_insert)
         except Spartacus.Database.Exception as exc:
             raise exc
         except sqlite3.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
+        finally:
+            if not v_keep:
+                self.Close()
     def Special(self, p_sql):
         return self.Query(p_sql).Pretty()
 
@@ -921,8 +931,10 @@ class Memory(Generic):
         return None
     def Open(self, p_autocommit=True):
         try:
-            self.v_con = sqlite3.connect(self.v_service, self.v_timeout)
-            #self.v_con.row_factory = sqlite3.Row
+            if p_autocommit:
+                self.v_con = sqlite3.connect(self.v_service, self.v_timeout, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES, isolation_level=None)
+            else:
+                self.v_con = sqlite3.connect(self.v_service, self.v_timeout, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES, isolation_level='DEFERRED')
             self.v_cur = self.v_con.cursor()
             if self.v_foreignkeys:
                 self.v_cur.execute('PRAGMA foreign_keys = ON')
@@ -985,12 +997,16 @@ class Memory(Generic):
     def Close(self, p_commit=True):
         try:
             if self.v_con:
-                self.v_con.commit()
+                if p_commit:
+                    self.v_con.commit()
+                else:
+                    self.v_con.rollback()
                 if self.v_cur:
                     self.v_cur.close()
                     self.v_cur = None
                 self.v_con.close()
                 self.v_con = None
+                self.v_start = True
         except sqlite3.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
@@ -1002,12 +1018,13 @@ class Memory(Generic):
     def Cancel(self, p_usesameconn=True):
         try:
             if self.v_con:
-                self.v_con.cancel()
+                self.v_con.rollback()
                 if self.v_cur:
                     self.v_cur.close()
                     self.v_cur = None
                 self.v_con.close()
                 self.v_con = None
+                self.v_start = True
         except sqlite3.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
@@ -1107,7 +1124,7 @@ class Memory(Generic):
             for r in p_block.Rows:
                 v_insert = v_insert + 'insert into ' + p_tablename + '(' + ','.join(v_columnames) + ') values ' + self.Mogrify(r, v_fields) + '; '
             v_insert = v_insert + 'commit;'
-            self.Execute(v_insert)
+            self.v_cur.executescript(v_insert)
         except Spartacus.Database.Exception as exc:
             raise exc
         except sqlite3.Error as exc:
@@ -1340,6 +1357,7 @@ class PostgreSQL(Generic):
                     self.v_cur = None
                 self.v_con.close()
                 self.v_con = None
+                self.v_start = True
         except psycopg2.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
@@ -1384,6 +1402,7 @@ class PostgreSQL(Generic):
                     self.v_cur = None
                 self.v_con.close()
                 self.v_con = None
+                self.v_start = True
         except psycopg2.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
@@ -1869,6 +1888,7 @@ class MySQL(Generic):
                     self.v_cur = None
                 self.v_con.close()
                 self.v_con = None
+                self.v_start = True
         except pymysql.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
@@ -1895,6 +1915,7 @@ class MySQL(Generic):
                     self.v_cur = None
                 self.v_con.close()
                 self.v_con = None
+                self.v_start = True
         except pymysql.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
@@ -2251,6 +2272,7 @@ class MariaDB(Generic):
                     self.v_cur = None
                 self.v_con.close()
                 self.v_con = None
+                self.v_start = True
         except pymysql.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
@@ -2277,6 +2299,7 @@ class MariaDB(Generic):
                     self.v_cur = None
                 self.v_con.close()
                 self.v_con = None
+                self.v_start = True
         except pymysql.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
@@ -2592,6 +2615,7 @@ class Firebird(Generic):
                     self.v_cur = None
                 self.v_con.close()
                 self.v_con = None
+                self.v_start = True
         except fdb.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
@@ -2609,6 +2633,7 @@ class Firebird(Generic):
                     self.v_cur = None
                 self.v_con.close()
                 self.v_con = None
+                self.v_start = True
         except fdb.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
@@ -2880,6 +2905,7 @@ class Oracle(Generic):
                     self.v_cur = None
                 self.v_con.close()
                 self.v_con = None
+                self.v_start = True
         except cx_Oracle.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
@@ -2897,6 +2923,7 @@ class Oracle(Generic):
                     self.v_cur = None
                 self.v_con.close()
                 self.v_con = None
+                self.v_start = True
         except cx_Oracle.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
@@ -3214,6 +3241,7 @@ class MSSQL(Generic):
                     self.v_cur = None
                 self.v_con.close()
                 self.v_con = None
+                self.v_start = True
         except pymssql.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
@@ -3231,6 +3259,7 @@ class MSSQL(Generic):
                     self.v_cur = None
                 self.v_con.close()
                 self.v_con = None
+                self.v_start = True
         except pymssql.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
@@ -3464,6 +3493,7 @@ class IBMDB2(Generic):
                     self.v_cur = None
                 self.v_con.close()
                 self.v_con = None
+                self.v_start = True
         except ibm_db_dbi.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:
@@ -3481,6 +3511,7 @@ class IBMDB2(Generic):
                     self.v_cur = None
                 self.v_con.close()
                 self.v_con = None
+                self.v_start = True
         except ibm_db_dbi.Error as exc:
             raise Spartacus.Database.Exception(str(exc))
         except Exception as exc:

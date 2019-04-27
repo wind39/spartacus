@@ -1,5 +1,5 @@
-Welcome to Spartacus's documentation!
-=====================================
+Spartacus
+=========
 
 Introduction
 ============

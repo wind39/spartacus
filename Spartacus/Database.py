@@ -499,6 +499,7 @@ class DataTransferReturn(object):
     def __init__(self):
         self.v_numrecords = 0
         self.v_log = None
+        self.v_hasmorerecords = True
 
 class DataList(object):
     def __init__(self):
@@ -570,14 +571,12 @@ class Generic(ABC):
     @abstractmethod
     def Special(self, p_sql):
         pass
-    @classmethod
     def String(self, p_value):
         if type(p_value) == type(list()):
             ret = self.MogrifyArray(p_value)
         else:
             ret = str(p_value)
         return ret
-    @classmethod
     def MogrifyValue(self, p_value):
         if type(p_value) == type(list()):
             ret = self.MogrifyArray(p_value)
@@ -590,7 +589,6 @@ class Generic(ABC):
         else:
             ret = '{0}'.format(p_value)
         return ret
-    @classmethod
     def MogrifyArray(self, p_array):
         ret = '{'
         if len(p_array) > 0:
@@ -599,7 +597,6 @@ class Generic(ABC):
                 ret = ret + ', ' + self.MogrifyArrayValue(p_array[i])
         ret = ret + '}'
         return ret
-    @classmethod
     def MogrifyArrayValue(self, p_value):
         if type(p_value) == type(list()):
             ret = self.MogrifyArray(p_value)
@@ -612,7 +609,6 @@ class Generic(ABC):
         else:
             ret = '{0}'.format(p_value)
         return ret
-    @classmethod
     def Mogrify(self, p_row, p_fields):
         if len(p_row) == len(p_fields):
             v_mog = []
@@ -621,26 +617,40 @@ class Generic(ABC):
             return '(' + ','.join(v_mog) + ')'
         else:
             raise Spartacus.Database.Exception('Can not mogrify with different number of parameters.')
-    @classmethod
-    def Transfer(self, p_sql, p_targetdatabase, p_tablename, p_blocksize, p_fields=None, p_alltypesstr=False):
+    def Transfer(self, p_sql=None, p_table=None, p_targetdatabase=None, p_tablename=None, p_blocksize=1000, p_fields=None, p_alltypesstr=False):
+        """Method used to transfer data from one database to another one.
+
+            Args:
+                p_sql (str): the sql query to be executed in the current database, in order to provide data to be inserted into target database. Defaults to None.
+                p_table (Spartacus.Database.DataTable): the data table containing data to be inserted into target database. Defaults to None.
+                p_targetdatabase (Spartacus.Database.Generic): any object that inherits from Spartacus.Database.Generic. It is the target database connection. Defaults to None.
+                p_tablename (str): the target table name. Defaults to None.
+                p_blocksize (int): number of rows to be read at a time from source database. Defaults to 1000.
+                p_fields (list): list of fields to be considered while inserting into target database table. Defaults to None.
+                p_alltypesstr (bool): if all fields should be queried as str instances.
+
+            Notes:
+                Either p_sql or p_table must be provided. If p_sql is provided, a query will be executed in source database. Otherwise, will use p_table data.
+                p_tablename may also contain schema name, if target database supports it, e.g., 'my_schema.my_table'.
+                p_blocksize and p_alltypesstr are used just in case of p_sql being used too.
+                If p_fields is None, will consider all target table columns while transfering data.
+
+            Returns:
+                Spartacus.Database.DataTransferReturn.
+
+            Raises:
+                Spartacus.Database.Exception.
+        """
+
+        if p_sql is None and p_table is None:
+            raise Spartacus.Database.Exception('Either p_sql or p_table parameter must be provided.')
         v_return = DataTransferReturn()
         try:
-            v_table = self.QueryBlock(p_sql, p_blocksize, p_alltypesstr)
+            v_table = self.QueryBlock(p_sql, p_blocksize, p_alltypesstr) if p_sql is not None else p_table
             if len(v_table.Rows) > 0:
                 p_targetdatabase.InsertBlock(v_table, p_tablename, p_fields)
             v_return.v_numrecords = len(v_table.Rows)
-        except Spartacus.Database.Exception as exc:
-            v_return.v_log = str(exc)
-        except Exception as exc:
-            raise Spartacus.Database.Exception(str(exc))
-        return v_return
-    @classmethod
-    def Transfer(self, p_table, p_targetdatabase, p_tablename, p_fields=None):
-        v_return = DataTransferReturn()
-        try:
-            if len(p_table.Rows) > 0:
-                p_targetdatabase.InsertBlock(p_table, p_tablename, p_fields)
-            v_return.v_numrecords = len(p_table.Rows)
+            v_return.v_hasmorerecords = not self.v_start
         except Spartacus.Database.Exception as exc:
             v_return.v_log = str(exc)
         except Exception as exc:

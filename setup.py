@@ -30,7 +30,7 @@ rootdir = os.path.abspath(os.path.dirname(__file__))
 long_description = open(os.path.join(rootdir, 'README')).read()
 
 setup(name='Spartacus',
-      version='3.26',
+      version='3.27',
       description='Generic database wrapper',
       long_description=long_description,
       url='http://github.com/wind39/spartacus',
@@ -38,7 +38,7 @@ setup(name='Spartacus',
       author_email='william.ivanski@gmail.com',
       license='MIT',
       packages=['Spartacus'],
-      install_requires=['pyscrypt', 'pyaes', 'openpyxl', 'click', 'sqlparse', 'tabulate' 'bs4', 'lxml', 'Pillow', 'pyexcel', 'pyexcel-xls', 'pyexcel-xlsx'],
+      install_requires=['pyscrypt', 'pyaes', 'openpyxl', 'click', 'sqlparse', 'tabulate', 'bs4', 'lxml', 'Pillow', 'pyexcel', 'pyexcel-xls', 'pyexcel-xlsx'],
       extras_require={
         'postgresql': ['psycopg2-binary', 'pgspecial'],
         'mysql':      ['PyMySQL'],

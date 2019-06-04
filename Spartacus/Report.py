@@ -1,4 +1,4 @@
-'''
+"""
 The MIT License (MIT)
 
 Copyright (c) 2014-2019 William Ivanski
@@ -21,7 +21,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-'''
+"""
 
 import collections
 import openpyxl
@@ -38,6 +38,7 @@ class Exception(Exception):
         Examples:
             raise Spartacus.Report.Exception('Problem occurred while doing something.')
     """
+
     pass
 
 
@@ -81,16 +82,24 @@ class Range:
         """
 
         if not isinstance(p_startRow, int):
-            raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Reports.Range": Parameter "p_startRow" must be of type "int".')
+            raise Spartacus.Report.Exception(
+                'Error during instantiation of class "Spartacus.Reports.Range": Parameter "p_startRow" must be of type "int".'
+            )
 
         if not isinstance(p_startColumn, int):
-            raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Reports.Range": Parameter "p_startColumn" must be of type "int".')
+            raise Spartacus.Report.Exception(
+                'Error during instantiation of class "Spartacus.Reports.Range": Parameter "p_startColumn" must be of type "int".'
+            )
 
         if not isinstance(p_endRow, int):
-            raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Reports.Range": Parameter "p_endRow" must be of type "int".')
+            raise Spartacus.Report.Exception(
+                'Error during instantiation of class "Spartacus.Reports.Range": Parameter "p_endRow" must be of type "int".'
+            )
 
         if not isinstance(p_endColumn, int):
-            raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Reports.Range": Parameter "p_endColumn" must be of type "int".')
+            raise Spartacus.Report.Exception(
+                'Error during instantiation of class "Spartacus.Reports.Range": Parameter "p_endColumn" must be of type "int".'
+            )
 
         self.startRow = p_startRow
         self.startColumn = p_startColumn
@@ -148,7 +157,15 @@ class Data:
                     We've used a 'bool' Data.type in the example above. As you can see, it matches by dict key, so False will be checked as corresponding str form of it, that means, 'False' in this case.
     """
 
-    def __init__(self, p_type = 'str', p_border = None, p_font = None, p_fill = None, p_alignment = None, p_valueMapping = {}):
+    def __init__(
+        self,
+        p_type="str",
+        p_border=None,
+        p_font=None,
+        p_fill=None,
+        p_alignment=None,
+        p_valueMapping={},
+    ):
         """Create a new Spartacus.Reports.Data instance.
 
             Args:
@@ -202,25 +219,57 @@ class Data:
         """
 
         if not isinstance(p_type, str):
-            raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Reports.Data": Parameter "p_type" must be of type "str".')
+            raise Spartacus.Report.Exception(
+                'Error during instantiation of class "Spartacus.Reports.Data": Parameter "p_type" must be of type "str".'
+            )
 
-        if not p_type in ['int', 'float', 'float4', 'percent', 'date', 'str', 'bool', 'int_formula', 'float_formula', 'float4_formula', 'percent_formula', 'date_formula', 'str_formula']:
-            raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Reports.Data": Parameter "p_type" must be one of: "int", "float", "float4", "percent", "date", "str", "bool", "int_formula", "float_formula", "float4_formula", "percent_formula", "date_formula", "str_formula".')
+        if not p_type in [
+            "int",
+            "float",
+            "float4",
+            "percent",
+            "date",
+            "str",
+            "bool",
+            "int_formula",
+            "float_formula",
+            "float4_formula",
+            "percent_formula",
+            "date_formula",
+            "str_formula",
+        ]:
+            raise Spartacus.Report.Exception(
+                'Error during instantiation of class "Spartacus.Reports.Data": Parameter "p_type" must be one of: "int", "float", "float4", "percent", "date", "str", "bool", "int_formula", "float_formula", "float4_formula", "percent_formula", "date_formula", "str_formula".'
+            )
 
-        if p_border is not None and not isinstance(p_border, openpyxl.styles.borders.Border):
-            raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Reports.Data": Parameter "p_border" must be None or of type "openpyxl.styles.borders.Border".')
+        if p_border is not None and not isinstance(
+            p_border, openpyxl.styles.borders.Border
+        ):
+            raise Spartacus.Report.Exception(
+                'Error during instantiation of class "Spartacus.Reports.Data": Parameter "p_border" must be None or of type "openpyxl.styles.borders.Border".'
+            )
 
         if p_font is not None and not isinstance(p_font, openpyxl.styles.Font):
-            raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Reports.Data": Parameter "p_font" must be None or of type "openpyxl.styles.Font".')
+            raise Spartacus.Report.Exception(
+                'Error during instantiation of class "Spartacus.Reports.Data": Parameter "p_font" must be None or of type "openpyxl.styles.Font".'
+            )
 
         if p_fill is not None and not isinstance(p_fill, openpyxl.styles.PatternFill):
-            raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Reports.Data": Parameter "p_fill" must be None or of type "openpyxl.styles.PatternFill".')
+            raise Spartacus.Report.Exception(
+                'Error during instantiation of class "Spartacus.Reports.Data": Parameter "p_fill" must be None or of type "openpyxl.styles.PatternFill".'
+            )
 
-        if p_alignment is not None and not isinstance(p_alignment, openpyxl.styles.Alignment):
-            raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Reports.Data": Parameter "p_alignment" must be of type "openpyxl.styles.Alignment".')
+        if p_alignment is not None and not isinstance(
+            p_alignment, openpyxl.styles.Alignment
+        ):
+            raise Spartacus.Report.Exception(
+                'Error during instantiation of class "Spartacus.Reports.Data": Parameter "p_alignment" must be of type "openpyxl.styles.Alignment".'
+            )
 
         if not isinstance(p_valueMapping, dict):
-            raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Reports.Data": Parameter "p_valueMapping" must be of type "dict".')
+            raise Spartacus.Report.Exception(
+                'Error during instantiation of class "Spartacus.Reports.Data": Parameter "p_valueMapping" must be of type "dict".'
+            )
 
         self.type = p_type
         self.border = p_border
@@ -274,7 +323,15 @@ class Summary:
                         If index is positive, summary will be placed index lines after table last data line.
     """
 
-    def __init__(self, p_type = 'float', p_border = None, p_font = None, p_fill = None, p_function = '', p_index = -1):
+    def __init__(
+        self,
+        p_type="float",
+        p_border=None,
+        p_font=None,
+        p_fill=None,
+        p_function="",
+        p_index=-1,
+    ):
         """Create a new Spartacus.Reports.Summary instance.
 
             Args:
@@ -322,28 +379,46 @@ class Summary:
         """
 
         if not isinstance(p_type, str):
-            raise Spartacus.Reports.Exception('Error during instantiation of class "Spartacus.Reports.Summary": Parameter "p_type" must be of type "str".')
+            raise Spartacus.Reports.Exception(
+                'Error during instantiation of class "Spartacus.Reports.Summary": Parameter "p_type" must be of type "str".'
+            )
 
-        if not p_type in ['int', 'float', 'float4', 'percent']:
-            raise Spartacus.Reports.Exception('Error during instantiation of class "Spartacus.Reports.Summary": Parameter "p_type" must be one of: "int", "float", "float4", "percent".')
+        if not p_type in ["int", "float", "float4", "percent"]:
+            raise Spartacus.Reports.Exception(
+                'Error during instantiation of class "Spartacus.Reports.Summary": Parameter "p_type" must be one of: "int", "float", "float4", "percent".'
+            )
 
-        if p_border is not None and not isinstance(p_border, openpyxl.styles.borders.Border):
-            raise Spartacus.Reports.Exception('Error during instantiation of class "Spartacus.Reports.Summary": Parameter "p_border" must be None or of type "openpyxl.styles.borders.Border".')
+        if p_border is not None and not isinstance(
+            p_border, openpyxl.styles.borders.Border
+        ):
+            raise Spartacus.Reports.Exception(
+                'Error during instantiation of class "Spartacus.Reports.Summary": Parameter "p_border" must be None or of type "openpyxl.styles.borders.Border".'
+            )
 
         if p_font is not None and not isinstance(p_font, openpyxl.styles.Font):
-            raise Spartacus.Reports.Exception('Error during instantiation of class "Spartacus.Reports.Summary": Parameter "p_font" must be None or of type "openpyxl.styles.Font".')
+            raise Spartacus.Reports.Exception(
+                'Error during instantiation of class "Spartacus.Reports.Summary": Parameter "p_font" must be None or of type "openpyxl.styles.Font".'
+            )
 
         if p_fill is not None and not isinstance(p_fill, openpyxl.styles.PatternFill):
-            raise Spartacus.Reports.Exception('Error during instantiation of class "Spartacus.Reports.Summary": Parameter "p_fill" must be None or of type "openpyxl.styles.PatternFill".')
+            raise Spartacus.Reports.Exception(
+                'Error during instantiation of class "Spartacus.Reports.Summary": Parameter "p_fill" must be None or of type "openpyxl.styles.PatternFill".'
+            )
 
         if not isinstance(p_function, str):
-            raise Spartacus.Reports.Exception('Error during instantiation of class "Spartacus.Reports.Summary": Parameter "p_function" must be of type "str".')
+            raise Spartacus.Reports.Exception(
+                'Error during instantiation of class "Spartacus.Reports.Summary": Parameter "p_function" must be of type "str".'
+            )
 
         if not isinstance(p_index, int):
-            raise Spartacus.Reports.Exception('Error during instantiation of class "Spartacus.Reports.Summary": Parameter "p_index" must be of type "int".')
+            raise Spartacus.Reports.Exception(
+                'Error during instantiation of class "Spartacus.Reports.Summary": Parameter "p_index" must be of type "int".'
+            )
 
         if p_index == 0:
-            raise Spartacus.Reports.Exception('Error during instantiation of class "Spartacus.Reports.Summary": Parameter "p_index" must be positive or negative.')
+            raise Spartacus.Reports.Exception(
+                'Error during instantiation of class "Spartacus.Reports.Summary": Parameter "p_index" must be positive or negative.'
+            )
 
         self.type = p_type
         self.border = p_border
@@ -428,7 +503,19 @@ class Field:
             hidden (bool): if this column should be hidden or not. Defaults to False.
     """
 
-    def __init__(self, p_name = '', p_width = 18, p_comment = None, p_border = None, p_font = None, p_fill = None, p_alignment = None, p_data = Data(), p_summaryList = [], p_hidden = False):
+    def __init__(
+        self,
+        p_name="",
+        p_width=18,
+        p_comment=None,
+        p_border=None,
+        p_font=None,
+        p_fill=None,
+        p_alignment=None,
+        p_data=Data(),
+        p_summaryList=[],
+        p_hidden=False,
+    ):
         """Create a new Spartacus.Report.Field instance.
 
             Args:
@@ -507,37 +594,69 @@ class Field:
         """
 
         if not isinstance(p_name, str):
-            raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Report.Field": Parameter "p_name" must be of type "str".')
+            raise Spartacus.Report.Exception(
+                'Error during instantiation of class "Spartacus.Report.Field": Parameter "p_name" must be of type "str".'
+            )
 
-        if p_width is not None and not isinstance(p_width, int) and not isinstance(p_width, float):
-            raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Report.Field": Parameter "p_width" must be of type "int" or "float" or None.')
+        if (
+            p_width is not None
+            and not isinstance(p_width, int)
+            and not isinstance(p_width, float)
+        ):
+            raise Spartacus.Report.Exception(
+                'Error during instantiation of class "Spartacus.Report.Field": Parameter "p_width" must be of type "int" or "float" or None.'
+            )
 
         if p_width is not None and p_width < 0:
-            raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Report.Field": Parameter "p_width" must be a non-negative number.')
+            raise Spartacus.Report.Exception(
+                'Error during instantiation of class "Spartacus.Report.Field": Parameter "p_width" must be a non-negative number.'
+            )
 
-        if p_comment is not None and not isinstance(p_comment, openpyxl.comments.Comment):
-            raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Report.Field": Parameter "p_comment" must be of type "openpyxl.comments.Comment".')
+        if p_comment is not None and not isinstance(
+            p_comment, openpyxl.comments.Comment
+        ):
+            raise Spartacus.Report.Exception(
+                'Error during instantiation of class "Spartacus.Report.Field": Parameter "p_comment" must be of type "openpyxl.comments.Comment".'
+            )
 
-        if p_border is not None and not isinstance(p_border, openpyxl.styles.borders.Border):
-            raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Report.Field": Parameter "p_border" must be of type "openpyxl.styles.borders.Border".')
+        if p_border is not None and not isinstance(
+            p_border, openpyxl.styles.borders.Border
+        ):
+            raise Spartacus.Report.Exception(
+                'Error during instantiation of class "Spartacus.Report.Field": Parameter "p_border" must be of type "openpyxl.styles.borders.Border".'
+            )
 
         if p_font is not None and not isinstance(p_font, openpyxl.styles.Font):
-            raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Report.Field": Parameter "p_font" must be of type "openpyxl.styles.Font".')
+            raise Spartacus.Report.Exception(
+                'Error during instantiation of class "Spartacus.Report.Field": Parameter "p_font" must be of type "openpyxl.styles.Font".'
+            )
 
         if p_fill is not None and not isinstance(p_fill, openpyxl.styles.PatternFill):
-            raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Report.Field": Parameter "p_fill" must be of type "openpyxl.styles.PatternFill".')
+            raise Spartacus.Report.Exception(
+                'Error during instantiation of class "Spartacus.Report.Field": Parameter "p_fill" must be of type "openpyxl.styles.PatternFill".'
+            )
 
-        if p_alignment is not None and not isinstance(p_alignment, openpyxl.styles.Alignment):
-            raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Report.Field": Parameter "p_alignment" must be of type "openpyxl.styles.Alignment".')
+        if p_alignment is not None and not isinstance(
+            p_alignment, openpyxl.styles.Alignment
+        ):
+            raise Spartacus.Report.Exception(
+                'Error during instantiation of class "Spartacus.Report.Field": Parameter "p_alignment" must be of type "openpyxl.styles.Alignment".'
+            )
 
         if p_data is not None and not isinstance(p_data, Data):
-            raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Report.Field": Parameter "p_data" must be of type "Spartacus.Report.Data".')
+            raise Spartacus.Report.Exception(
+                'Error during instantiation of class "Spartacus.Report.Field": Parameter "p_data" must be of type "Spartacus.Report.Data".'
+            )
 
         if not isinstance(p_summaryList, list):
-            raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Report.Field": Parameter "p_summaryList" must be of type "list".')
+            raise Spartacus.Report.Exception(
+                'Error during instantiation of class "Spartacus.Report.Field": Parameter "p_summaryList" must be of type "list".'
+            )
 
         if not isinstance(p_hidden, bool):
-            raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Report.Field": Parameter "p_hidden" must be of type "bool".')
+            raise Spartacus.Report.Exception(
+                'Error during instantiation of class "Spartacus.Report.Field": Parameter "p_hidden" must be of type "bool".'
+            )
 
         self.name = p_name
         self.width = p_width
@@ -571,7 +690,7 @@ class ConditionalFormatting:
                     )
     """
 
-    def __init__(self, p_formula = '', p_differentialStyle = None):
+    def __init__(self, p_formula="", p_differentialStyle=None):
         """Create a new classes.ConditionalFormatting instance.
 
             Args:
@@ -595,16 +714,35 @@ class ConditionalFormatting:
         """
 
         if not isinstance(p_formula, str):
-            raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Report.ConditionalFormatting": Parameter "p_formula" must be of type "str".')
+            raise Spartacus.Report.Exception(
+                'Error during instantiation of class "Spartacus.Report.ConditionalFormatting": Parameter "p_formula" must be of type "str".'
+            )
 
-        if p_differentialStyle is not None and not isinstance(p_differentialStyle, openpyxl.styles.differential.DifferentialStyle):
-            raise Spartacus.Report.Exception('Error during instantiation of class "Spartacus.Report.ConditionalFormatting": Parameter "p_formula" must be of type "openpyxl.styles.differential.DifferentialStyle".')
+        if p_differentialStyle is not None and not isinstance(
+            p_differentialStyle, openpyxl.styles.differential.DifferentialStyle
+        ):
+            raise Spartacus.Report.Exception(
+                'Error during instantiation of class "Spartacus.Report.ConditionalFormatting": Parameter "p_formula" must be of type "openpyxl.styles.differential.DifferentialStyle".'
+            )
 
         self.formula = p_formula
         self.differentialStyle = p_differentialStyle
 
 
-def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_startRow = 1, p_headerHeight = None, p_data = None, p_database = None, p_query = None, p_mainTable = False, p_conditionalFormatting = None, p_tableStyleInfo = None, p_withFilters = True):
+def AddTable(
+    p_workSheet=None,
+    p_headerDict=None,
+    p_startColumn=1,
+    p_startRow=1,
+    p_headerHeight=None,
+    p_data=None,
+    p_database=None,
+    p_query=None,
+    p_mainTable=False,
+    p_conditionalFormatting=None,
+    p_tableStyleInfo=None,
+    p_withFilters=True,
+):
     """Insert a table in a given worksheet.
 
         Args:
@@ -714,54 +852,96 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
     """
 
     if not isinstance(p_workSheet, openpyxl.worksheet.worksheet.Worksheet):
-        raise Spartacus.Report.Exception('Error during execution of method "Static.AddTable": Parameter "p_workSheet" must be of type "openpyxl.worksheet.worksheet.Worksheet".')
+        raise Spartacus.Report.Exception(
+            'Error during execution of method "Static.AddTable": Parameter "p_workSheet" must be of type "openpyxl.worksheet.worksheet.Worksheet".'
+        )
 
     if not isinstance(p_headerDict, collections.OrderedDict):
-        raise Spartacus.Report.Exception('Error during execution of method "Static.AddTable": Parameter "p_headerDict" must be of type "collections.OrderedDict".')
+        raise Spartacus.Report.Exception(
+            'Error during execution of method "Static.AddTable": Parameter "p_headerDict" must be of type "collections.OrderedDict".'
+        )
 
     if not isinstance(p_startColumn, int):
-        raise Spartacus.Report.Exception('Error during execution of method "Static.AddTable": Parameter "p_startColumn" must be of type "int".')
+        raise Spartacus.Report.Exception(
+            'Error during execution of method "Static.AddTable": Parameter "p_startColumn" must be of type "int".'
+        )
 
     if p_startColumn < 1:
-        raise Spartacus.Report.Exception('Error during execution of method "Static.AddTable": Parameter "p_startColumn" must be a positive integer.')
+        raise Spartacus.Report.Exception(
+            'Error during execution of method "Static.AddTable": Parameter "p_startColumn" must be a positive integer.'
+        )
 
     if not isinstance(p_startRow, int):
-        raise Spartacus.Report.Exception('Error during execution of method "Static.AddTable": Parameter "p_startRow" must be of type "int".')
+        raise Spartacus.Report.Exception(
+            'Error during execution of method "Static.AddTable": Parameter "p_startRow" must be of type "int".'
+        )
 
     if p_startRow < 1:
-        raise Spartacus.Report.Exception('Error during execution of method "Static.AddTable": Parameter "p_startRow" must be a positive integer.')
+        raise Spartacus.Report.Exception(
+            'Error during execution of method "Static.AddTable": Parameter "p_startRow" must be a positive integer.'
+        )
 
-    if p_headerHeight is not None and not isinstance(p_headerHeight, int) and not isinstance(p_headerHeight, float):
-        raise Spartacus.Report.Exception('Error during execution of method "Static.AddTable": Parameter "p_headerHeight" must be None or of type "int" or "float".')
+    if (
+        p_headerHeight is not None
+        and not isinstance(p_headerHeight, int)
+        and not isinstance(p_headerHeight, float)
+    ):
+        raise Spartacus.Report.Exception(
+            'Error during execution of method "Static.AddTable": Parameter "p_headerHeight" must be None or of type "int" or "float".'
+        )
 
     if p_data is not None and not isinstance(p_data, Spartacus.Database.DataTable):
-        raise Spartacus.Report.Exception('Error during execution of method "Static.AddTable": Parameter "p_data" must be of type "Spartacus.Database.DataTable".')
+        raise Spartacus.Report.Exception(
+            'Error during execution of method "Static.AddTable": Parameter "p_data" must be of type "Spartacus.Database.DataTable".'
+        )
 
-    if p_database is not None and not isinstance(p_database, Spartacus.Database.Generic):
-        raise Spartacus.Report.Exception('Error during execution of method "Static.AddTable": Parameter "p_database" must be of type "Spartacus.Database.Generic".')
+    if p_database is not None and not isinstance(
+        p_database, Spartacus.Database.Generic
+    ):
+        raise Spartacus.Report.Exception(
+            'Error during execution of method "Static.AddTable": Parameter "p_database" must be of type "Spartacus.Database.Generic".'
+        )
 
     if p_data is None and p_database is None:
-        raise Spartacus.Report.Exception('Either p_data or p_database must be provided.')
+        raise Spartacus.Report.Exception(
+            "Either p_data or p_database must be provided."
+        )
 
     if p_data is not None and p_database is not None:
-        raise Spartacus.Report.Exception('Just one between p_data or p_database should be provided.')
+        raise Spartacus.Report.Exception(
+            "Just one between p_data or p_database should be provided."
+        )
 
     if p_query is not None and not isinstance(p_query, str):
-        raise Spartacus.Report.Exception('Error during execution of method "Static.AddTable": Parameter "p_query" must be of type "str".')
+        raise Spartacus.Report.Exception(
+            'Error during execution of method "Static.AddTable": Parameter "p_query" must be of type "str".'
+        )
 
     if not isinstance(p_mainTable, bool):
-        raise Spartacus.Report.Exception('Error during execution of method "Static.AddTable": Parameter "p_mainTable" must be of type "bool".')
+        raise Spartacus.Report.Exception(
+            'Error during execution of method "Static.AddTable": Parameter "p_mainTable" must be of type "bool".'
+        )
 
-    if p_conditionalFormatting is not None and not isinstance(p_conditionalFormatting, ConditionalFormatting):
-        raise Spartacus.Report.Exception('Error during execution of method "Static.AddTable": Parameter "p_conditionalFormatting" must be None or of type "Spartacus.Report.ConditionalFormatting".')
+    if p_conditionalFormatting is not None and not isinstance(
+        p_conditionalFormatting, ConditionalFormatting
+    ):
+        raise Spartacus.Report.Exception(
+            'Error during execution of method "Static.AddTable": Parameter "p_conditionalFormatting" must be None or of type "Spartacus.Report.ConditionalFormatting".'
+        )
 
-    if p_tableStyleInfo is not None and not isinstance(p_tableStyleInfo, openpyxl.worksheet.table.TableStyleInfo):
-        raise Spartacus.Report.Exception('Error during execution of method "Static.AddTable": Parameter "p_tableStyleInfo" must be None or of type "openpyxl.worksheet.table.TableStyleInfo".')
+    if p_tableStyleInfo is not None and not isinstance(
+        p_tableStyleInfo, openpyxl.worksheet.table.TableStyleInfo
+    ):
+        raise Spartacus.Report.Exception(
+            'Error during execution of method "Static.AddTable": Parameter "p_tableStyleInfo" must be None or of type "openpyxl.worksheet.table.TableStyleInfo".'
+        )
 
     if p_withFilters is not None and not isinstance(p_withFilters, bool):
-        raise Spartacus.Report.Exception('Error during execution of method "Static.AddTable": Parameter "p_withFilters" must be None or of type "bool".')
+        raise Spartacus.Report.Exception(
+            'Error during execution of method "Static.AddTable": Parameter "p_withFilters" must be None or of type "bool".'
+        )
 
-    #Format Header
+    # Format Header
     if p_headerHeight is not None:
         p_workSheet.row_dimensions[p_startRow].height = p_headerHeight
 
@@ -771,7 +951,7 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
         v_header = p_headerDict[v_headerList[i]]
         v_letter = openpyxl.utils.get_column_letter(i + p_startColumn)
 
-        v_cell = p_workSheet['{0}{1}'.format(v_letter, p_startRow)]
+        v_cell = p_workSheet["{0}{1}".format(v_letter, p_startRow)]
         v_cell.value = v_header.name
 
         if p_mainTable:
@@ -794,10 +974,10 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
             v_cell.alignment = v_header.alignment
 
     if p_mainTable:
-        p_workSheet.freeze_panes = 'A{0}'.format(p_startRow + 1)
+        p_workSheet.freeze_panes = "A{0}".format(p_startRow + 1)
 
-    #used in formula fields, if it's the case
-    v_pattern = re.compile(r'#column_[^\n\r#]*#')
+    # used in formula fields, if it's the case
+    v_pattern = re.compile(r"#column_[^\n\r#]*#")
 
     if p_database is not None:
         p_database.Open()
@@ -805,13 +985,15 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
     v_line = 0
     v_hasmorerecords = True
     while v_hasmorerecords:
-        v_data = p_database.QueryBlock(p_query, 1000) if p_database is not None else p_data
+        v_data = (
+            p_database.QueryBlock(p_query, 1000) if p_database is not None else p_data
+        )
 
         if p_database is None and p_data is not None:
             v_hasmorerecords = False
 
         if len(v_data.Rows) > 0:
-            #Fill content
+            # Fill content
             for v_row in v_data.Rows:
                 v_line += 1
 
@@ -819,7 +1001,9 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
                     v_headerData = p_headerDict[v_headerList[i]].data
                     v_letter = openpyxl.utils.get_column_letter(i + p_startColumn)
 
-                    v_cell = p_workSheet['{0}{1}'.format(v_letter, v_line + p_startRow)] #Plus p_startRow to "jump" report header lines
+                    v_cell = p_workSheet[
+                        "{0}{1}".format(v_letter, v_line + p_startRow)
+                    ]  # Plus p_startRow to "jump" report header lines
 
                     if v_headerData.border is not None:
                         v_cell.border = v_headerData.border
@@ -833,7 +1017,7 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
                     if v_headerData.alignment is not None:
                         v_cell.alignment = v_headerData.alignment
 
-                    if v_headerData.type == 'int':
+                    if v_headerData.type == "int":
                         v_key = str(v_row[v_headerList[i]])
 
                         if v_key in v_headerData.valueMapping:
@@ -842,10 +1026,14 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
                             try:
                                 v_cell.value = int(v_row[v_headerList[i]])
                             except (Exception, TypeError, ValueError):
-                                v_cell.value = v_row[v_headerList[i]] if v_headerList[i] is not None else ''
+                                v_cell.value = (
+                                    v_row[v_headerList[i]]
+                                    if v_headerList[i] is not None
+                                    else ""
+                                )
 
-                        v_cell.number_format = '0'
-                    elif v_headerData.type == 'float':
+                        v_cell.number_format = "0"
+                    elif v_headerData.type == "float":
                         v_key = str(v_row[v_headerList[i]])
 
                         if v_key in v_headerData.valueMapping:
@@ -854,10 +1042,14 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
                             try:
                                 v_cell.value = float(v_row[v_headerList[i]])
                             except (Exception, TypeError, ValueError):
-                                v_cell.value = v_row[v_headerList[i]] if v_headerList[i] is not None else ''
+                                v_cell.value = (
+                                    v_row[v_headerList[i]]
+                                    if v_headerList[i] is not None
+                                    else ""
+                                )
 
-                        v_cell.number_format = '#,##0.00'
-                    elif v_headerData.type == 'float4':
+                        v_cell.number_format = "#,##0.00"
+                    elif v_headerData.type == "float4":
                         v_key = str(v_row[v_headerList[i]])
 
                         if v_key in v_headerData.valueMapping:
@@ -866,10 +1058,14 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
                             try:
                                 v_cell.value = float(v_row[v_headerList[i]])
                             except (Exception, TypeError, ValueError):
-                                v_cell.value = v_row[v_headerList[i]] if v_headerList[i] is not None else ''
+                                v_cell.value = (
+                                    v_row[v_headerList[i]]
+                                    if v_headerList[i] is not None
+                                    else ""
+                                )
 
-                        v_cell.number_format = '#,##0.0000'
-                    elif v_headerData.type == 'percent':
+                        v_cell.number_format = "#,##0.0000"
+                    elif v_headerData.type == "percent":
                         v_key = str(v_row[v_headerList[i]])
 
                         if v_key in v_headerData.valueMapping:
@@ -878,109 +1074,172 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
                             try:
                                 v_cell.value = float(v_row[v_headerList[i]])
                             except (Exception, TypeError, ValueError):
-                                v_cell.value = v_row[v_headerList[i]] if v_headerList[i] is not None else ''
+                                v_cell.value = (
+                                    v_row[v_headerList[i]]
+                                    if v_headerList[i] is not None
+                                    else ""
+                                )
 
-                        v_cell.number_format = '0.00%'
-                    elif v_headerData.type == 'date':
+                        v_cell.number_format = "0.00%"
+                    elif v_headerData.type == "date":
                         v_key = str(v_row[v_headerList[i]])
 
                         if v_key in v_headerData.valueMapping:
                             v_cell.value = v_headerData.valueMapping[v_key]
                         else:
-                            v_cell.value = v_row[v_headerList[i]] if v_headerList[i] is not None else ''
+                            v_cell.value = (
+                                v_row[v_headerList[i]]
+                                if v_headerList[i] is not None
+                                else ""
+                            )
 
-                        v_cell.number_format = 'DD/MM/YYYY'
-                    elif v_headerData.type == 'str':
+                        v_cell.number_format = "DD/MM/YYYY"
+                    elif v_headerData.type == "str":
                         v_key = str(v_row[v_headerList[i]])
 
                         if v_key in v_headerData.valueMapping:
                             v_cell.value = v_headerData.valueMapping[v_key]
                         else:
-                            v_cell.value = v_row[v_headerList[i]] if v_headerList[i] is not None else ''
-                    elif v_headerData.type == 'bool':
+                            v_cell.value = (
+                                v_row[v_headerList[i]]
+                                if v_headerList[i] is not None
+                                else ""
+                            )
+                    elif v_headerData.type == "bool":
                         v_key = str(v_row[v_headerList[i]])
 
                         if v_key in v_headerData.valueMapping:
                             v_cell.value = v_headerData.valueMapping[v_key]
                         else:
                             try:
-                                v_cell.value = bool(v_row[v_headerList[i]]) if v_row[v_headerList[i]] is not None and str(v_row[v_headerList[i]]).strip() != '' else ''
+                                v_cell.value = (
+                                    bool(v_row[v_headerList[i]])
+                                    if v_row[v_headerList[i]] is not None
+                                    and str(v_row[v_headerList[i]]).strip() != ""
+                                    else ""
+                                )
                             except (Exception, TypeError, ValueError):
-                                v_cell.value = v_row[v_headerList[i]] if v_headerList[i] is not None else ''
-                    if v_headerData.type == 'int_formula':
-                        v_value = v_row[v_headerList[i]].replace('#row#', str(p_startRow + v_line))
+                                v_cell.value = (
+                                    v_row[v_headerList[i]]
+                                    if v_headerList[i] is not None
+                                    else ""
+                                )
+                    if v_headerData.type == "int_formula":
+                        v_value = v_row[v_headerList[i]].replace(
+                            "#row#", str(p_startRow + v_line)
+                        )
                         v_match = re.search(v_pattern, v_value)
 
                         while v_match is not None:
                             v_start = v_match.start()
                             v_end = v_match.end()
-                            v_matchColumn = openpyxl.utils.get_column_letter(p_startColumn + v_headerList.index(v_value[v_start + 8 : v_end - 1])) #Discard starting #column_ and ending # in match
-                            v_value = v_value[:v_start] + v_matchColumn + v_value[v_end:]
+                            v_matchColumn = openpyxl.utils.get_column_letter(
+                                p_startColumn
+                                + v_headerList.index(v_value[v_start + 8 : v_end - 1])
+                            )  # Discard starting #column_ and ending # in match
+                            v_value = (
+                                v_value[:v_start] + v_matchColumn + v_value[v_end:]
+                            )
                             v_match = re.search(v_pattern, v_value)
 
                         v_cell.value = v_value
-                        v_cell.number_format = '0'
-                    elif v_headerData.type == 'float_formula':
-                        v_value = v_row[v_headerList[i]].replace('#row#', str(p_startRow + v_line))
+                        v_cell.number_format = "0"
+                    elif v_headerData.type == "float_formula":
+                        v_value = v_row[v_headerList[i]].replace(
+                            "#row#", str(p_startRow + v_line)
+                        )
                         v_match = re.search(v_pattern, v_value)
 
                         while v_match is not None:
                             v_start = v_match.start()
                             v_end = v_match.end()
-                            v_matchColumn = openpyxl.utils.get_column_letter(p_startColumn + v_headerList.index(v_value[v_start + 8 : v_end - 1])) #Discard starting #column_ and ending # in match
-                            v_value = v_value[:v_start] + v_matchColumn + v_value[v_end:]
+                            v_matchColumn = openpyxl.utils.get_column_letter(
+                                p_startColumn
+                                + v_headerList.index(v_value[v_start + 8 : v_end - 1])
+                            )  # Discard starting #column_ and ending # in match
+                            v_value = (
+                                v_value[:v_start] + v_matchColumn + v_value[v_end:]
+                            )
                             v_match = re.search(v_pattern, v_value)
 
                         v_cell.value = v_value
-                        v_cell.number_format = '#,##0.00'
-                    elif v_headerData.type == 'float4_formula':
-                        v_value = v_row[v_headerList[i]].replace('#row#', str(p_startRow + v_line))
+                        v_cell.number_format = "#,##0.00"
+                    elif v_headerData.type == "float4_formula":
+                        v_value = v_row[v_headerList[i]].replace(
+                            "#row#", str(p_startRow + v_line)
+                        )
                         v_match = re.search(v_pattern, v_value)
 
                         while v_match is not None:
                             v_start = v_match.start()
                             v_end = v_match.end()
-                            v_matchColumn = openpyxl.utils.get_column_letter(p_startColumn + v_headerList.index(v_value[v_start + 8 : v_end - 1])) #Discard starting #column_ and ending # in match
-                            v_value = v_value[:v_start] + v_matchColumn + v_value[v_end:]
+                            v_matchColumn = openpyxl.utils.get_column_letter(
+                                p_startColumn
+                                + v_headerList.index(v_value[v_start + 8 : v_end - 1])
+                            )  # Discard starting #column_ and ending # in match
+                            v_value = (
+                                v_value[:v_start] + v_matchColumn + v_value[v_end:]
+                            )
                             v_match = re.search(v_pattern, v_value)
 
                         v_cell.value = v_value
-                        v_cell.number_format = '#,##0.0000'
-                    elif v_headerData.type == 'percent_formula':
-                        v_value = v_row[v_headerList[i]].replace('#row#', str(p_startRow + v_line))
+                        v_cell.number_format = "#,##0.0000"
+                    elif v_headerData.type == "percent_formula":
+                        v_value = v_row[v_headerList[i]].replace(
+                            "#row#", str(p_startRow + v_line)
+                        )
                         v_match = re.search(v_pattern, v_value)
 
                         while v_match is not None:
                             v_start = v_match.start()
                             v_end = v_match.end()
-                            v_matchColumn = openpyxl.utils.get_column_letter(p_startColumn + v_headerList.index(v_value[v_start + 8 : v_end - 1])) #Discard starting #column_ and ending # in match
-                            v_value = v_value[:v_start] + v_matchColumn + v_value[v_end:]
+                            v_matchColumn = openpyxl.utils.get_column_letter(
+                                p_startColumn
+                                + v_headerList.index(v_value[v_start + 8 : v_end - 1])
+                            )  # Discard starting #column_ and ending # in match
+                            v_value = (
+                                v_value[:v_start] + v_matchColumn + v_value[v_end:]
+                            )
                             v_match = re.search(v_pattern, v_value)
 
                         v_cell.value = v_value
-                        v_cell.number_format = '0.00%'
-                    elif v_headerData.type == 'date_formula':
-                        v_value = v_row[v_headerList[i]].replace('#row#', str(p_startRow + v_line))
+                        v_cell.number_format = "0.00%"
+                    elif v_headerData.type == "date_formula":
+                        v_value = v_row[v_headerList[i]].replace(
+                            "#row#", str(p_startRow + v_line)
+                        )
                         v_match = re.search(v_pattern, v_value)
 
                         while v_match is not None:
                             v_start = v_match.start()
                             v_end = v_match.end()
-                            v_matchColumn = openpyxl.utils.get_column_letter(p_startColumn + v_headerList.index(v_value[v_start + 8 : v_end - 1])) #Discard starting #column_ and ending # in match
-                            v_value = v_value[:v_start] + v_matchColumn + v_value[v_end:]
+                            v_matchColumn = openpyxl.utils.get_column_letter(
+                                p_startColumn
+                                + v_headerList.index(v_value[v_start + 8 : v_end - 1])
+                            )  # Discard starting #column_ and ending # in match
+                            v_value = (
+                                v_value[:v_start] + v_matchColumn + v_value[v_end:]
+                            )
                             v_match = re.search(v_pattern, v_value)
 
                         v_cell.value = v_value
-                        v_cell.number_format = 'DD/MM/YYYY'
-                    elif v_headerData.type == 'str_formula':
-                        v_value = v_row[v_headerList[i]].replace('#row#', str(p_startRow + v_line))
+                        v_cell.number_format = "DD/MM/YYYY"
+                    elif v_headerData.type == "str_formula":
+                        v_value = v_row[v_headerList[i]].replace(
+                            "#row#", str(p_startRow + v_line)
+                        )
                         v_match = re.search(v_pattern, v_value)
 
                         while v_match is not None:
                             v_start = v_match.start()
                             v_end = v_match.end()
-                            v_matchColumn = openpyxl.utils.get_column_letter(p_startColumn + v_headerList.index(v_value[v_start + 8 : v_end - 1])) #Discard starting #column_ and ending # in match
-                            v_value = v_value[:v_start] + v_matchColumn + v_value[v_end:]
+                            v_matchColumn = openpyxl.utils.get_column_letter(
+                                p_startColumn
+                                + v_headerList.index(v_value[v_start + 8 : v_end - 1])
+                            )  # Discard starting #column_ and ending # in match
+                            v_value = (
+                                v_value[:v_start] + v_matchColumn + v_value[v_end:]
+                            )
                             v_match = re.search(v_pattern, v_value)
 
                         v_cell.value = v_value
@@ -1004,34 +1263,42 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
 
     v_lastLine = v_line + p_startRow
 
-    #Apply conditional formatting, if any
+    # Apply conditional formatting, if any
     if p_conditionalFormatting is not None:
         v_startLetter = openpyxl.utils.get_column_letter(p_startColumn)
-        v_finalLetter = openpyxl.utils.get_column_letter(len(v_headerList) + p_startColumn - 1)
+        v_finalLetter = openpyxl.utils.get_column_letter(
+            len(v_headerList) + p_startColumn - 1
+        )
 
-        v_formula = p_conditionalFormatting.formula.replace('#row#', str(p_startRow + 1))
+        v_formula = p_conditionalFormatting.formula.replace(
+            "#row#", str(p_startRow + 1)
+        )
 
         v_match = re.search(v_pattern, v_formula)
 
         while v_match is not None:
             v_start = v_match.start()
             v_end = v_match.end()
-            v_matchColumn = openpyxl.utils.get_column_letter(p_startColumn + v_headerList.index(v_formula[v_start + 8 : v_end - 1])) #Discard starting #column_ and ending # in match
+            v_matchColumn = openpyxl.utils.get_column_letter(
+                p_startColumn + v_headerList.index(v_formula[v_start + 8 : v_end - 1])
+            )  # Discard starting #column_ and ending # in match
             v_formula = v_formula[:v_start] + v_matchColumn + v_formula[v_end:]
             v_match = re.search(v_pattern, v_formula)
 
         v_rule = openpyxl.formatting.rule.Rule(
-            type = 'expression',
-            formula = [v_formula],
-            dxf = p_conditionalFormatting.differentialStyle
+            type="expression",
+            formula=[v_formula],
+            dxf=p_conditionalFormatting.differentialStyle,
         )
 
         p_workSheet.conditional_formatting.add(
-            '{0}{1}:{2}{3}'.format(v_startLetter, p_startRow + 1, v_finalLetter, v_lastLine),
-            v_rule
+            "{0}{1}:{2}{3}".format(
+                v_startLetter, p_startRow + 1, v_finalLetter, v_lastLine
+            ),
+            v_rule,
         )
 
-    #Build Summary
+    # Build Summary
     for i in range(len(v_headerList)):
         v_headerSummaryList = p_headerDict[v_headerList[i]].summaryList
 
@@ -1045,18 +1312,24 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
             elif v_headerSummary.index > 0:
                 v_index = v_lastLine + v_headerSummary.index
 
-            v_value = v_headerSummary.function.replace('#column#', v_letter).replace('#start_row#', str(p_startRow + 1)).replace('#end_row#', str(v_lastLine))
+            v_value = (
+                v_headerSummary.function.replace("#column#", v_letter)
+                .replace("#start_row#", str(p_startRow + 1))
+                .replace("#end_row#", str(v_lastLine))
+            )
 
             v_match = re.search(v_pattern, v_value)
 
             while v_match is not None:
                 v_start = v_match.start()
                 v_end = v_match.end()
-                v_matchColumn = openpyxl.utils.get_column_letter(p_startColumn + v_headerList.index(v_value[v_start + 8 : v_end - 1])) #Discard starting #column_ and ending # in match
+                v_matchColumn = openpyxl.utils.get_column_letter(
+                    p_startColumn + v_headerList.index(v_value[v_start + 8 : v_end - 1])
+                )  # Discard starting #column_ and ending # in match
                 v_value = v_value[:v_start] + v_matchColumn + v_value[v_end:]
                 v_match = re.search(v_pattern, v_value)
 
-            v_cell = p_workSheet['{0}{1}'.format(v_letter, v_index)]
+            v_cell = p_workSheet["{0}{1}".format(v_letter, v_index)]
             v_cell.value = v_value
 
             if v_headerSummary.border is not None:
@@ -1068,27 +1341,31 @@ def AddTable(p_workSheet = None, p_headerDict = None, p_startColumn = 1, p_start
             if v_headerSummary.fill is not None:
                 v_cell.fill = v_headerSummary.fill
 
-            if v_headerSummary.type == 'int':
-                v_cell.number_format = '0'
-            elif v_headerSummary.type == 'float':
-                v_cell.number_format = '#,##0.00'
-            elif v_headerSummary.type == 'float4':
-                v_cell.number_format = '#,##0.0000'
-            elif v_headerSummary.type == 'percent':
-                v_cell.number_format = '0.00%'
+            if v_headerSummary.type == "int":
+                v_cell.number_format = "0"
+            elif v_headerSummary.type == "float":
+                v_cell.number_format = "#,##0.00"
+            elif v_headerSummary.type == "float4":
+                v_cell.number_format = "#,##0.0000"
+            elif v_headerSummary.type == "percent":
+                v_cell.number_format = "0.00%"
 
-    #Create a new table and add it to worksheet
-    v_name = 'Table_{0}_{1}'.format(p_workSheet.title.replace(' ', ''), len(p_workSheet._tables) + 1) #excel doesn't accept same displayName in more than one table.
-    v_name = ''.join([c for c in v_name if c.isalnum()]) #Excel doesn't accept non-alphanumeric characters.
+    # Create a new table and add it to worksheet
+    v_name = "Table_{0}_{1}".format(
+        p_workSheet.title.replace(" ", ""), len(p_workSheet._tables) + 1
+    )  # excel doesn't accept same displayName in more than one table.
+    v_name = "".join(
+        [c for c in v_name if c.isalnum()]
+    )  # Excel doesn't accept non-alphanumeric characters.
 
     v_table = openpyxl.worksheet.table.Table(
-        displayName = v_name,
-        ref = '{0}{1}:{2}{3}'.format(
+        displayName=v_name,
+        ref="{0}{1}:{2}{3}".format(
             openpyxl.utils.get_column_letter(p_startColumn),
             p_startRow,
             openpyxl.utils.get_column_letter(p_startColumn + len(v_headerList) - 1),
-            v_lastLine
-        )
+            v_lastLine,
+        ),
     )
 
     if p_tableStyleInfo is not None:

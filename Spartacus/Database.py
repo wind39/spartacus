@@ -656,6 +656,115 @@ class Generic(ABC):
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
         return v_return
+    def GetIdentifiersDML(p_sql):
+        try:
+            v_dict = {
+                'all': [],
+                'readonly': [],
+                'writeonly': [],
+                'readwrite': []
+            }
+            v_statement = sqlparse.split(p_sql)
+            v_analysis = sqlparse.parse(p_sql)
+            if len(v_statement) == len(v_analysis):
+                for i in range(0, len(v_statement)):
+                    v_type = v_analysis[i].get_type()
+                    v_next_is_into = False
+                    v_next_is_from = False
+                    v_next_is_read_table = False
+                    v_next_is_write_table = False
+                    for v_token in v_analysis[i].flatten():
+                        if v_token.ttype != sqlparse.tokens.Token.Text.Whitespace:
+                            if v_next_is_into:
+                                v_next_is_write_table = True
+                                v_next_is_into = False
+                            elif v_next_is_from:
+                                v_next_is_write_table = True
+                                v_next_is_from = False
+                            elif v_next_is_read_table:
+                                v_dict['readonly'].append(v_token.value)
+                                v_next_is_read_table = False
+                            elif v_next_is_write_table:
+                                v_dict['writeonly'].append(v_token.value)
+                                v_next_is_write_table = False
+                            elif v_token.is_keyword and v_token.value.lower() in [
+                                'from',
+                                'join',
+                                'inner join',
+                                'left join',
+                                'left outer join',
+                                'right join',
+                                'right outer join',
+                                'full join',
+                                'full outer join',
+                                'cross join',
+                                'natural join'
+                            ]:
+                                v_next_is_read_table = True
+                            elif v_token.is_keyword and v_token.value.lower() == 'insert':
+                                v_next_is_into = True
+                            elif v_token.is_keyword and v_token.value.lower() == 'delete':
+                                v_next_is_from = True
+                            elif v_token.is_keyword and v_token.value.lower() == 'update':
+                                v_next_is_write_table = True
+                            elif v_token.is_keyword and v_token.value.lower() == 'truncate':
+                                v_next_is_write_table = True
+            v_dict['readonly'] = list(dict.fromkeys(v_dict['readonly']))
+            v_dict['writeonly'] = list(dict.fromkeys(v_dict['writeonly']))
+            v_dict['readwrite'] = list(dict.fromkeys([value for value in v_dict['readonly'] if value in v_dict['writeonly']] + [value for value in v_dict['writeonly'] if value in v_dict['readonly']]))
+            for value in v_dict['readwrite']:
+                v_dict['readonly'].remove(value)
+                v_dict['writeonly'].remove(value)
+            v_dict['all'] = list(dict.fromkeys(v_dict['readonly'] + v_dict['writeonly'] + v_dict['readwrite']))
+            for k in list(v_dict.keys()):
+                v_dict[k].sort()
+            return v_dict
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+    def GetIdentifiersDDL(p_sql):
+        try:
+            v_dict = {
+                'all': [],
+                'create': [],
+                'alter': [],
+                'drop': []
+            }
+            v_statement = sqlparse.split(p_sql)
+            v_analysis = sqlparse.parse(p_sql)
+            if len(v_statement) == len(v_analysis):
+                for i in range(0, len(v_statement)):
+                    v_type = v_analysis[i].get_type()
+                    v_class = None
+                    v_next_is_class = False
+                    v_next_is_object = False
+                    if v_type in ['CREATE', 'CREATE OR REPLACE', 'ALTER', 'DROP']:
+                        for v_token in v_analysis[i].flatten():
+                            if v_token.ttype != sqlparse.tokens.Token.Text.Whitespace:
+                                if v_token.is_keyword and v_token.value.upper() == v_type:
+                                    v_next_is_class = True
+                                elif v_next_is_class:
+                                    v_class = v_token.value.lower()
+                                    v_next_is_class = False
+                                    v_next_is_object = True
+                                elif v_next_is_object:
+                                    if v_type == 'CREATE OR REPLACE':
+                                        v_dict['create'].append((v_class, v_token.value))
+                                    else:
+                                        v_dict[v_type.lower()].append((v_class, v_token.value))
+                                    if v_class in v_dict:
+                                        v_dict[v_class].append(v_token.value)
+                                    else:
+                                        v_dict[v_class] = [v_token.value]
+                                    v_next_is_object = False
+            v_dict['create'] = list(dict.fromkeys(v_dict['create']))
+            v_dict['alter'] = list(dict.fromkeys(v_dict['alter']))
+            v_dict['drop'] = list(dict.fromkeys(v_dict['drop']))
+            v_dict['all'] = list(dict.fromkeys(v_dict['create'] + v_dict['alter'] + v_dict['drop']))
+            for k in list(v_dict.keys()):
+                v_dict[k].sort()
+            return v_dict
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
 
 '''
 ------------------------------------------------------------------------

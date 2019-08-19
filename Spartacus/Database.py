@@ -1588,8 +1588,6 @@ class PostgreSQL(Generic):
             self.v_expanded = False
             self.v_timing = False
             self.v_types = None
-            psycopg2.extras.register_default_json(loads=lambda x: x)
-            psycopg2.extras.register_default_jsonb(loads=lambda x: x)
             psycopg2.extensions.register_type(
                 psycopg2.extensions.new_type(
                     psycopg2.extensions.INTERVAL.values, "INTERVAL_STR", psycopg2.STRING
@@ -1660,7 +1658,7 @@ class PostgreSQL(Generic):
     def Handler(self, value, cursor):
         return value
 
-    def Open(self, p_autocommit=True, p_datetime=False):
+    def Open(self, p_autocommit=True, p_datetime=False, p_json_as_string=True):
         try:
             self.v_con = psycopg2.connect(
                 self.GetConnectionString(), cursor_factory=psycopg2.extras.DictCursor
@@ -1689,6 +1687,9 @@ class PostgreSQL(Generic):
                         oids, "DATE", self.Handler
                     )
                     psycopg2.extensions.register_type(v_new_date_type, self.v_cur)
+                if p_json_as_string:
+                    psycopg2.extras.register_default_json(self.v_cur, loads=lambda x: x)
+                    psycopg2.extras.register_default_jsonb(self.v_cur, loads=lambda x: x)
                 if not p_autocommit:
                     self.v_con.commit()
             self.v_con.notices = DataList()
@@ -1699,11 +1700,11 @@ class PostgreSQL(Generic):
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
 
-    def Query(self, p_sql, p_alltypesstr=False, p_simple=False, p_datetime=False):
+    def Query(self, p_sql, p_alltypesstr=False, p_simple=False, p_datetime=False, p_json_as_string=True):
         try:
             v_keep = None
             if self.v_con is None:
-                self.Open(p_datetime=p_datetime)
+                self.Open(p_datetime=p_datetime, p_json_as_string=p_json_as_string)
                 v_keep = False
             else:
                 v_keep = True
@@ -1750,11 +1751,11 @@ class PostgreSQL(Generic):
             if not v_keep:
                 self.Close()
 
-    def ExecuteScalar(self, p_sql, p_datetime=False):
+    def ExecuteScalar(self, p_sql, p_datetime=False, p_json_as_string=True):
         try:
             v_keep = None
             if self.v_con is None:
-                self.Open(p_datetime=p_datetime)
+                self.Open(p_datetime=p_datetime, p_json_as_string=p_json_as_string)
                 v_keep = False
             else:
                 v_keep = True

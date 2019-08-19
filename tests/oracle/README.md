@@ -50,13 +50,62 @@ Because of the `--rm` above, the container will be automatically destroyed when
 you exit the container shell.
 
 
-#### Running the tests
+#### Connecting to Oracle
+
+From OmniDB you can connect using these information:
+
+- Host: 127.0.0.1
+- Port: 1521
+- Service: XE
+- User: SYSTEM
+- Password: spartacus
+
+If you get this error:
+
+```
+ORA-24454: client host name is not set
+```
+
+Then on the client machine you need to do this (I needed to do this on Mac):
+
+```
+sudo /bin/bash -c "echo '127.0.1.1 ${HOSTNAME}' >> /etc/hosts"
+```
+
+You can create a non-system user like this (in the container, as `root`):
+
+```
+su oracle
+sqlplus / as sysdba
+
+alter session set "_ORACLE_SCRIPT"=true;
+create user spartacus identified by spartacus;
+grant dba to spartacus;
+```
+
+
+#### Inserting data into the database
+
+In the `samples` folder there is a SQL script to create some tables and add some
+data to Oracle. Decompress it and copy it to the running Oracle container:
+
+```
+gunzip dellstore2-oracle.sql.gz
+docker cp dellstore2-oracle.sql <container_id>:/tmp/dellstore2-oracle.sql
+```
+
+Now inside the container, as `oracle` user, copy it to the home directory and
+run the script:
+
+```
+cp /tmp/dellstore2-oracle.sql .
+time sqlplus spartacus/spartacus@XE @dellstore2-oracle.sql
+```
+
+
+#### Running the tests (TODO)
 
 To run the tests, outside of the container, execute:
-
-```
-
-```
 
 
 #### Destroying the container

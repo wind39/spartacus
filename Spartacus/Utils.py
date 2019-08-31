@@ -33,6 +33,8 @@ from collections import OrderedDict
 import pyexcel
 import tempfile
 import hashlib
+from enum import IntEnum
+from cryptography.fernet import Fernet
 
 import Spartacus
 import Spartacus.Database
@@ -42,32 +44,56 @@ class Exception(Exception):
     pass
 
 
+class CryptorBackend(IntEnum):
+    AES = 1
+    CRYPTOGRAPHY = 2
+
+
 class Cryptor(object):
-    def __init__(self, p_key, p_encoding="utf-8"):
+    def __init__(self, p_key, p_encoding="utf-8", p_backend=CryptorBackend.AES):
         try:
             self.v_encoding = p_encoding
-            self.v_hash = pyscrypt.hash(
-                password=p_key.encode("utf-8"),
-                salt="0123456789ABCDEF".encode("utf-8"),
-                N=1024,
-                r=1,
-                p=1,
-                dkLen=32,
-            )
+
+            if p_backend == CryptorBackend.AES:
+                self.v_hash = pyscrypt.hash(
+                    password=p_key.encode("utf-8"),
+                    salt="0123456789ABCDEF".encode("utf-8"),
+                    N=1024,
+                    r=1,
+                    p=1,
+                    dkLen=32,
+                )
+            elif p_backend == CryptorBackend.CRYPTOGRAPHY:
+                if len(p_key) != 32:
+                    raise Exception('p_key parameter must be exactaly 32 characters length while using "cryptography" backend')
+
+                self.v_hash = base64.urlsafe_b64encode(p_key.encode('utf-8'))
+            else:
+                raise Exception('Unrecognized cryptor backend')
+
+            self.v_backend = p_backend
         except Exception as exc:
             raise Spartacus.Utils.Exception(str(exc))
 
     def Encrypt(self, p_plaintext):
         try:
-            v_aes = pyaes.AESModeOfOperationCTR(self.v_hash)
-            return base64.b64encode(v_aes.encrypt(p_plaintext)).decode(self.v_encoding)
+            if self.v_backend == CryptorBackend.AES:
+                v_aes = pyaes.AESModeOfOperationCTR(self.v_hash)
+                return base64.b64encode(v_aes.encrypt(p_plaintext)).decode(self.v_encoding)
+            elif self.v_backend == CryptorBackend.CRYPTOGRAPHY:
+                v_fernet = Fernet(self.v_hash)
+                return v_fernet.encrypt(p_plaintext.encode(self.v_encoding)).decode(self.v_encoding)
         except Exception as exc:
             raise Spartacus.Utils.Exception(str(exc))
 
     def Decrypt(self, p_cyphertext):
         try:
-            v_aes = pyaes.AESModeOfOperationCTR(self.v_hash)
-            return v_aes.decrypt(base64.b64decode(p_cyphertext)).decode(self.v_encoding)
+            if self.v_backend == CryptorBackend.AES:
+                v_aes = pyaes.AESModeOfOperationCTR(self.v_hash)
+                return v_aes.decrypt(base64.b64decode(p_cyphertext)).decode(self.v_encoding)
+            elif self.v_backend == CryptorBackend.CRYPTOGRAPHY:
+                v_fernet = Fernet(self.v_hash)
+                return v_fernet.decrypt(p_cyphertext.encode(self.v_encoding)).decode(self.v_encoding)
         except Exception as exc:
             raise Spartacus.Utils.Exception(str(exc))
 

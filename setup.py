@@ -31,7 +31,7 @@ long_description = open(os.path.join(rootdir, "README")).read()
 
 setup(
     name="Spartacus",
-    version="3.31",
+    version="3.32",
     description="Generic database wrapper",
     long_description=long_description,
     url="http://github.com/wind39/spartacus",
@@ -52,6 +52,7 @@ setup(
         "pyexcel",
         "pyexcel-xls",
         "pyexcel-xlsx",
+        "cryptography",
     ],
     extras_require={
         "postgresql": ["psycopg2-binary", "pgspecial"],

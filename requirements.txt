@@ -10,3 +10,4 @@ Pillow
 pyexcel
 pyexcel-xls
 pyexcel-xlsx
+cryptography

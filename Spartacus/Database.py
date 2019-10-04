@@ -1729,13 +1729,13 @@ class PostgreSQL(Generic):
         p_sql,
         p_alltypesstr=False,
         p_simple=False,
-        p_datetime=False,
+        p_datetime_as_string=False,
         p_json_as_string=True,
     ):
         try:
             v_keep = None
             if self.v_con is None:
-                self.Open(p_datetime=p_datetime, p_json_as_string=p_json_as_string)
+                self.Open(p_datetime_as_string=p_datetime_as_string, p_json_as_string=p_json_as_string)
                 v_keep = False
             else:
                 v_keep = True
@@ -1782,11 +1782,11 @@ class PostgreSQL(Generic):
             if not v_keep:
                 self.Close()
 
-    def ExecuteScalar(self, p_sql, p_datetime=False, p_json_as_string=True):
+    def ExecuteScalar(self, p_sql, p_datetime_as_string=False, p_json_as_string=True):
         try:
             v_keep = None
             if self.v_con is None:
-                self.Open(p_datetime=p_datetime, p_json_as_string=p_json_as_string)
+                self.Open(p_datetime_as_string=p_datetime_as_string, p_json_as_string=p_json_as_string)
                 v_keep = False
             else:
                 v_keep = True

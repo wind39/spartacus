@@ -23,6 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+import base64
 import datetime
 import decimal
 import math
@@ -1655,10 +1656,19 @@ class PostgreSQL(Generic):
                 self.v_application_name.replace("'", "\\'"),
             )
 
-    def Handler(self, value, cursor):
+    def DateHandler(self, value, cursor):
         return value
 
-    def Open(self, p_autocommit=True, p_datetime=False, p_json_as_string=True):
+    def BinaryHandler(self, value, cursor):
+        return base64.b64encode(value)
+
+    def Open(
+        self,
+        p_autocommit=True,
+        p_datetime_as_string=False,
+        p_json_as_string=False,
+        p_bytea_as_base64=False,
+    ):
         try:
             self.v_con = psycopg2.connect(
                 self.GetConnectionString(), cursor_factory=psycopg2.extras.DictCursor
@@ -1673,7 +1683,7 @@ class PostgreSQL(Generic):
                 self.v_types = dict(
                     [(r["oid"], r["typname"]) for r in self.v_cur.fetchall()]
                 )
-                if not p_datetime:
+                if p_datetime_as_string:
                     tmp = []
                     for oid, name in self.v_types.items():
                         if (
@@ -1683,13 +1693,27 @@ class PostgreSQL(Generic):
                         ):
                             tmp.append(oid)
                     oids = tuple(tmp)
-                    v_new_date_type = psycopg2.extensions.new_type(
-                        oids, "DATE", self.Handler
+                    psycopg2.extensions.register_type(
+                        psycopg2.extensions.new_type(oids, "DATE", self.DateHandler),
+                        self.v_cur,
                     )
-                    psycopg2.extensions.register_type(v_new_date_type, self.v_cur)
                 if p_json_as_string:
                     psycopg2.extras.register_default_json(self.v_cur, loads=lambda x: x)
-                    psycopg2.extras.register_default_jsonb(self.v_cur, loads=lambda x: x)
+                    psycopg2.extras.register_default_jsonb(
+                        self.v_cur, loads=lambda x: x
+                    )
+                if p_bytea_as_base64:
+                    tmp = []
+                    for oid, name in self.v_types.items():
+                        if name == "bytea":
+                            tmp.append(oid)
+                    oids = tuple(tmp)
+                    psycopg2.extensions.register_type(
+                        psycopg2.extensions.new_type(
+                            oids, "BINARY", self.BinaryHandler
+                        ),
+                        self.v_cur,
+                    )
                 if not p_autocommit:
                     self.v_con.commit()
             self.v_con.notices = DataList()
@@ -1700,7 +1724,14 @@ class PostgreSQL(Generic):
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
 
-    def Query(self, p_sql, p_alltypesstr=False, p_simple=False, p_datetime=False, p_json_as_string=True):
+    def Query(
+        self,
+        p_sql,
+        p_alltypesstr=False,
+        p_simple=False,
+        p_datetime=False,
+        p_json_as_string=True,
+    ):
         try:
             v_keep = None
             if self.v_con is None:

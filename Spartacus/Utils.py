@@ -65,11 +65,13 @@ class Cryptor(object):
                 )
             elif p_backend == CryptorBackend.CRYPTOGRAPHY:
                 if len(p_key) != 32:
-                    raise Exception('p_key parameter must be exactaly 32 characters length while using "cryptography" backend')
+                    raise Exception(
+                        'p_key parameter must be exactaly 32 characters length while using "cryptography" backend'
+                    )
 
-                self.v_hash = base64.urlsafe_b64encode(p_key.encode('utf-8'))
+                self.v_hash = base64.urlsafe_b64encode(p_key.encode("utf-8"))
             else:
-                raise Exception('Unrecognized cryptor backend')
+                raise Exception("Unrecognized cryptor backend")
 
             self.v_backend = p_backend
         except Exception as exc:
@@ -79,10 +81,14 @@ class Cryptor(object):
         try:
             if self.v_backend == CryptorBackend.AES:
                 v_aes = pyaes.AESModeOfOperationCTR(self.v_hash)
-                return base64.b64encode(v_aes.encrypt(p_plaintext)).decode(self.v_encoding)
+                return base64.b64encode(v_aes.encrypt(p_plaintext)).decode(
+                    self.v_encoding
+                )
             elif self.v_backend == CryptorBackend.CRYPTOGRAPHY:
                 v_fernet = Fernet(self.v_hash)
-                return v_fernet.encrypt(p_plaintext.encode(self.v_encoding)).decode(self.v_encoding)
+                return v_fernet.encrypt(p_plaintext.encode(self.v_encoding)).decode(
+                    self.v_encoding
+                )
         except Exception as exc:
             raise Spartacus.Utils.Exception(str(exc))
 
@@ -90,10 +96,14 @@ class Cryptor(object):
         try:
             if self.v_backend == CryptorBackend.AES:
                 v_aes = pyaes.AESModeOfOperationCTR(self.v_hash)
-                return v_aes.decrypt(base64.b64decode(p_cyphertext)).decode(self.v_encoding)
+                return v_aes.decrypt(base64.b64decode(p_cyphertext)).decode(
+                    self.v_encoding
+                )
             elif self.v_backend == CryptorBackend.CRYPTOGRAPHY:
                 v_fernet = Fernet(self.v_hash)
-                return v_fernet.decrypt(p_cyphertext.encode(self.v_encoding)).decode(self.v_encoding)
+                return v_fernet.decrypt(p_cyphertext.encode(self.v_encoding)).decode(
+                    self.v_encoding
+                )
         except Exception as exc:
             raise Spartacus.Utils.Exception(str(exc))
 

@@ -729,6 +729,41 @@ class ConditionalFormatting:
         self.differentialStyle = p_differentialStyle
 
 
+class RowsGrouping(object):
+    """Represents info about rows grouping and collapsing on a table.
+
+        Attributes:
+            column (str): the column that contains each row level.
+            collapsedLevel (int): the level the table will be collapsed.
+    """
+
+    def __init__(self, p_column=None, p_collapsedLevel=0):
+        """Create a new psrel.reports.classes.RowsGrouping instance.
+
+            Args:
+                p_column (str): the column that contains each row level. Defaults to None.
+                p_collapsedLevel (int): the level the table will be collapsed. Defaults to 0.
+        """
+
+        if not isinstance(p_column, str):
+            raise Spartacus.Report.Exception(
+                'Error during instantiation of class "Spartacus.Report.RowsGrouping": Parameter "p_column" must be of type "str".'
+            )
+
+        if not isinstance(p_collapsedLevel, int):
+            raise Spartacus.Report.Exception(
+                'Error during instantiation of class "Spartacus.Report.RowsGrouping": Parameter "p_collapsedLevel" must be of type "int".'
+            )
+
+        if p_collapsedLevel < 0:
+            raise exception.Exception(
+                'Error during instantiation of class "Spartacus.Report.RowsGrouping": Parameter "p_collapsedLevel" must be of type "int" and greater than or equal to 0.'
+            )
+
+        self.column = p_column
+        self.collapsedLevel = p_collapsedLevel
+
+
 def AddTable(
     p_workSheet=None,
     p_headerDict=None,
@@ -742,6 +777,7 @@ def AddTable(
     p_conditionalFormatting=None,
     p_tableStyleInfo=None,
     p_withFilters=True,
+    p_rowsGrouping=None,
 ):
     """Insert a table in a given worksheet.
 
@@ -843,6 +879,9 @@ def AddTable(
                     )
 
             p_withFilters (bool): if the table must contain auto-filters.
+            p_rowsGrouping (RowsGrouping): rows grouping to be applied to the table. Defaults to None.
+                Notes:
+                    The column in p_rowsGrouping.column attribute must be in p_data.Columns. It will be used to decide outline level of the row and when we should collapse or hide the row.
 
         Yields:
             int: Every 1000 lines inserted into the table, yields actual line number.
@@ -939,6 +978,11 @@ def AddTable(
     if p_withFilters is not None and not isinstance(p_withFilters, bool):
         raise Spartacus.Report.Exception(
             'Error during execution of method "Static.AddTable": Parameter "p_withFilters" must be None or of type "bool".'
+        )
+
+    if p_rowsGrouping is not None and not isinstance(p_rowsGrouping, RowsGrouping):
+        raise exception.Exception(
+            'Error during execution of method "Static.AddTable": Parameter "p_rowsGrouping" must be None of of type "Spartacus.Report.RowsGrouping".'
         )
 
     # Format Header
@@ -1243,6 +1287,14 @@ def AddTable(
                             v_match = re.search(v_pattern, v_value)
 
                         v_cell.value = v_value
+
+                #Apply rows grouping, if any
+                if p_rowsGrouping is not None:
+                    v_rowLevel = v_row[p_rowsGrouping.column]
+                    v_rowDimensions = p_workSheet.row_dimensions[p_startRow + v_line]
+                    v_rowDimensions.outlineLevel = v_rowLevel
+                    v_rowDimensions.hidden = v_rowLevel != p_rowsGrouping.collapsedLevel
+                    v_rowDimensions.collapsed = v_rowLevel == p_rowsGrouping.collapsedLevel
 
                 if p_database is not None:
                     yield v_line

@@ -238,8 +238,8 @@ class DataFileReader(object):
 
     def Sheets(self):
         try:
-            if self.v_extension == "xlsx" and self.v_object:
-                return self.v_object.get_sheet_names()
+            if self.v_extension in ["xlsx", "xls"] and self.v_object:
+                return self.v_object.sheetnames
             else:
                 return []
         except Spartacus.Utils.Exception as exc:

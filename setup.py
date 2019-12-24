@@ -1,7 +1,8 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2017-2019 William Ivanski
+Copyright (c) 2014-2019 William Ivanski
+Copyright (c) 2018-2019 Israel Barth Rubio
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +24,6 @@ SOFTWARE.
 """
 
 import os
-import sys
 from setuptools import setup
 
 rootdir = os.path.abspath(os.path.dirname(__file__))
@@ -31,7 +31,7 @@ long_description = open(os.path.join(rootdir, "README")).read()
 
 setup(
     name="Spartacus",
-    version="3.36",
+    version="3.37",
     description="Generic database wrapper",
     long_description=long_description,
     url="http://github.com/wind39/spartacus",
@@ -42,16 +42,9 @@ setup(
     install_requires=[
         "pyscrypt",
         "pyaes",
-        "openpyxl",
         "click",
         "sqlparse",
         "tabulate",
-        "bs4",
-        "lxml",
-        "Pillow",
-        "pyexcel",
-        "pyexcel-xls",
-        "pyexcel-xlsx",
         "cryptography",
     ],
     extras_require={
@@ -62,6 +55,8 @@ setup(
         "oracle": ["cx_Oracle"],
         "mssql": ["pymssql"],
         "ibmdb2": ["ibm_db"],
+        "xlsx": ["openpyxl", "bs4", "lxml", "Pillow"],
+        "xls": ["openpyxl", "bs4", "lxml", "Pillow", "pyexcel", "pyexcel-xlsx", "pyexcel-xls"],
         "complete": [
             "psycopg2-binary",
             "pgspecial",
@@ -70,6 +65,13 @@ setup(
             "cx_Oracle",
             "pymssql",
             "ibm_db",
+            "openpyxl",
+            "bs4",
+            "lxml",
+            "Pillow",
+            "pyexcel",
+            "pyexcel-xlsx",
+            "pyexcel-xls"
         ],
     },
     zip_safe=False,

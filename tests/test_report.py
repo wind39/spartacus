@@ -1,9 +1,7 @@
 import collections
 import openpyxl
 import bs4
-import re
 
-import Spartacus
 import Spartacus.Database
 import Spartacus.Report
 

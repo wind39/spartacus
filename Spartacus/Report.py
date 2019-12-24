@@ -24,9 +24,14 @@ SOFTWARE.
 """
 
 import collections
-import openpyxl
-import bs4
 import re
+
+try:
+    import openpyxl
+except ImportError:
+    raise Exception(
+        "XLSX is not supported. Please install it with 'pip install Spartacus[xlsx]'."
+    )
 
 import Spartacus
 import Spartacus.Database

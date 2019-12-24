@@ -31,7 +31,7 @@ long_description = open(os.path.join(rootdir, "README")).read()
 
 setup(
     name="Spartacus",
-    version="3.37",
+    version="3.38",
     description="Generic database wrapper",
     long_description=long_description,
     url="http://github.com/wind39/spartacus",
@@ -56,7 +56,7 @@ setup(
         "mssql": ["pymssql"],
         "ibmdb2": ["ibm_db"],
         "xlsx": ["openpyxl", "bs4", "lxml", "Pillow"],
-        "xls": ["openpyxl", "bs4", "lxml", "Pillow", "pyexcel", "pyexcel-xlsx", "pyexcel-xls"],
+        "xls": ["bs4", "lxml", "Pillow", "pyexcel", "pyexcel-xlsx", "pyexcel-xls"],
         "complete": [
             "psycopg2-binary",
             "pgspecial",
@@ -65,7 +65,6 @@ setup(
             "cx_Oracle",
             "pymssql",
             "ibm_db",
-            "openpyxl",
             "bs4",
             "lxml",
             "Pillow",

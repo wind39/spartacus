@@ -1,6 +1,6 @@
 #### Requirements
 
-Download Debian 8 base image:
+Download Debian 10 base image:
 
 ```
 docker pull debian:stable-slim
@@ -25,7 +25,7 @@ docker build -t "spartacus:tests_postgresql" .
 To test OmniDB, start a container from the test image, and a shell into the container:
 
 ```
-docker run -it --rm -p 5494:5494 -p 5495:5495 -p 5496:5496 -p 5410:5410 -p 5411:5411 omnidb:tests_postgresql /bin/bash
+docker run -it --rm -p 5494:5494 -p 5495:5495 -p 5496:5496 -p 5410:5410 -p 5411:5411 -p 5412:5412 spartacus:tests_postgresql /bin/bash
 ```
 
 Inside the container, start all PostgreSQL instances:
@@ -36,6 +36,7 @@ pg_ctlcluster 9.5 main start
 pg_ctlcluster 9.6 main start
 pg_ctlcluster 10 main start
 pg_ctlcluster 11 main start
+pg_ctlcluster 12 main start
 ```
 
 Also inside the container, restore the sample database:

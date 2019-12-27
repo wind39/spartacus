@@ -1,117 +1,190 @@
 import unittest
 import datetime
+import os
+import os.path
 import Spartacus.Database
 
 
 class TestSQLite(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.v_filename = "test.db"
+        cls.v_database = Spartacus.Database.SQLite(cls.v_filename)
+        cls.v_database.Open()
+        cls.v_database.Execute(
+            """
+            CREATE TABLE departments (
+                dept_no char(4) not null,
+                dept_name varchar(40) not null
+            );
+        """
+        )
+        cls.v_database.Execute(
+            """
+            INSERT INTO departments VALUES('d009','Customer Service');
+        """
+        )
+        cls.v_database.Execute(
+            """
+            INSERT INTO departments VALUES('d005','Development');
+        """
+        )
+        cls.v_database.Execute(
+            """
+            INSERT INTO departments VALUES('d002','Finance');
+        """
+        )
+        cls.v_database.Execute(
+            """
+            INSERT INTO departments VALUES('d003','Human Resources');
+        """
+        )
+        cls.v_database.Execute(
+            """
+            INSERT INTO departments VALUES('d001','Marketing');
+        """
+        )
+        cls.v_database.Execute(
+            """
+            INSERT INTO departments VALUES('d004','Production');
+        """
+        )
+        cls.v_database.Execute(
+            """
+            INSERT INTO departments VALUES('d006','Quality Management');
+        """
+        )
+        cls.v_database.Execute(
+            """
+            INSERT INTO departments VALUES('d008','Research');
+        """
+        )
+        cls.v_database.Execute(
+            """
+            INSERT INTO departments VALUES('d007','Sales');
+        """
+        )
+        cls.v_database.Execute(
+            """
+            CREATE TABLE employees (
+                emp_no integer not null,
+                birth_date text not null,
+                first_name varchar(14) not null,
+                last_name varchar(16) not null,
+                gender varchar(500) not null,
+                hire_date text not null
+            );
+        """
+        )
+        cls.v_database.Close()
+
+    @classmethod
+    def tearDownClass(cls):
+        if os.path.isfile(cls.v_filename):
+            os.remove(cls.v_filename)
+
     def test_open_close(self):
-        v_database = Spartacus.Database.SQLite("employees.db")
-        self.assertIsInstance(v_database, Spartacus.Database.SQLite)
-        v_database.Open()
-        self.assertIsNot(v_database.v_con, None)
-        v_database.Close()
-        self.assertIs(v_database.v_con, None)
+        self.assertIsInstance(self.v_database, Spartacus.Database.SQLite)
+        self.v_database.Open()
+        self.assertIsNot(self.v_database.v_con, None)
+        self.v_database.Close()
+        self.assertIs(self.v_database.v_con, None)
 
     def test_getconstatus(self):
-        v_database = Spartacus.Database.SQLite("employees.db")
-        self.assertEqual(v_database.GetConStatus(), 0)
-        v_database.Open()
-        self.assertEqual(v_database.GetConStatus(), 1)
-        v_database.Close()
-        self.assertEqual(v_database.GetConStatus(), 0)
+        self.assertEqual(self.v_database.GetConStatus(), 0)
+        self.v_database.Open()
+        self.assertEqual(self.v_database.GetConStatus(), 1)
+        self.v_database.Close()
+        self.assertEqual(self.v_database.GetConStatus(), 0)
 
     def test_open_autocommit_enabled(self):
-        v_database = Spartacus.Database.SQLite("employees.db")
-        v_database.Open(p_autocommit=True)
-        self.assertIsNot(v_database.v_con, None)
-        self.assertIs(v_database.v_con.isolation_level, None)
-        v_database.Close()
+        self.v_database.Open(p_autocommit=True)
+        self.assertIsNot(self.v_database.v_con, None)
+        self.assertIs(self.v_database.v_con.isolation_level, None)
+        self.v_database.Close()
 
     def test_open_autocommit_disabled(self):
-        v_database = Spartacus.Database.SQLite("employees.db")
-        v_database.Open(p_autocommit=False)
-        self.assertIsNot(v_database.v_con, None)
-        self.assertIsNot(v_database.v_con.isolation_level, None)
-        v_database.Close()
+        self.v_database.Open(p_autocommit=False)
+        self.assertIsNot(self.v_database.v_con, None)
+        self.assertIsNot(self.v_database.v_con.isolation_level, None)
+        self.v_database.Close()
 
     def test_executescalar(self):
-        v_database = Spartacus.Database.SQLite("employees.db")
-        v_result = v_database.ExecuteScalar(
+        v_result = self.v_database.ExecuteScalar(
             "select dept_name from departments where dept_no = 'd005'"
         )
         self.assertEqual(v_result, "Development")
 
     def test_execute(self):
-        v_database = Spartacus.Database.SQLite("employees.db")
-        v_database.Open()
-        v_database.Execute(
+        self.v_database.Open()
+        self.v_database.Execute(
             "insert into departments (dept_no, dept_name) values ('d000', 'Spartacus')"
         )
-        v_result = v_database.ExecuteScalar(
+        v_result = self.v_database.ExecuteScalar(
             "select dept_name from departments where dept_no = 'd000'"
         )
-        v_database.Execute("delete from departments where dept_no = 'd000'")
-        v_database.Close()
+        self.v_database.Execute("delete from departments where dept_no = 'd000'")
+        self.v_database.Close()
         self.assertEqual(v_result, "Spartacus")
 
     def test_commit(self):
-        v_database = Spartacus.Database.SQLite("employees.db")
-        v_database.Open(p_autocommit=False)
-        v_database.Execute(
+        self.v_database.Open(p_autocommit=False)
+        self.v_database.Execute(
             "insert into departments (dept_no, dept_name) values ('d000', 'Spartacus')"
         )
-        v_database.Commit()
-        v_database.Open()
-        v_result = v_database.ExecuteScalar(
+        self.v_database.Commit()
+        self.v_database.Open()
+        v_result = self.v_database.ExecuteScalar(
             "select dept_name from departments where dept_no = 'd000'"
         )
-        v_database.Execute("delete from departments where dept_no = 'd000'")
-        v_database.Close()
+        self.v_database.Execute("delete from departments where dept_no = 'd000'")
+        self.v_database.Close()
         self.assertEqual(v_result, "Spartacus")
 
     def test_rollback(self):
-        v_database = Spartacus.Database.SQLite("employees.db")
-        v_database.Open(p_autocommit=False)
-        v_database.Execute(
+        self.v_database.Open(p_autocommit=False)
+        self.v_database.Execute(
             "insert into departments (dept_no, dept_name) values ('d000', 'Spartacus')"
         )
-        v_database.Rollback()
-        v_result = v_database.ExecuteScalar(
+        self.v_database.Rollback()
+        v_result = self.v_database.ExecuteScalar(
             "select dept_name from departments where dept_no = 'd000'"
         )
         self.assertIs(v_result, None)
 
     def test_close_commit(self):
-        v_database = Spartacus.Database.SQLite("employees.db")
-        v_database.Open(p_autocommit=False)
-        v_database.Execute(
+        self.v_database.Open(p_autocommit=False)
+        self.v_database.Execute(
             "insert into departments (dept_no, dept_name) values ('d000', 'Spartacus')"
         )
-        v_database.Close(p_commit=True)
-        v_database.Open()
-        v_result = v_database.ExecuteScalar(
+        self.v_database.Close(p_commit=True)
+        self.v_database.Open()
+        v_result = self.v_database.ExecuteScalar(
             "select dept_name from departments where dept_no = 'd000'"
         )
-        v_database.Execute("delete from departments where dept_no = 'd000'")
-        v_database.Close()
+        self.v_database.Execute("delete from departments where dept_no = 'd000'")
+        self.v_database.Close()
         self.assertEqual(v_result, "Spartacus")
 
     def test_close_rollback(self):
-        v_database = Spartacus.Database.SQLite("employees.db")
-        v_database.Open(p_autocommit=False)
-        v_database.Execute(
+        self.v_database.Open(p_autocommit=False)
+        self.v_database.Execute(
             "insert into departments (dept_no, dept_name) values ('d000', 'Spartacus')"
         )
-        v_database.Close(p_commit=False)
-        v_result = v_database.ExecuteScalar(
+        self.v_database.Close(p_commit=False)
+        v_result = self.v_database.ExecuteScalar(
             "select dept_name from departments where dept_no = 'd000'"
         )
         self.assertIs(v_result, None)
 
     def test_getfields(self):
-        v_database = Spartacus.Database.SQLite("employees.db")
-        v_result = v_database.GetFields(
-            "select 1 as id, 'Spartacus' as name, '1988-05-08 17:00:00' as 'birth_date [timestamp]', 9.8 as grade"
+        v_result = self.v_database.GetFields(
+            """
+            SELECT 1 AS id,
+                   'Spartacus' AS name,
+                   '1988-05-08 17:00:00' AS 'birth_date [timestamp]',
+                   9.8 AS grade
+        """
         )
         self.assertEqual(len(v_result), 4)
         for r in v_result:
@@ -130,8 +203,7 @@ class TestSQLite(unittest.TestCase):
         self.assertIs(v_result[3].v_dbtype, float)
 
     def test_query(self):
-        v_database = Spartacus.Database.SQLite("employees.db")
-        v_result = v_database.Query("select * from departments order by dept_no")
+        v_result = self.v_database.Query("select * from departments order by dept_no")
         self.assertIsInstance(v_result, Spartacus.Database.DataTable)
         v_template = ["dept_no", "dept_name"]
         self.assertListEqual(v_result.Columns, v_template)
@@ -156,8 +228,7 @@ class TestSQLite(unittest.TestCase):
         self.assertEqual(v_result.Rows[8]["dept_name"], "Customer Service")
 
     def test_query_simple(self):
-        v_database = Spartacus.Database.SQLite("employees.db")
-        v_result = v_database.Query(
+        v_result = self.v_database.Query(
             "select * from departments order by dept_no", p_simple=True
         )
         self.assertIsInstance(v_result, Spartacus.Database.DataTable)
@@ -184,9 +255,13 @@ class TestSQLite(unittest.TestCase):
         self.assertEqual(v_result.Rows[8][1], "Customer Service")
 
     def test_query_types(self):
-        v_database = Spartacus.Database.SQLite("employees.db")
-        v_result = v_database.Query(
-            "select 1 as id, 'Spartacus' as name, '1988-05-08 17:00:00' as 'birth_date [timestamp]', 9.8 as grade"
+        v_result = self.v_database.Query(
+            """
+            SELECT 1 AS id,
+                   'Spartacus' AS name,
+                   '1988-05-08 17:00:00' AS 'birth_date [timestamp]',
+                   9.8 AS grade
+        """
         )
         self.assertIsInstance(v_result, Spartacus.Database.DataTable)
         v_template = ["id", "name", "birth_date", "grade"]
@@ -205,9 +280,13 @@ class TestSQLite(unittest.TestCase):
         self.assertIsInstance(v_result.Rows[0]["grade"], float)
 
     def test_query_alltypesstr(self):
-        v_database = Spartacus.Database.SQLite("employees.db")
-        v_result = v_database.Query(
-            "select 1 as id, 'Spartacus' as name, '1988-05-08 17:00:00' as 'birth_date [timestamp]', 9.8 as grade",
+        v_result = self.v_database.Query(
+            """
+            SELECT 1 AS id,
+                   'Spartacus' AS name,
+                   '1988-05-08 17:00:00' AS 'birth_date [timestamp]',
+                   9.8 AS grade
+            """,
             p_alltypesstr=True,
         )
         self.assertIsInstance(v_result, Spartacus.Database.DataTable)
@@ -224,48 +303,45 @@ class TestSQLite(unittest.TestCase):
         self.assertIsInstance(v_result.Rows[0]["grade"], str)
 
     def test_queryblock_connection_not_open(self):
-        v_database = Spartacus.Database.SQLite("employees.db")
         with self.assertRaises(Spartacus.Database.Exception):
-            v_result = v_database.QueryBlock(
+            v_result = self.v_database.QueryBlock(
                 "select * from departments order by dept_no", 4
             )
 
     def test_queryblock(self):
-        v_database = Spartacus.Database.SQLite("employees.db")
-        v_database.Open()
-        self.assertTrue(v_database.v_start)
-        v_result = v_database.QueryBlock(
+        self.v_database.Open()
+        self.assertTrue(self.v_database.v_start)
+        v_result = self.v_database.QueryBlock(
             "select * from departments order by dept_no", 4
         )
-        self.assertFalse(v_database.v_start)
+        self.assertFalse(self.v_database.v_start)
         self.assertEqual(len(v_result.Rows), 4)
-        v_result = v_database.QueryBlock(
+        v_result = self.v_database.QueryBlock(
             "select * from departments order by dept_no", 4
         )
-        self.assertFalse(v_database.v_start)
+        self.assertFalse(self.v_database.v_start)
         self.assertEqual(len(v_result.Rows), 4)
-        v_result = v_database.QueryBlock(
+        v_result = self.v_database.QueryBlock(
             "select * from departments order by dept_no", 4
         )
-        self.assertFalse(v_database.v_start)
+        self.assertFalse(self.v_database.v_start)
         self.assertEqual(len(v_result.Rows), 1)
-        v_result = v_database.QueryBlock(
+        v_result = self.v_database.QueryBlock(
             "select * from departments order by dept_no", 4
         )
-        self.assertFalse(v_database.v_start)
+        self.assertFalse(self.v_database.v_start)
         self.assertEqual(len(v_result.Rows), 0)
-        v_database.Close()
-        self.assertTrue(v_database.v_start)
+        self.v_database.Close()
+        self.assertTrue(self.v_database.v_start)
 
     def test_insertblock(self):
-        v_database = Spartacus.Database.SQLite("employees.db")
         v_table = Spartacus.Database.DataTable()
         v_table.AddColumn("dept_no")
         v_table.AddColumn("dept_name")
         v_table.AddRow(["d010", "Spartacus"])
         v_table.AddRow(["d011", "Python"])
-        v_database.InsertBlock(v_table, "departments")
-        v_result = v_database.Query(
+        self.v_database.InsertBlock(v_table, "departments")
+        v_result = self.v_database.Query(
             "select * from departments where dept_no in ('d010', 'd011')"
         )
         self.assertEqual(len(v_result.Rows), 2)
@@ -273,18 +349,19 @@ class TestSQLite(unittest.TestCase):
         self.assertEqual(v_result.Rows[0]["dept_name"], "Spartacus")
         self.assertEqual(v_result.Rows[1]["dept_no"], "d011")
         self.assertEqual(v_result.Rows[1]["dept_name"], "Python")
-        v_database.Execute("delete from departments where dept_no in ('d010', 'd011')")
+        self.v_database.Execute(
+            "delete from departments where dept_no in ('d010', 'd011')"
+        )
 
     def test_insertblock_fields(self):
-        v_database = Spartacus.Database.SQLite("employees.db")
-        v_fields = v_database.GetFields("select * from employees limit 1")
+        v_fields = self.v_database.GetFields("select * from employees limit 1")
         v_table = Spartacus.Database.DataTable()
         for f in v_fields:
             v_table.AddColumn(f.v_name)
         v_table.AddRow([500000, "1988-05-08", "Spartacus", "Python", "M", "2006-01-01"])
         v_table.AddRow([500001, "1988-05-08", "Spartacus", "Python", "M", "2006-01-01"])
-        v_database.InsertBlock(v_table, "employees", v_fields)
-        v_result = v_database.Query(
+        self.v_database.InsertBlock(v_table, "employees", v_fields)
+        v_result = self.v_database.Query(
             "select * from employees where emp_no in (500000, 500001)"
         )
         self.assertEqual(len(v_result.Rows), 2)
@@ -292,7 +369,9 @@ class TestSQLite(unittest.TestCase):
         self.assertEqual(v_result.Rows[0]["first_name"], "Spartacus")
         self.assertEqual(v_result.Rows[1]["emp_no"], 500001)
         self.assertEqual(v_result.Rows[1]["first_name"], "Spartacus")
-        v_database.Execute("delete from employees where emp_no in (500000, 500001)")
+        self.v_database.Execute(
+            "delete from employees where emp_no in (500000, 500001)"
+        )
 
 
 if __name__ == "__main__":

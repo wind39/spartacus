@@ -54,7 +54,12 @@ you exit the container shell.
 To run the tests, outside of the container, execute:
 
 ```
-
+python test_postgresql_94.py
+python test_postgresql_95.py
+python test_postgresql_96.py
+python test_postgresql_10.py
+python test_postgresql_11.py
+python test_postgresql_12.py
 ```
 
 

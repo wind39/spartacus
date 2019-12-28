@@ -1,16 +1,22 @@
 import unittest
 import datetime
-import os
-import os.path
+import decimal
 import Spartacus.Database
 
 
-class TestSQLite(unittest.TestCase):
+class TestPostgreSQL94(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.v_filename = "test.db"
-        cls.v_database = Spartacus.Database.SQLite(cls.v_filename)
+        cls.v_database = Spartacus.Database.PostgreSQL(
+            "127.0.0.1", 5494, "spartacus", "spartacus", "spartacus"
+        )
         cls.v_database.Open()
+        cls.v_database.Execute(
+            """
+            DROP TABLE IF EXISTS departments;
+            DROP TABLE IF EXISTS employees;
+        """
+        )
         cls.v_database.Execute(
             """
             CREATE TABLE departments (
@@ -22,45 +28,13 @@ class TestSQLite(unittest.TestCase):
         cls.v_database.Execute(
             """
             INSERT INTO departments VALUES('d009','Customer Service');
-        """
-        )
-        cls.v_database.Execute(
-            """
             INSERT INTO departments VALUES('d005','Development');
-        """
-        )
-        cls.v_database.Execute(
-            """
             INSERT INTO departments VALUES('d002','Finance');
-        """
-        )
-        cls.v_database.Execute(
-            """
             INSERT INTO departments VALUES('d003','Human Resources');
-        """
-        )
-        cls.v_database.Execute(
-            """
             INSERT INTO departments VALUES('d001','Marketing');
-        """
-        )
-        cls.v_database.Execute(
-            """
             INSERT INTO departments VALUES('d004','Production');
-        """
-        )
-        cls.v_database.Execute(
-            """
             INSERT INTO departments VALUES('d006','Quality Management');
-        """
-        )
-        cls.v_database.Execute(
-            """
             INSERT INTO departments VALUES('d008','Research');
-        """
-        )
-        cls.v_database.Execute(
-            """
             INSERT INTO departments VALUES('d007','Sales');
         """
         )
@@ -80,11 +54,17 @@ class TestSQLite(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        if os.path.isfile(cls.v_filename):
-            os.remove(cls.v_filename)
+        cls.v_database.Open()
+        cls.v_database.Execute(
+            """
+            DROP TABLE IF EXISTS departments;
+            DROP TABLE IF EXISTS employees;
+        """
+        )
+        cls.v_database.Close()
 
     def test_open_close(self):
-        self.assertIsInstance(self.v_database, Spartacus.Database.SQLite)
+        self.assertIsInstance(self.v_database, Spartacus.Database.PostgreSQL)
         self.v_database.Open()
         self.assertIsNot(self.v_database.v_con, None)
         self.v_database.Close()
@@ -100,13 +80,13 @@ class TestSQLite(unittest.TestCase):
     def test_open_autocommit_enabled(self):
         self.v_database.Open(p_autocommit=True)
         self.assertIsNot(self.v_database.v_con, None)
-        self.assertIs(self.v_database.v_con.isolation_level, None)
+        self.assertTrue(self.v_database.v_con.autocommit)
         self.v_database.Close()
 
     def test_open_autocommit_disabled(self):
         self.v_database.Open(p_autocommit=False)
         self.assertIsNot(self.v_database.v_con, None)
-        self.assertIsNot(self.v_database.v_con.isolation_level, None)
+        self.assertFalse(self.v_database.v_con.autocommit)
         self.v_database.Close()
 
     def test_executescalar(self):
@@ -183,8 +163,8 @@ class TestSQLite(unittest.TestCase):
         v_result = self.v_database.GetFields(
             """
             SELECT 1 AS id,
-                   'Spartacus' AS name,
-                   '1988-05-08 17:00:00' AS 'birth_date [timestamp]',
+                   'Spartacus'::text AS name,
+                   '1988-05-08 17:00:00'::timestamp without time zone AS birth_date,
                    9.8 AS grade
         """
         )
@@ -193,16 +173,16 @@ class TestSQLite(unittest.TestCase):
             self.assertIsInstance(r, Spartacus.Database.DataField)
         self.assertEqual(v_result[0].v_name, "id")
         self.assertIs(v_result[0].v_type, int)
-        self.assertIs(v_result[0].v_dbtype, int)
+        self.assertEqual(v_result[0].v_dbtype, "int4")
         self.assertEqual(v_result[1].v_name, "name")
         self.assertIs(v_result[1].v_type, str)
-        self.assertIs(v_result[1].v_dbtype, str)
+        self.assertEqual(v_result[1].v_dbtype, "text")
         self.assertEqual(v_result[2].v_name, "birth_date")
         self.assertIs(v_result[2].v_type, datetime.datetime)
-        self.assertIs(v_result[2].v_dbtype, datetime.datetime)
+        self.assertEqual(v_result[2].v_dbtype, "timestamp")
         self.assertEqual(v_result[3].v_name, "grade")
-        self.assertIs(v_result[3].v_type, float)
-        self.assertIs(v_result[3].v_dbtype, float)
+        self.assertIs(v_result[3].v_type, decimal.Decimal)
+        self.assertEqual(v_result[3].v_dbtype, "numeric")
 
     def test_query(self):
         v_result = self.v_database.Query("select * from departments order by dept_no")
@@ -260,8 +240,8 @@ class TestSQLite(unittest.TestCase):
         v_result = self.v_database.Query(
             """
             SELECT 1 AS id,
-                   'Spartacus' AS name,
-                   '1988-05-08 17:00:00' AS 'birth_date [timestamp]',
+                   'Spartacus'::text AS name,
+                   '1988-05-08 17:00:00'::timestamp without time zone AS birth_date,
                    9.8 AS grade
         """
         )
@@ -278,15 +258,15 @@ class TestSQLite(unittest.TestCase):
             datetime.datetime.strptime("1988-05-08 17:00:00", "%Y-%m-%d %H:%M:%S"),
         )
         self.assertIsInstance(v_result.Rows[0]["birth_date"], datetime.datetime)
-        self.assertEqual(v_result.Rows[0]["grade"], 9.8)
-        self.assertIsInstance(v_result.Rows[0]["grade"], float)
+        self.assertEqual(float(v_result.Rows[0]["grade"]), 9.8)
+        self.assertIsInstance(v_result.Rows[0]["grade"], decimal.Decimal)
 
     def test_query_alltypesstr(self):
         v_result = self.v_database.Query(
             """
             SELECT 1 AS id,
-                   'Spartacus' AS name,
-                   '1988-05-08 17:00:00' AS 'birth_date [timestamp]',
+                   'Spartacus'::text AS name,
+                   '1988-05-08 17:00:00'::timestamp without time zone AS birth_date,
                    9.8 AS grade
             """,
             p_alltypesstr=True,

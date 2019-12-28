@@ -1045,10 +1045,30 @@ class SQLite(Generic):
             raise Spartacus.Database.Exception(str(exc))
 
     def Commit(self):
-        self.Close(True)
+        try:
+            if self.v_con is None:
+                raise Spartacus.Database.Exception(
+                    "This method should be called in the middle of Open() and Close() calls."
+                )
+            else:
+                return self.v_con.commit()
+        except sqlite3.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
 
     def Rollback(self):
-        self.Close(False)
+        try:
+            if self.v_con is None:
+                raise Spartacus.Database.Exception(
+                    "This method should be called in the middle of Open() and Close() calls."
+                )
+            else:
+                return self.v_con.rollback()
+        except sqlite3.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
 
     def Cancel(self, p_usesameconn=True):
         try:
@@ -1156,6 +1176,8 @@ class SQLite(Generic):
                             v_row = self.v_cur.fetchone()
                 if self.v_start:
                     self.v_start = False
+                if len(v_table.Rows) < p_blocksize:
+                    self.v_start = True
                 return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -1449,6 +1471,8 @@ class Memory(Generic):
                             v_row = self.v_cur.fetchone()
                 if self.v_start:
                     self.v_start = False
+                if len(v_table.Rows) < p_blocksize:
+                    self.v_start = True
                 return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -2431,7 +2455,10 @@ class MySQL(Generic):
     def Close(self, p_commit=True):
         try:
             if self.v_con:
-                self.v_con.commit()
+                if p_commit:
+                    self.v_con.commit()
+                else:
+                    self.v_con.rollback()
                 if self.v_cur:
                     self.v_cur.close()
                     self.v_cur = None
@@ -2444,10 +2471,30 @@ class MySQL(Generic):
             raise Spartacus.Database.Exception(str(exc))
 
     def Commit(self):
-        self.Close(True)
+        try:
+            if self.v_con is None:
+                raise Spartacus.Database.Exception(
+                    "This method should be called in the middle of Open() and Close() calls."
+                )
+            else:
+                return self.v_con.commit()
+        except pymysql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
 
     def Rollback(self):
-        self.Close(False)
+        try:
+            if self.v_con is None:
+                raise Spartacus.Database.Exception(
+                    "This method should be called in the middle of Open() and Close() calls."
+                )
+            else:
+                return self.v_con.rollback()
+        except pymysql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
 
     def Cancel(self, p_usesameconn=True):
         try:
@@ -2586,6 +2633,8 @@ class MySQL(Generic):
                             v_row = self.v_cur.fetchone()
                 if self.v_start:
                     self.v_start = False
+                if len(v_table.Rows) < p_blocksize:
+                    self.v_start = True
                 return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -2872,7 +2921,10 @@ class MariaDB(Generic):
     def Close(self, p_commit=True):
         try:
             if self.v_con:
-                self.v_con.commit()
+                if p_commit:
+                    self.v_con.commit()
+                else:
+                    self.v_con.rollback()
                 if self.v_cur:
                     self.v_cur.close()
                     self.v_cur = None
@@ -2885,10 +2937,30 @@ class MariaDB(Generic):
             raise Spartacus.Database.Exception(str(exc))
 
     def Commit(self):
-        self.Close(True)
+        try:
+            if self.v_con is None:
+                raise Spartacus.Database.Exception(
+                    "This method should be called in the middle of Open() and Close() calls."
+                )
+            else:
+                return self.v_con.commit()
+        except pymysql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
 
     def Rollback(self):
-        self.Close(False)
+        try:
+            if self.v_con is None:
+                raise Spartacus.Database.Exception(
+                    "This method should be called in the middle of Open() and Close() calls."
+                )
+            else:
+                return self.v_con.rollback()
+        except pymysql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
 
     def Cancel(self, p_usesameconn=True):
         try:
@@ -3027,6 +3099,8 @@ class MariaDB(Generic):
                             v_row = self.v_cur.fetchone()
                 if self.v_start:
                     self.v_start = False
+                if len(v_table.Rows) < p_blocksize:
+                    self.v_start = True
                 return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -3263,7 +3337,10 @@ class Firebird(Generic):
     def Close(self, p_commit=True):
         try:
             if self.v_con:
-                self.v_con.commit()
+                if p_commit:
+                    self.v_con.commit()
+                else:
+                    self.v_con.rollback()
                 if self.v_cur:
                     self.v_cur.close()
                     self.v_cur = None
@@ -3276,10 +3353,30 @@ class Firebird(Generic):
             raise Spartacus.Database.Exception(str(exc))
 
     def Commit(self):
-        self.Close(True)
+        try:
+            if self.v_con is None:
+                raise Spartacus.Database.Exception(
+                    "This method should be called in the middle of Open() and Close() calls."
+                )
+            else:
+                return self.v_con.commit()
+        except fdb.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
 
     def Rollback(self):
-        self.Close(False)
+        try:
+            if self.v_con is None:
+                raise Spartacus.Database.Exception(
+                    "This method should be called in the middle of Open() and Close() calls."
+                )
+            else:
+                return self.v_con.rollback()
+        except fdb.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
 
     def Cancel(self, p_usesameconn=True):
         try:
@@ -3387,6 +3484,8 @@ class Firebird(Generic):
                             v_row = self.v_cur.fetchone()
                 if self.v_start:
                     self.v_start = False
+                if len(v_table.Rows) < p_blocksize:
+                    self.v_start = True
                 return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -3605,7 +3704,10 @@ class Oracle(Generic):
     def Close(self, p_commit=True):
         try:
             if self.v_con:
-                self.v_con.commit()
+                if p_commit:
+                    self.v_con.commit()
+                else:
+                    self.v_con.rollback()
                 if self.v_cur:
                     self.v_cur.close()
                     self.v_cur = None
@@ -3618,10 +3720,30 @@ class Oracle(Generic):
             raise Spartacus.Database.Exception(str(exc))
 
     def Commit(self):
-        self.Close(True)
+        try:
+            if self.v_con is None:
+                raise Spartacus.Database.Exception(
+                    "This method should be called in the middle of Open() and Close() calls."
+                )
+            else:
+                return self.v_con.commit()
+        except cx_Oracle.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
 
     def Rollback(self):
-        self.Close(False)
+        try:
+            if self.v_con is None:
+                raise Spartacus.Database.Exception(
+                    "This method should be called in the middle of Open() and Close() calls."
+                )
+            else:
+                return self.v_con.rollback()
+        except cx_Oracle.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
 
     def Cancel(self, p_usesameconn=True):
         try:
@@ -3752,6 +3874,8 @@ class Oracle(Generic):
                             v_row = self.v_cur.fetchone()
                 if self.v_start:
                     self.v_start = False
+                if len(v_table.Rows) < p_blocksize:
+                    self.v_start = True
                 return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -3995,7 +4119,10 @@ class MSSQL(Generic):
     def Close(self, p_commit=True):
         try:
             if self.v_con:
-                self.v_con.commit()
+                if p_commit:
+                    self.v_con.commit()
+                else:
+                    self.v_con.rollback()
                 if self.v_cur:
                     self.v_cur.close()
                     self.v_cur = None
@@ -4008,10 +4135,30 @@ class MSSQL(Generic):
             raise Spartacus.Database.Exception(str(exc))
 
     def Commit(self):
-        self.Close(True)
+        try:
+            if self.v_con is None:
+                raise Spartacus.Database.Exception(
+                    "This method should be called in the middle of Open() and Close() calls."
+                )
+            else:
+                return self.v_con.commit()
+        except pymssql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
 
     def Rollback(self):
-        self.Close(False)
+        try:
+            if self.v_con is None:
+                raise Spartacus.Database.Exception(
+                    "This method should be called in the middle of Open() and Close() calls."
+                )
+            else:
+                return self.v_con.rollback()
+        except pymssql.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
 
     def Cancel(self, p_usesameconn=True):
         try:
@@ -4121,6 +4268,8 @@ class MSSQL(Generic):
                             v_row = self.v_cur.fetchone()
                 if self.v_start:
                     self.v_start = False
+                if len(v_table.Rows) < p_blocksize:
+                    self.v_start = True
                 return v_table
         except Spartacus.Database.Exception as exc:
             raise exc
@@ -4287,7 +4436,10 @@ class IBMDB2(Generic):
     def Close(self, p_commit=True):
         try:
             if self.v_con:
-                self.v_con.commit()
+                if p_commit:
+                    self.v_con.commit()
+                else:
+                    self.v_con.rollback()
                 if self.v_cur:
                     self.v_cur.close()
                     self.v_cur = None
@@ -4300,10 +4452,30 @@ class IBMDB2(Generic):
             raise Spartacus.Database.Exception(str(exc))
 
     def Commit(self):
-        self.Close(True)
+        try:
+            if self.v_con is None:
+                raise Spartacus.Database.Exception(
+                    "This method should be called in the middle of Open() and Close() calls."
+                )
+            else:
+                return self.v_con.commit()
+        except ibm_db_dbi.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
 
     def Rollback(self):
-        self.Close(False)
+        try:
+            if self.v_con is None:
+                raise Spartacus.Database.Exception(
+                    "This method should be called in the middle of Open() and Close() calls."
+                )
+            else:
+                return self.v_con.rollback()
+        except ibm_db_dbi.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
 
     def Cancel(self, p_usesameconn=True):
         try:
@@ -4411,6 +4583,8 @@ class IBMDB2(Generic):
                             v_row = self.v_cur.fetchone()
                 if self.v_start:
                     self.v_start = False
+                if len(v_table.Rows) < p_blocksize:
+                    self.v_start = True
                 return v_table
         except Spartacus.Database.Exception as exc:
             raise exc

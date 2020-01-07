@@ -23,9 +23,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import base64
 import datetime
 import decimal
+import json
 import math
 import uuid
 import sqlparse
@@ -374,6 +374,36 @@ class DataTable(object):
             raise Spartacus.Database.Exception(
                 "Can not compare tables with no columns."
             )
+
+    def Jsonify(self):
+        if self.Simple:
+            if len(self.Rows) > 0:
+                if isinstance(self.Rows[0], OrderedDict):
+                    return json.dumps(self.Rows)
+                else:
+                    v_table = []
+                    for r in self.Rows:
+                        v_row = []
+                        for c in range(0, len(self.Columns)):
+                            v_row.append(r[c])
+                        v_table.append(OrderedDict(zip(self.Columns, tuple(v_row))))
+                    return json.dumps(v_table)
+            else:
+                return json.dumps(self.Rows)
+        else:
+            if len(self.Rows) > 0:
+                if isinstance(self.Rows[0], OrderedDict):
+                    return json.dumps(self.Rows)
+                else:
+                    v_table = []
+                    for r in self.Rows:
+                        v_row = []
+                        for c in self.Columns:
+                            v_row.append(r[c])
+                        v_table.append(OrderedDict(zip(self.Columns, tuple(v_row))))
+                    return json.dumps(v_table)
+            else:
+                return json.dumps(self.Rows)
 
     def Pretty(self, p_transpose=False):
         if self.Simple:
@@ -1683,15 +1713,11 @@ class PostgreSQL(Generic):
     def DateHandler(self, value, cursor):
         return value
 
-    def BinaryHandler(self, value, cursor):
-        return base64.b64encode(value)
-
     def Open(
         self,
         p_autocommit=True,
         p_datetime_as_string=False,
         p_json_as_string=False,
-        p_bytea_as_base64=False,
     ):
         try:
             self.v_con = psycopg2.connect(
@@ -1725,18 +1751,6 @@ class PostgreSQL(Generic):
                     psycopg2.extras.register_default_json(self.v_cur, loads=lambda x: x)
                     psycopg2.extras.register_default_jsonb(
                         self.v_cur, loads=lambda x: x
-                    )
-                if p_bytea_as_base64:
-                    tmp = []
-                    for oid, name in self.v_types.items():
-                        if name == "bytea":
-                            tmp.append(oid)
-                    oids = tuple(tmp)
-                    psycopg2.extensions.register_type(
-                        psycopg2.extensions.new_type(
-                            oids, "BINARY", self.BinaryHandler
-                        ),
-                        self.v_cur,
                     )
                 if not p_autocommit:
                     self.v_con.commit()

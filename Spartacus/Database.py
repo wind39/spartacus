@@ -1729,7 +1729,7 @@ class PostgreSQL(Generic):
                     cursor_factory=psycopg2.extras.DictCursor,
                     async_=1,
                 )
-                self.Wait()
+                self.Wait(p_timeout=None)
             else:
                 self.v_con = psycopg2.connect(
                     self.GetConnectionString(),
@@ -2328,7 +2328,7 @@ class PostgreSQL(Generic):
             if not v_keep:
                 self.Close()
 
-    def Poll(self):
+    def Poll(self, p_timeout=0):
         try:
             if self.v_con is None:
                 raise Spartacus.Database.Exception(
@@ -2344,13 +2344,23 @@ class PostgreSQL(Generic):
                     if v_state == psycopg2.extensions.POLL_OK:
                         return 0
                     elif v_state == psycopg2.extensions.POLL_WRITE:
-                        v_poll = select.select([], [self.v_con.fileno()], [], 0)
+                        if p_timeout is not None:
+                            v_poll = select.select(
+                                [], [self.v_con.fileno()], [], p_timeout
+                            )
+                        else:
+                            v_poll = select.select([], [self.v_con.fileno()], [])
                         if self.v_con.fileno() in v_poll[1]:
                             return 1
                         else:
                             return -1
                     elif v_state == psycopg2.extensions.POLL_READ:
-                        v_poll = select.select([self.v_con.fileno()], [], [], 0)
+                        if p_timeout is not None:
+                            v_poll = select.select(
+                                [self.v_con.fileno()], [], [], p_timeout
+                            )
+                        else:
+                            v_poll = select.select([self.v_con.fileno()], [], [])
                         if self.v_con.fileno() in v_poll[0]:
                             return 2
                         else:
@@ -2366,10 +2376,10 @@ class PostgreSQL(Generic):
         except Exception as exc:
             raise Spartacus.Database.Exception(str(exc))
 
-    def Wait(self):
-        x = self.Poll()
+    def Wait(self, p_timeout=0):
+        x = self.Poll(p_timeout)
         while x != 0:
-            x = self.Poll()
+            x = self.Poll(p_timeout)
 
     def AsyncStmtStart(self, p_sql):
         try:
@@ -2398,25 +2408,32 @@ class PostgreSQL(Generic):
             raise Spartacus.Database.Exception(str(exc))
 
     def AsyncStmtEnd(self):
-        if self.v_con is None:
-            raise Spartacus.Database.Exception(
-                "This method should be called in the middle of Open() and Close() calls."
-            )
-        else:
-            if self.v_con.async_ == 0:
+        try:
+            if self.v_con is None:
                 raise Spartacus.Database.Exception(
-                    "This method should be called in the context of an asynchronous connection."
+                    "This method should be called in the middle of Open() and Close() calls."
                 )
             else:
-                if self.v_start:
-                    raise Spartacus.Database.Exception("No statement was started.")
+                if self.v_con.async_ == 0:
+                    raise Spartacus.Database.Exception(
+                        "This method should be called in the context of an asynchronous connection."
+                    )
                 else:
-                    if self.Poll() != 0:
-                        raise Spartacus.Database.Exception(
-                            "A statement has not finished yet."
-                        )
+                    if self.v_start:
+                        raise Spartacus.Database.Exception("No statement was started.")
                     else:
-                        self.v_start = True
+                        if self.Poll() != 0:
+                            raise Spartacus.Database.Exception(
+                                "A statement has not finished yet."
+                            )
+                        else:
+                            self.v_start = True
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except psycopg2.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
 
     def AsyncFetchTable(self, p_alltypesstr=False):
         try:

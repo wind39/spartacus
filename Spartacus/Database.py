@@ -29,6 +29,7 @@ import json
 import math
 import uuid
 import sqlparse
+import select
 from collections import OrderedDict
 from abc import ABC, abstractmethod
 from tabulate import tabulate
@@ -46,7 +47,8 @@ except ImportError:
     pass
 try:
     import psycopg2
-    from psycopg2 import extras
+    import psycopg2.extras
+    import psycopg2.extensions
     from pgspecial.main import PGSpecial
     from pgspecial.namedqueries import NamedQueries
     from pgspecial.help.commands import helpcommands as HelpCommands
@@ -1718,18 +1720,30 @@ class PostgreSQL(Generic):
         p_autocommit=True,
         p_datetime_as_string=False,
         p_json_as_string=False,
+        p_async=False,
     ):
         try:
-            self.v_con = psycopg2.connect(
-                self.GetConnectionString(), cursor_factory=psycopg2.extras.DictCursor
-            )
-            self.v_con.autocommit = p_autocommit
+            if p_async:
+                self.v_con = psycopg2.connect(
+                    self.GetConnectionString(),
+                    cursor_factory=psycopg2.extras.DictCursor,
+                    async_=1,
+                )
+                self.Wait()
+            else:
+                self.v_con = psycopg2.connect(
+                    self.GetConnectionString(),
+                    cursor_factory=psycopg2.extras.DictCursor,
+                )
+                self.v_con.autocommit = p_autocommit
             self.v_cur = self.v_con.cursor()
             self.v_start = True
             self.v_cursor = None
             # PostgreSQL types
             if self.v_types is None:
                 self.v_cur.execute("select oid, typname from pg_type")
+                if p_async:
+                    self.Wait()
                 self.v_types = dict(
                     [(r["oid"], r["typname"]) for r in self.v_cur.fetchall()]
                 )
@@ -1752,7 +1766,7 @@ class PostgreSQL(Generic):
                     psycopg2.extras.register_default_jsonb(
                         self.v_cur, loads=lambda x: x
                     )
-                if not p_autocommit:
+                if not p_autocommit and not p_async:
                     self.v_con.commit()
             self.v_con.notices = DataList()
         except Spartacus.Database.Exception as exc:
@@ -1773,7 +1787,10 @@ class PostgreSQL(Generic):
         try:
             v_keep = None
             if self.v_con is None:
-                self.Open(p_datetime_as_string=p_datetime_as_string, p_json_as_string=p_json_as_string)
+                self.Open(
+                    p_datetime_as_string=p_datetime_as_string,
+                    p_json_as_string=p_json_as_string,
+                )
                 v_keep = False
             else:
                 v_keep = True
@@ -1824,7 +1841,10 @@ class PostgreSQL(Generic):
         try:
             v_keep = None
             if self.v_con is None:
-                self.Open(p_datetime_as_string=p_datetime_as_string, p_json_as_string=p_json_as_string)
+                self.Open(
+                    p_datetime_as_string=p_datetime_as_string,
+                    p_json_as_string=p_json_as_string,
+                )
                 v_keep = False
             else:
                 v_keep = True
@@ -2293,6 +2313,140 @@ class PostgreSQL(Generic):
         finally:
             if not v_keep:
                 self.Close()
+
+    def Poll(self):
+        try:
+            if self.v_con is None:
+                raise Spartacus.Database.Exception(
+                    "This method should be called in the middle of Open() and Close() calls."
+                )
+            else:
+                if self.v_con.async_ == 0:
+                    raise Spartacus.Database.Exception(
+                        "This method should be called in the context of an asynchronous connection."
+                    )
+                else:
+                    v_state = self.v_con.poll()
+                    if v_state == psycopg2.extensions.POLL_OK:
+                        return 0
+                    elif v_state == psycopg2.extensions.POLL_WRITE:
+                        v_poll = select.select([], [self.v_con.fileno()], [], 0)
+                        if self.v_con.fileno() in v_poll[1]:
+                            return 1
+                        else:
+                            return -1
+                    elif v_state == psycopg2.extensions.POLL_READ:
+                        v_poll = select.select([self.v_con.fileno()], [], [], 0)
+                        if self.v_con.fileno() in v_poll[0]:
+                            return 2
+                        else:
+                            return -2
+                    else:
+                        raise Spartacus.Database.Exception(
+                            "Unknown poll state {0}.".format(v_state)
+                        )
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except psycopg2.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+
+    def Wait(self):
+        x = self.Poll()
+        while x != 0:
+            x = self.Poll()
+
+    def AsyncStmtStart(self, p_sql):
+        try:
+            if self.v_con is None:
+                raise Spartacus.Database.Exception(
+                    "This method should be called in the middle of Open() and Close() calls."
+                )
+            else:
+                if self.v_con.async_ == 0:
+                    raise Spartacus.Database.Exception(
+                        "This method should be called in the context of an asynchronous connection."
+                    )
+                else:
+                    if not self.v_start:
+                        raise Spartacus.Database.Exception(
+                            "Can only start a single statement per asynchronous connection."
+                        )
+                    else:
+                        self.v_cur.execute(p_sql)
+                        self.v_start = False
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except psycopg2.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
+
+    def AsyncStmtEnd(self):
+        if self.v_con is None:
+            raise Spartacus.Database.Exception(
+                "This method should be called in the middle of Open() and Close() calls."
+            )
+        else:
+            if self.v_con.async_ == 0:
+                raise Spartacus.Database.Exception(
+                    "This method should be called in the context of an asynchronous connection."
+                )
+            else:
+                if self.v_start:
+                    raise Spartacus.Database.Exception("No statement was started.")
+                else:
+                    if self.Poll() != 0:
+                        raise Spartacus.Database.Exception(
+                            "A statement has not finished yet."
+                        )
+                    else:
+                        self.v_start = True
+
+    def AsyncFetchTable(self, p_alltypesstr=False):
+        try:
+            v_table = None
+            if self.v_con is None:
+                raise Spartacus.Database.Exception(
+                    "This method should be called in the middle of Open() and Close() calls."
+                )
+            else:
+                if self.v_con.async_ == 0:
+                    raise Spartacus.Database.Exception(
+                        "This method should be called in the context of an asynchronous connection."
+                    )
+                else:
+                    if self.v_start:
+                        raise Spartacus.Database.Exception("No statement was started.")
+                    else:
+                        if self.Poll() != 0:
+                            raise Spartacus.Database.Exception(
+                                "A statement has not finished yet."
+                            )
+                        else:
+                            v_table = DataTable()
+                            if self.v_cur.description:
+                                for c in self.v_cur.description:
+                                    v_table.AddColumn(c[0])
+                                v_table.Rows = self.v_cur.fetchall()
+                                if p_alltypesstr:
+                                    for i in range(0, len(v_table.Rows)):
+                                        for j in range(0, len(v_table.Columns)):
+                                            if v_table.Rows[i][j] != None:
+                                                v_table.Rows[i][j] = self.String(
+                                                    v_table.Rows[i][j]
+                                                )
+                                            else:
+                                                v_table.Rows[i][j] = ""
+                            self.v_start = True
+            return v_table
+        except Spartacus.Database.Exception as exc:
+            raise exc
+        except psycopg2.Error as exc:
+            raise Spartacus.Database.Exception(str(exc))
+        except Exception as exc:
+            raise Spartacus.Database.Exception(str(exc))
 
 
 """

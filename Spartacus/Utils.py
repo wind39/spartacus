@@ -168,21 +168,25 @@ class DataFileReader(object):
                 )
                 self.v_open = True
             elif self.v_extension == "xlsx":
-                if 'xlsx' in v_supported_file_formats:
-                    self.v_object = openpyxl.load_workbook(self.v_filename, read_only=True)
+                if "xlsx" in v_supported_file_formats:
+                    self.v_object = openpyxl.load_workbook(
+                        self.v_filename, read_only=True
+                    )
                     self.v_open = True
                 else:
                     raise Spartacus.Utils.Exception(
                         "XLSX is not supported. Please install it with 'pip install Spartacus[xlsx]'."
                     )
             elif self.v_extension == "xls":
-                if 'xls' in v_supported_file_formats:
+                if "xls" in v_supported_file_formats:
                     v_tmp_file = tempfile.NamedTemporaryFile(suffix=".xlsx")
                     v_tmp_file.file.close()
                     pyexcel.save_book_as(
                         file_name=self.v_filename, dest_file_name=v_tmp_file.name
                     )
-                    self.v_object = openpyxl.load_workbook(v_tmp_file.name, read_only=True)
+                    self.v_object = openpyxl.load_workbook(
+                        v_tmp_file.name, read_only=True
+                    )
                     self.v_open = True
                 else:
                     raise Spartacus.Utils.Exception(
@@ -309,7 +313,7 @@ class DataFileWriter(object):
                 self.v_object.writerow(self.v_header)
                 self.v_open = True
             elif self.v_extension == "xlsx":
-                if 'xlsx' in v_supported_file_formats:
+                if "xlsx" in v_supported_file_formats:
                     self.v_object = openpyxl.Workbook(write_only=True)
                     self.v_open = True
                 else:

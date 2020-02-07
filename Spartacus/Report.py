@@ -1293,13 +1293,15 @@ def AddTable(
 
                         v_cell.value = v_value
 
-                #Apply rows grouping, if any
+                # Apply rows grouping, if any
                 if p_rowsGrouping is not None:
                     v_rowLevel = v_row[p_rowsGrouping.column]
                     v_rowDimensions = p_workSheet.row_dimensions[p_startRow + v_line]
                     v_rowDimensions.outlineLevel = v_rowLevel
                     v_rowDimensions.hidden = v_rowLevel != p_rowsGrouping.collapsedLevel
-                    v_rowDimensions.collapsed = v_rowLevel == p_rowsGrouping.collapsedLevel
+                    v_rowDimensions.collapsed = (
+                        v_rowLevel == p_rowsGrouping.collapsedLevel
+                    )
 
                 if p_database is not None:
                     yield v_line

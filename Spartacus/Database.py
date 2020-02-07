@@ -1868,10 +1868,11 @@ class PostgreSQL(Generic):
     def Close(self, p_commit=True):
         try:
             if self.v_con:
-                if p_commit:
-                    self.v_con.commit()
-                else:
-                    self.v_con.rollback()
+                if self.v_con.async_ == 0:
+                    if p_commit:
+                        self.v_con.commit()
+                    else:
+                        self.v_con.rollback()
                 if self.v_cur:
                     self.v_cur.close()
                     self.v_cur = None

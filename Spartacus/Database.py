@@ -1795,6 +1795,8 @@ class PostgreSQL(Generic):
             else:
                 v_keep = True
             self.v_cur.execute(p_sql)
+            if self.v_con.async_ == 1:
+                self.Wait()
             v_table = DataTable()
             if self.v_cur.description:
                 for c in self.v_cur.description:
@@ -1827,6 +1829,8 @@ class PostgreSQL(Generic):
             else:
                 v_keep = True
             self.v_cur.execute(p_sql)
+            if self.v_con.async_ == 1:
+                self.Wait()
         except Spartacus.Database.Exception as exc:
             raise exc
         except psycopg2.Error as exc:
@@ -1849,6 +1853,8 @@ class PostgreSQL(Generic):
             else:
                 v_keep = True
             self.v_cur.execute(p_sql)
+            if self.v_con.async_ == 1:
+                self.Wait()
             r = self.v_cur.fetchone()
             if r != None:
                 s = r[0]
@@ -2147,50 +2153,57 @@ class PostgreSQL(Generic):
                     "This method should be called in the middle of Open() and Close() calls."
                 )
             else:
-                if self.v_start:
+                if self.v_con.async_ == 1:
+                    raise Spartacus.Database.Exception(
+                        "This method is not allowed in asynchronous mode."
+                    )
+                else:
+                    if self.v_start:
+                        if self.v_cursor:
+                            try:
+                                self.v_cur.execute("CLOSE {0}".format(self.v_cursor))
+                            except:
+                                None
+                        v_sql = self.Parse(p_sql)
+                        if (
+                            not self.v_autocommit
+                            and not self.GetConStatus() == 3
+                            and not self.GetConStatus() == 4
+                        ):
+                            self.v_cur.execute("BEGIN;")
+                        self.v_cur.execute(v_sql)
+                    v_table = DataTable()
                     if self.v_cursor:
-                        try:
+                        if p_blocksize > 0:
+                            self.v_cur.execute(
+                                "FETCH {0} {1}".format(p_blocksize, self.v_cursor)
+                            )
+                        else:
+                            self.v_cur.execute("FETCH ALL {0}".format(self.v_cursor))
+                    if self.v_cur.description:
+                        for c in self.v_cur.description:
+                            v_table.AddColumn(c[0])
+                        if p_blocksize > 0:
+                            v_table.Rows = self.v_cur.fetchmany(p_blocksize)
+                        else:
+                            v_table.Rows = self.v_cur.fetchall()
+                        if p_alltypesstr:
+                            for i in range(0, len(v_table.Rows)):
+                                for j in range(0, len(v_table.Columns)):
+                                    if v_table.Rows[i][j] != None:
+                                        v_table.Rows[i][j] = self.String(
+                                            v_table.Rows[i][j]
+                                        )
+                                    else:
+                                        v_table.Rows[i][j] = ""
+                    if self.v_start:
+                        self.v_start = False
+                    if len(v_table.Rows) < p_blocksize:
+                        self.v_start = True
+                        if self.v_cursor:
                             self.v_cur.execute("CLOSE {0}".format(self.v_cursor))
-                        except:
-                            None
-                    v_sql = self.Parse(p_sql)
-                    if (
-                        not self.v_autocommit
-                        and not self.GetConStatus() == 3
-                        and not self.GetConStatus() == 4
-                    ):
-                        self.v_cur.execute("BEGIN;")
-                    self.v_cur.execute(v_sql)
-                v_table = DataTable()
-                if self.v_cursor:
-                    if p_blocksize > 0:
-                        self.v_cur.execute(
-                            "FETCH {0} {1}".format(p_blocksize, self.v_cursor)
-                        )
-                    else:
-                        self.v_cur.execute("FETCH ALL {0}".format(self.v_cursor))
-                if self.v_cur.description:
-                    for c in self.v_cur.description:
-                        v_table.AddColumn(c[0])
-                    if p_blocksize > 0:
-                        v_table.Rows = self.v_cur.fetchmany(p_blocksize)
-                    else:
-                        v_table.Rows = self.v_cur.fetchall()
-                    if p_alltypesstr:
-                        for i in range(0, len(v_table.Rows)):
-                            for j in range(0, len(v_table.Columns)):
-                                if v_table.Rows[i][j] != None:
-                                    v_table.Rows[i][j] = self.String(v_table.Rows[i][j])
-                                else:
-                                    v_table.Rows[i][j] = ""
-                if self.v_start:
-                    self.v_start = False
-                if len(v_table.Rows) < p_blocksize:
-                    self.v_start = True
-                    if self.v_cursor:
-                        self.v_cur.execute("CLOSE {0}".format(self.v_cursor))
-                        self.v_cursor = None
-                return v_table
+                            self.v_cursor = None
+                    return v_table
         except Spartacus.Database.Exception as exc:
             self.v_start = True
             self.v_cursor = None

@@ -1,8 +1,8 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2014-2019 William Ivanski
-Copyright (c) 2018-2019 Israel Barth Rubio
+Copyright (c) 2014-2020 William Ivanski
+Copyright (c) 2018-2020 Israel Barth Rubio
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -31,7 +31,7 @@ long_description = open(os.path.join(rootdir, "README")).read()
 
 setup(
     name="Spartacus",
-    version="3.44",
+    version="3.45",
     description="Generic database wrapper",
     long_description=long_description,
     url="http://github.com/wind39/spartacus",

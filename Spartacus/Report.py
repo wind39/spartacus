@@ -761,7 +761,7 @@ class RowsGrouping(object):
             )
 
         if p_collapsedLevel < 0:
-            raise exception.Exception(
+            raise Spartacus.Report.Exception(
                 'Error during instantiation of class "Spartacus.Report.RowsGrouping": Parameter "p_collapsedLevel" must be of type "int" and greater than or equal to 0.'
             )
 
@@ -986,7 +986,7 @@ def AddTable(
         )
 
     if p_rowsGrouping is not None and not isinstance(p_rowsGrouping, RowsGrouping):
-        raise exception.Exception(
+        raise Spartacus.Report.Exception(
             'Error during execution of method "Static.AddTable": Parameter "p_rowsGrouping" must be None of of type "Spartacus.Report.RowsGrouping".'
         )
 

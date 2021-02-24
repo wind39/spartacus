@@ -276,11 +276,20 @@ class Data:
                 'Error during instantiation of class "Spartacus.Reports.Data": Parameter "p_valueMapping" must be of type "dict".'
             )
 
+        v_alignment = p_alignment
+
+        # data cell must not wrap text by default, unless explicitly set other way
+        if v_alignment is None:
+            v_alignment = openpyxl.styles.Alignment(wrapText=False)
+        else:
+            if v_alignment.wrapText is None:
+                v_alignment.wrapText = False
+
         self.type = p_type
         self.border = p_border
         self.font = p_font
         self.fill = p_fill
-        self.alignment = p_alignment
+        self.alignment = v_alignment
         self.valueMapping = p_valueMapping
 
 
@@ -663,13 +672,22 @@ class Field:
                 'Error during instantiation of class "Spartacus.Report.Field": Parameter "p_hidden" must be of type "bool".'
             )
 
+        v_alignment = p_alignment
+
+        # header cell must wrap text by default, unless explicitly set other way
+        if v_alignment is None:
+            v_alignment = openpyxl.styles.Alignment(wrapText=True)
+        else:
+            if v_alignment.wrapText is None:
+                v_alignment.wrapText = True
+
         self.name = p_name
         self.width = p_width
         self.comment = p_comment
         self.border = p_border
         self.font = p_font
         self.fill = p_fill
-        self.alignment = p_alignment
+        self.alignment = v_alignment
         self.data = p_data
         self.summaryList = p_summaryList
         self.hidden = p_hidden
@@ -774,7 +792,7 @@ def AddTable(
     p_headerDict=None,
     p_startColumn=1,
     p_startRow=1,
-    p_headerHeight=None,
+    p_headerHeight=40,
     p_data=None,
     p_database=None,
     p_query=None,
@@ -822,7 +840,7 @@ def AddTable(
             p_startRow (int): the row number where the table should start. Defaults to 1.
                 Notes:
                     Must be a positive integer.
-            p_headerHeight (float): the header row height in pt. Defaults to None.
+            p_headerHeight (float): the header row height in pt. Defaults to 40.
                 Notes:
                     Must be a non-negative number or None.
             p_data (Spartacus.Database.DataTable): the datatable that contains the data that will be inserted into the excel table. Defaults to None.

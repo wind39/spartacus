@@ -31,7 +31,7 @@ long_description = open(os.path.join(rootdir, "README")).read()
 
 setup(
     name="Spartacus",
-    version="3.46",
+    version="3.47",
     description="Generic database wrapper",
     long_description=long_description,
     url="http://github.com/wind39/spartacus",

@@ -848,6 +848,8 @@ def AddTable(
                     If the corresponding column data type in p_headerDict is some kind of formula, then below wildcards can be used:
                         #row#: the current row.
                         #column_columname#: will be replaced by the letter of the column.
+                        #start_row#: will be replaced by the first data line number of this table.
+                        #end_row#: will be replaced by the last data line number this table.
                 Examples:
                     p_data = Spartacus.Database.DataTable that contains:
                         Columns: ['field_one', 'field_two'].
@@ -869,6 +871,8 @@ def AddTable(
                     If the corresponding column data type in p_headerDict is some kind of formula, then below wildcards can be used:
                         #row#: the current row.
                         #column_columname#: will be replaced by the letter of the column.
+                        #start_row#: will be replaced by the first data line number of this table.
+                        #end_row#: will be replaced by the last data line number this table.
                 Examples:
                     "SELECT field_one, '=if(#column_field_one##row# = "HAHAHA", 1, 0)' as field_two FROM sometable"
             p_mainTable (bool): if this table is the main table of the current worksheet. Defaults to False.
@@ -1047,7 +1051,20 @@ def AddTable(
     v_pattern = re.compile(r"#column_[^\n\r#]*#")
 
     if p_database is not None:
+        v_rowCount = p_database.ExecuteScalar('''
+            SELECT count(*)
+            FROM (
+                {p_query}
+            ) x
+        '''.format(
+            p_query=p_query
+        ))
+
         p_database.Open()
+    else:
+        v_rowCount = len(p_data.Rows)
+
+    v_lastLine = v_rowCount + p_startRow
 
     v_line = 0
     v_hasmorerecords = True
@@ -1194,6 +1211,10 @@ def AddTable(
                     if v_headerData.type == "int_formula":
                         v_value = v_row[v_headerList[i]].replace(
                             "#row#", str(p_startRow + v_line)
+                        ).replace(
+                            "#start_row#", str(p_startRow + 1)
+                        ).replace(
+                            "#end_row#", str(v_lastLine)
                         )
                         v_match = re.search(v_pattern, v_value)
 
@@ -1214,6 +1235,10 @@ def AddTable(
                     elif v_headerData.type == "float_formula":
                         v_value = v_row[v_headerList[i]].replace(
                             "#row#", str(p_startRow + v_line)
+                        ).replace(
+                            "#start_row#", str(p_startRow + 1)
+                        ).replace(
+                            "#end_row#", str(v_lastLine)
                         )
                         v_match = re.search(v_pattern, v_value)
 
@@ -1234,6 +1259,10 @@ def AddTable(
                     elif v_headerData.type == "float4_formula":
                         v_value = v_row[v_headerList[i]].replace(
                             "#row#", str(p_startRow + v_line)
+                        ).replace(
+                            "#start_row#", str(p_startRow + 1)
+                        ).replace(
+                            "#end_row#", str(v_lastLine)
                         )
                         v_match = re.search(v_pattern, v_value)
 
@@ -1254,6 +1283,10 @@ def AddTable(
                     elif v_headerData.type == "percent_formula":
                         v_value = v_row[v_headerList[i]].replace(
                             "#row#", str(p_startRow + v_line)
+                        ).replace(
+                            "#start_row#", str(p_startRow + 1)
+                        ).replace(
+                            "#end_row#", str(v_lastLine)
                         )
                         v_match = re.search(v_pattern, v_value)
 
@@ -1274,6 +1307,10 @@ def AddTable(
                     elif v_headerData.type == "date_formula":
                         v_value = v_row[v_headerList[i]].replace(
                             "#row#", str(p_startRow + v_line)
+                        ).replace(
+                            "#start_row#", str(p_startRow + 1)
+                        ).replace(
+                            "#end_row#", str(v_lastLine)
                         )
                         v_match = re.search(v_pattern, v_value)
 
@@ -1294,6 +1331,10 @@ def AddTable(
                     elif v_headerData.type == "str_formula":
                         v_value = v_row[v_headerList[i]].replace(
                             "#row#", str(p_startRow + v_line)
+                        ).replace(
+                            "#start_row#", str(p_startRow + 1)
+                        ).replace(
+                            "#end_row#", str(v_lastLine)
                         )
                         v_match = re.search(v_pattern, v_value)
 

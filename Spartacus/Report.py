@@ -117,7 +117,7 @@ class Data:
 
         Attributes:
             type (str): the data type of each cell of this column. Defaults to 'str'.
-                Must be one of: int, float, float4, percent, date, str, bool, int_formula, float_formula, float4_formula, percent_formula, date_formula, str_formula.
+                Must be one of: int, float, float4, accounting, percent, date, str, bool, int_formula, float_formula, float4_formula, accounting_formula, percent_formula, date_formula, str_formula.
             border (openpyxl.styles.borders.Border): the border to be applied data to cells of this column. Defaults to None.
                 Examples:
                     openpyxl.styles.borders.Border(
@@ -175,7 +175,7 @@ class Data:
 
             Args:
                 p_type (str): the data type of each cell of this column. Defaults to 'str'.
-                    Must be one of: int, float, float4, percent, date, str, bool, int_formula, float_formula, float4_formula, percent_formula, date_formula, str_formula.
+                    Must be one of: int, float, float4, accounting, percent, date, str, bool, int_formula, float_formula, float4_formula, accounting_formula, percent_formula, date_formula, str_formula.
                 p_border (openpyxl.styles.borders.Border): the border to be applied to cells of this column. Defaults to None.
                     Examples:
                         p_border = openpyxl.styles.borders.Border(
@@ -232,6 +232,7 @@ class Data:
             "int",
             "float",
             "float4",
+            "accounting",
             "percent",
             "date",
             "str",
@@ -239,12 +240,13 @@ class Data:
             "int_formula",
             "float_formula",
             "float4_formula",
+            "accounting_formula",
             "percent_formula",
             "date_formula",
             "str_formula",
         ]:
             raise Spartacus.Report.Exception(
-                'Error during instantiation of class "Spartacus.Reports.Data": Parameter "p_type" must be one of: "int", "float", "float4", "percent", "date", "str", "bool", "int_formula", "float_formula", "float4_formula", "percent_formula", "date_formula", "str_formula".'
+                'Error during instantiation of class "Spartacus.Reports.Data": Parameter "p_type" must be one of: "int", "float", "float4", "accounting", "percent", "date", "str", "bool", "int_formula", "float_formula", "float4_formula", "accounting_formula", "percent_formula", "date_formula", "str_formula".'
             )
 
         if p_border is not None and not isinstance(
@@ -297,7 +299,7 @@ class Summary:
     """Summary represents info about one summary to be applied to a column, including type and formatting.
 
         Attributes:
-            type (str): the data type of the column summary. Must be one of: int, float, float4, percent. Defaults to 'float'.
+            type (str): the data type of the column summary. Must be one of: int, float, float4, accounting, percent. Defaults to 'float'.
             border (openpyxl.styles.borders.Border): the border to be applied to column summary. Defaults to None.
                 Examples:
                     openpyxl.styles.borders.Border(
@@ -349,7 +351,7 @@ class Summary:
         """Create a new Spartacus.Reports.Summary instance.
 
             Args:
-                p_type (str): the data type of the column summary. Must be one of: int, float, float4, percent. Defaults to 'float'.
+                p_type (str): the data type of the column summary. Must be one of: int, float, float4, accounting, percent. Defaults to 'float'.
                 p_border (openpyxl.styles.borders.Border): the border to be applied to column summary. Defaults to None.
                     Examples:
                         p_border = openpyxl.styles.borders.Border(
@@ -397,9 +399,9 @@ class Summary:
                 'Error during instantiation of class "Spartacus.Reports.Summary": Parameter "p_type" must be of type "str".'
             )
 
-        if not p_type in ["int", "float", "float4", "percent"]:
+        if not p_type in ["int", "float", "float4", "accounting", "percent"]:
             raise Spartacus.Reports.Exception(
-                'Error during instantiation of class "Spartacus.Reports.Summary": Parameter "p_type" must be one of: "int", "float", "float4", "percent".'
+                'Error during instantiation of class "Spartacus.Reports.Summary": Parameter "p_type" must be one of: "int", "float", "float4", "accounting", "percent".'
             )
 
         if p_border is not None and not isinstance(
@@ -1149,6 +1151,22 @@ def AddTable(
                                 )
 
                         v_cell.number_format = "#,##0.0000"
+                    elif v_headerData.type == "accounting":
+                        v_key = str(v_row[v_headerList[i]])
+
+                        if v_key in v_headerData.valueMapping:
+                            v_cell.value = v_headerData.valueMapping[v_key]
+                        else:
+                            try:
+                                v_cell.value = float(v_row[v_headerList[i]])
+                            except (Exception, TypeError, ValueError):
+                                v_cell.value = (
+                                    v_row[v_headerList[i]]
+                                    if v_headerList[i] is not None
+                                    else ""
+                                )
+
+                        v_cell.number_format = r'_ * #,##0.00_ ;_ * \\-#,##0.00_ ;_ * "-"??_ ;_ @_ '
                     elif v_headerData.type == "percent":
                         v_key = str(v_row[v_headerList[i]])
 
@@ -1280,6 +1298,30 @@ def AddTable(
 
                         v_cell.value = v_value
                         v_cell.number_format = "#,##0.0000"
+                    elif v_headerData.type == "accounting_formula":
+                        v_value = v_row[v_headerList[i]].replace(
+                            "#row#", str(p_startRow + v_line)
+                        ).replace(
+                            "#start_row#", str(p_startRow + 1)
+                        ).replace(
+                            "#end_row#", str(v_lastLine)
+                        )
+                        v_match = re.search(v_pattern, v_value)
+
+                        while v_match is not None:
+                            v_start = v_match.start()
+                            v_end = v_match.end()
+                            v_matchColumn = openpyxl.utils.get_column_letter(
+                                p_startColumn
+                                + v_headerList.index(v_value[v_start + 8 : v_end - 1])
+                            )  # Discard starting #column_ and ending # in match
+                            v_value = (
+                                v_value[:v_start] + v_matchColumn + v_value[v_end:]
+                            )
+                            v_match = re.search(v_pattern, v_value)
+
+                        v_cell.value = v_value
+                        v_cell.number_format = r'_ * #,##0.00_ ;_ * \\-#,##0.00_ ;_ * "-"??_ ;_ @_ '
                     elif v_headerData.type == "percent_formula":
                         v_value = v_row[v_headerList[i]].replace(
                             "#row#", str(p_startRow + v_line)
@@ -1465,6 +1507,8 @@ def AddTable(
                 v_cell.number_format = "#,##0.00"
             elif v_headerSummary.type == "float4":
                 v_cell.number_format = "#,##0.0000"
+            elif v_headerSummary.type == "accounting":
+                v_cell.number_format = r'_ * #,##0.00_ ;_ * \\-#,##0.00_ ;_ * "-"??_ ;_ @_ '
             elif v_headerSummary.type == "percent":
                 v_cell.number_format = "0.00%"
 
